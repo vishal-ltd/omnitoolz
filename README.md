@@ -5,6 +5,8 @@ text, developer, security and media tasks. Every tool runs entirely in the
 browser: files are processed on the user's device, with no upload, no server
 processing, no accounts and no tracking.
 
+**▸ Try it live: [omnitoolz.vercel.app](https://omnitoolz.vercel.app)**
+
 Built with Next.js 15, React 19, TypeScript and Tailwind CSS v4, in a
 16-bit pixel-art UI. 59 tools · 114 unit tests · 76 statically generated
 pages · first-load JS ~104 kB.
