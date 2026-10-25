@@ -1,0 +1,390 @@
+@import "tailwindcss";
+
+/*
+  ═══════════════════════════════════════════════════════════════════
+  OmniToolz pixel design system
+  Style: 16-bit console UI — hard 4px shadows (no blur), 3px ink borders,
+  bitmap display font (Press Start 2P) + terminal body font (VT323),
+  CRT scanlines and checkerboard dithering.
+  Techniques per NES.css / retro-UI conventions: blocky shadows in 4px
+  steps, box-shadow pixel art, repeating-gradient scanlines.
+  Themes: light (cream paper) / dark (CRT night) via CSS variables that
+  swap under `.dark`; "system" resolves through the inline head script.
+  ═══════════════════════════════════════════════════════════════════
+*/
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Fonts: display = pixel bitmap, body = terminal, sans = readable copy. */
+  --font-display: "Press Start 2P", "Courier New", monospace;
+  --font-body: "VT323", "Courier New", monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+
+  /* Light theme (default) — warm arcade-manual paper. */
+  --color-canvas: #e9e4d3;
+  --color-card: #fcfaf0;
+  --color-ink: #23242f;
+  --color-ink-soft: #5f6070;
+  --color-line: #d2ccb8;
+  --color-line-strong: #23242f;
+  --color-edge: #23242f;
+  --color-shadow: #23242f;
+  --color-brand: #5b54e8;
+  --color-brand-strong: #4940d6;
+  --color-brand-soft: #e5e2fa;
+  --color-brand-softer: #cbc5f4;
+  --color-ok: #1e9e5a;
+  --color-ok-soft: #ddf2e5;
+  --color-err: #d94a3d;
+  --color-err-soft: #fae3e0;
+  --color-warn: #d98a0a;
+  --color-warn-soft: #faecd2;
+  --color-gold: #f2b824;
+  /* Text color on brand-filled surfaces (some funky palettes need dark ink). */
+  --color-on-brand: #ffffff;
+
+  /* Retro shadow steps (used with shadow-* utilities, color via --color-shadow). */
+  --shadow-pixel-sm: 3px 3px 0 0 var(--color-shadow);
+  --shadow-pixel: 4px 4px 0 0 var(--color-shadow);
+  --shadow-pixel-lg: 6px 6px 0 0 var(--color-shadow);
+  --shadow-pixel-hover: 6px 6px 0 0 var(--color-shadow);
+  --shadow-pixel-inset: inset 3px 3px 0 0 rgb(0 0 0 / 0.12);
+
+  --animate-blink: blink 1.1s steps(2, start) infinite;
+  --animate-pixel-in: pixel-in 0.4s steps(6, end) both;
+  --animate-ticker: ticker 40s linear infinite;
+}
+
+/* Dark theme — CRT cabinet night. */
+.dark {
+  --color-canvas: #12131f;
+  --color-card: #1d1f30;
+  --color-ink: #ece9dc;
+  --color-ink-soft: #9a9ab0;
+  --color-line: #323551;
+  --color-line-strong: #5a5e8f;
+  --color-edge: #5a5e8f;
+  --color-shadow: #07070e;
+  --color-brand: #8781ff;
+  --color-brand-strong: #a29cff;
+  --color-brand-soft: #292655;
+  --color-brand-softer: #3b3770;
+  --color-ok: #45c883;
+  --color-ok-soft: #16342a;
+  --color-err: #ff6b61;
+  --color-err-soft: #44201f;
+  --color-warn: #f2b33d;
+  --color-warn-soft: #3f3018;
+  --color-gold: #ffd23f;
+
+  color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Funky accents — selected via data-accent on <html>, orthogonal to
+   light/dark mode. Accents recolor ONLY the highlight moments (buttons,
+   links, ticker, logo, chips, focus rings); the paper/ink surfaces and
+   status colors stay classic. Default is "arcade" (the tokens above);
+   these blocks come later in the cascade so they win over :root/.dark.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Game Boy accent — DMG green buttons and highlights. */
+[data-accent="gameboy"] {
+  --color-brand: #306230;
+  --color-brand-strong: #0f380f;
+  --color-brand-soft: #dfebba;
+  --color-brand-softer: #cfe08f;
+  --color-gold: #7c9a2a;
+  --color-on-brand: #ffffff;
+}
+[data-accent="gameboy"].dark {
+  --color-brand: #8bac0f;
+  --color-brand-strong: #9bbc0a;
+  --color-brand-soft: #1e3d20;
+  --color-brand-softer: #2a5430;
+  --color-gold: #9bbc0a;
+  --color-on-brand: #0f380f;
+}
+
+/* Synthwave accent — hot pink neons with cyan chrome. */
+[data-accent="synthwave"] {
+  --color-brand: #d61a8c;
+  --color-brand-strong: #ad0f70;
+  --color-brand-soft: #ffd9ec;
+  --color-brand-softer: #ffb8dc;
+  --color-gold: #00b8d4;
+  --color-on-brand: #ffffff;
+}
+[data-accent="synthwave"].dark {
+  --color-brand: #ff2e88;
+  --color-brand-strong: #ff5da8;
+  --color-brand-soft: #3d1440;
+  --color-brand-softer: #521c52;
+  --color-gold: #00e5ff;
+  --color-on-brand: #1a0313;
+}
+
+/* Amber CRT accent — phosphor orange buttons, red highlights. */
+[data-accent="amber"] {
+  --color-brand: #b45309;
+  --color-brand-strong: #92400e;
+  --color-brand-soft: #fde8c8;
+  --color-brand-softer: #f9d49a;
+  --color-gold: #dc2626;
+  --color-on-brand: #ffffff;
+}
+[data-accent="amber"].dark {
+  --color-brand: #ffb347;
+  --color-brand-strong: #ffd27a;
+  --color-brand-soft: #3a2408;
+  --color-brand-softer: #4a2f0e;
+  --color-gold: #ff5d3d;
+  --color-on-brand: #1a0d00;
+}
+
+/* Mono accent — black buttons on paper, white on night. Newspaper chic. */
+[data-accent="mono"] {
+  --color-brand: #111111;
+  --color-brand-strong: #000000;
+  --color-brand-soft: #e9e9e9;
+  --color-brand-softer: #d7d7d7;
+  --color-gold: #111111;
+  --color-on-brand: #ffffff;
+}
+[data-accent="mono"].dark {
+  --color-brand: #f0f0f0;
+  --color-brand-strong: #ffffff;
+  --color-brand-soft: #262626;
+  --color-brand-softer: #333333;
+  --color-gold: #f0f0f0;
+  --color-on-brand: #0a0a0a;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── CRT scanlines ───────────────────────────────────────────────
+   Subtle horizontal lines over the whole viewport; pointer-events
+   none so it never interferes. Density differs per theme. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(0 0 0 / 0.028) 0 1px,
+    transparent 1px 3px
+  );
+}
+.dark body::after {
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(0 0 0 / 0.14) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Pixel display font for all headings (base inheritance keeps long-form
+   pages readable without per-page edits). Line-height generous: bitmap
+   glyphs clip at 1.1. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background-color: var(--color-brand);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* ── Utilities ───────────────────────────────────────────────────── */
+
+/* Checkerboard dither block (hero background, decorative panels). */
+.bg-dither {
+  background-image: conic-gradient(
+    from 90deg at 50% 50%,
+    var(--dither-color, rgb(35 36 47 / 0.07)) 25%,
+    transparent 0 50%,
+    var(--dither-color, rgb(35 36 47 / 0.07)) 0 75%,
+    transparent 0
+  );
+  background-size: 12px 12px;
+}
+.dark .bg-dither {
+  --dither-color: rgb(236 233 220 / 0.05);
+}
+
+/* Blinking pixel cursor / decorations. */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Section entrance: chunky stepped reveal, like tiles snapping in. */
+@keyframes pixel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Retro ticker marquee (duplicated content scrolls one width). */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Animated diagonal stripes for progress bars / strength meters. */
+.pixel-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-brand) 0 8px,
+    var(--color-brand-strong) 8px 16px
+  );
+  animation: pixel-stripes 0.7s linear infinite;
+}
+@keyframes pixel-stripes {
+  to {
+    background-position: 22.63px 0;
+  }
+}
+
+.pixel-stripes-ok {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-ok) 0 8px,
+    color-mix(in srgb, var(--color-ok) 75%, black) 8px 16px
+  );
+  animation: pixel-stripes 0.7s linear infinite;
+}
+
+/* Square pixel thumb for range inputs. */
+input[type="range"] {
+  accent-color: var(--color-brand);
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  height: 1.5rem;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--color-line-strong);
+  border: 2px solid var(--color-edge);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 22px;
+  margin-top: -10px;
+  background: var(--color-brand);
+  border: 2px solid var(--color-edge);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: var(--color-line-strong);
+  border: 2px solid var(--color-edge);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 18px;
+  border-radius: 0;
+  background: var(--color-brand);
+  border: 2px solid var(--color-edge);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
+  cursor: pointer;
+}
+
+/* Square color inputs. */
+input[type="color"] {
+  border-radius: 0;
+}
+
+/* Keep bitmap fonts crisp (VT323/PS2P are pixel fonts; smoothing ruins them). */
+.font-display,
+.font-body {
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* Mono code areas inherit the terminal font. */
+.code-area {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  tab-size: 2;
+}
+
+/* Native checkbox → chunky pixel square. */
+input[type="checkbox"].pixel-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--color-card);
+  border: 3px solid var(--color-edge);
+  box-shadow: 2px 2px 0 0 var(--color-shadow);
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+}
+input[type="checkbox"].pixel-check::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  transform: scale(0);
+  transition: transform 80ms steps(2, end);
+  background: var(--color-brand);
+  box-shadow: 4px 4px 0 0 var(--color-brand);
+}
+input[type="checkbox"].pixel-check:checked::before {
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

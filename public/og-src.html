@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: "PS2P";
+    src: url("https://cdn.jsdelivr.net/npm/@fontsource/press-start-2p@5/files/press-start-2p-latin-400-normal.woff2") format("woff2");
+    font-display: block;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0 1px, transparent 1px 4px),
+      repeating-conic-gradient(#d2ccb8 0% 25%, #e9e4d3 0% 50%);
+    background-size: auto, 24px 24px;
+    border: 12px solid #23242f;
+    font-family: "PS2P", monospace;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 80px 96px; position: relative;
+  }
+  .brand-row { display: flex; align-items: center; gap: 36px; }
+  .brand-row img { margin-top: -14px; }
+  .brand-row img { width: 150px; height: 150px; image-rendering: pixelated; }
+  .wordmark { font-size: 62px; color: #23242f; letter-spacing: -2px; }
+  .wordmark span { color: #5b54e8; }
+  .tagline { margin-top: 38px; font-size: 26px; color: #23242f; }
+  .tagline em { font-style: normal; color: #b8860b; }
+  .chips { margin-top: 48px; display: flex; gap: 20px; align-items: stretch; }
+  .chip { border: 4px solid #23242f; background: #fcfaf0; box-shadow: 6px 6px 0 #23242f; padding: 14px 20px; font-size: 15px; color: #23242f; text-transform: uppercase; }
+  .chip.brand { background: #5b54e8; color: #fff; }
+  .strip { position: absolute; left: 0; right: 0; bottom: 0; background: #23242f; color: #f2b824; font-size: 14px; padding: 14px 0; letter-spacing: 2px; white-space: nowrap; overflow: hidden; }
+</style>
+</head>
+<body>
+  <div class="brand-row">
+    <img src="/logo.svg" alt="" />
+    <div class="wordmark">OMNI<span>TOOLZ</span></div>
+  </div>
+  <div class="tagline">EVERY TOOL. <em>ONE PLACE.</em></div>
+  <div class="chips">
+    <div class="chip brand">50+ free tools</div>
+    <div class="chip">no sign-up</div>
+    <div class="chip">100% in-browser</div>
+  </div>
+  <div class="strip">◆ MERGE ◆ SPLIT ◆ PROTECT ◆ ORGANIZE ◆ SIGN ◆ WATERMARK ◆ INVOICE ◆ QR ◆ OCR ◆ DIFF ◆ TOTP ◆ REGEX ◆ COMPRESS ◆ CROP ◆ EXTRACT ◆ CONVERT ◆ COMPARE ◆</div>
+  <script>document.title = "ready";</script>
+</body>
+</html>

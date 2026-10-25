@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+tsconfig.tsbuildinfo
+
+# env
+.env
+.env.local
+.env*.local
+
+# logs & test artifacts
+*.log
+lh-*.json
+*.traineddata
+test-*.pdf
+test-*.docx
+test-*.xlsx
+.*-check.pdf
+.*-check.b64
+
+# os / editor
+.DS_Store
+Thumbs.db

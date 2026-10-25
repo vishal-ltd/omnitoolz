@@ -1,0 +1,14 @@
+{
+  "name": "OmniToolz — Every Tool. One Place.",
+  "short_name": "OmniToolz",
+  "description": "36 free browser tools for PDFs, images, text, developers and security. No sign-up, no upload — everything runs on your device.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#e9e4d3",
+  "theme_color": "#12131f",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
