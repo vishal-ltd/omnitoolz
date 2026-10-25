@@ -2,7 +2,7 @@
   "name": "omnitoolz",
   "version": "0.1.0",
   "private": true,
-  "description": "Every Tool. One Place. \u2014 60 free browser tools for PDFs, images, text, developers, security and media. No uploads, no accounts, no tracking.",
+  "description": "Every Tool. One Place. — 60 free browser tools for PDFs, images, text, developers, security and media. No uploads, no accounts, no tracking.",
   "license": "MIT",
   "engines": {
     "node": ">=20"
@@ -22,6 +22,7 @@
     "@fontsource/vt323": "^5.3.0",
     "@imgly/background-removal": "^1.7.0",
     "@jspawn/qpdf-wasm": "^0.0.2",
+    "@vercel/speed-insights": "^2.0.0",
     "docx": "^9.14.0",
     "fflate": "^0.8.3",
     "jsqr": "^1.4.0",

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource/press-start-2p";
 import "@fontsource/vt323";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { SearchDialog } from "@/components/layout/search-dialog";
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <SearchDialog />
         <ServiceWorkerRegister />
+        <SpeedInsights />
       </body>
     </html>
   );
