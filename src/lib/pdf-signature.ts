@@ -231,7 +231,7 @@ function derLenOf(len: number): Uint8Array {
 
 function decodeOid(content: Uint8Array): string {
   const parts: number[] = [];
-  let first = content[0];
+  const first = content[0];
   parts.push(Math.floor(first / 40), first % 40);
   let value = 0;
   for (let i = 1; i < content.length; i++) {

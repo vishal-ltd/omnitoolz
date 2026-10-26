@@ -1,4 +1,5 @@
 import { createHash, createVerify } from "node:crypto";
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
@@ -12,7 +13,6 @@ let fixtureBytes: Uint8Array;
 
 beforeAll(() => {
   // Generate the fixture via the dev script (deterministic structure, fresh key).
-  const { execSync } = require("node:child_process") as typeof import("node:child_process");
   execSync("node scripts/make-signed-fixture.mjs", { cwd: process.cwd() });
   const raw = readFileSync(".signed-fixture.pdf");
   fixtureBytes = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
