@@ -24,3 +24,6 @@ test-*.xlsx
 # os / editor
 .DS_Store
 Thumbs.db
+
+# generated signature-test fixture
+.signed-fixture.pdf
