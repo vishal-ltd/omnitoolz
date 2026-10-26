@@ -183,11 +183,11 @@ export default function ComparePdfTool() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="mb-1.5 font-display text-[9px] text-ink-soft uppercase">1 · Original</p>
-              <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
+              <FileDropZone accept={["pdf"]} multiple={false} maxFiles={2} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
             </div>
             <div>
               <p className="mb-1.5 font-display text-[9px] text-ink-soft uppercase">2 · Revised</p>
-              <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
+              <FileDropZone accept={["pdf"]} multiple={false} maxFiles={2} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
             </div>
           </div>
           <FileList files={queue.files} onRemove={queue.removeAt} />
