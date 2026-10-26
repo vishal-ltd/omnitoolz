@@ -17,6 +17,7 @@ export default [
       // The editors paint committed overlays from refs inside effects —
       // intentional imperative canvas syncing the compiler can't model.
       "react-hooks/immutability": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
     },
   },
 ];
