@@ -259,7 +259,6 @@ export default function EditPdfTool() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
   // ── Paint the current page + detect its text targets ─────────────
