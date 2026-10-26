@@ -55,6 +55,8 @@ export const toolLoaders: Record<string, () => Promise<{ default: ComponentType 
   "compress-pdf": () => import("./pdf/compress-pdf"),
   "word-to-pdf": () => import("./pdf/word-to-pdf"),
   "edit-pdf": () => import("./pdf/edit-pdf"),
+  "verify-pdf-signature": () => import("./pdf/verify-pdf-signature"),
+  "pptx-to-pdf": () => import("./pdf/pptx-to-pdf"),
   "excel-to-pdf": () => import("./pdf/excel-to-pdf"),
   "pdf-to-word": () => import("./pdf/pdf-to-word"),
   // Developer

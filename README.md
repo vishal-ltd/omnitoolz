@@ -8,7 +8,7 @@ processing, no accounts and no tracking.
 **▸ Try it live: [omnitoolz.vercel.app](https://omnitoolz.vercel.app)**
 
 Built with Next.js 15, React 19, TypeScript and Tailwind CSS v4, in a
-16-bit pixel-art UI. 60 tools · 133 unit tests · 77 statically generated
+16-bit pixel-art UI. 62 tools · 138 unit tests · 79 statically generated
 pages · first-load JS ~104 kB.
 
 ## Quick start
@@ -21,9 +21,9 @@ npm run dev        # http://localhost:3000
 Other scripts:
 
 ```bash
-npm run build      # production build (77 static pages)
+npm run build      # production build (79 static pages)
 npm run start      # serve the production build
-npm test           # vitest unit tests (133)
+npm test           # vitest unit tests (138)
 npm run lint       # eslint (0 errors; see the note on react-hooks below)
 ```
 
@@ -98,7 +98,8 @@ public/                      pdf.js worker, libheif + qpdf WASM engines,
   node:crypto), line diff, color/WCAG, password auditing and the ICO
   container — plus the Edit-PDF overlay geometry (coordinate transforms
 with y-flip, Ramer-Douglas-Peucker ink simplification, serialization) and
-the target-size binary search — all live in dependency-free modules with
+the target-size binary search — plus a minimal DER/CMS reader for PDF
+digital-signature verification — all live in dependency-free modules with
 unit tests.
 - **Honest privacy claims.** Every current tool is browser-mode; tool pages
   and the privacy policy say exactly that. If server-side tools are ever
@@ -116,7 +117,7 @@ picked file changes, and loading lazy engines — documented in
 
 ## Testing
 
-`npm test` — 133 unit tests covering page-range parsing, split modes,
+`npm test` — 138 unit tests covering page-range parsing, split modes,
 password generation/auditing, case conversion, JSON tools, search ranking,
 byte formatting, invoice math, page pixel analysis, ICO packing, WAV
 encoding, base32/TOTP (cross-checked against node:crypto), line diff, color

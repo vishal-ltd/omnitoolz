@@ -82,7 +82,11 @@ describe("registry integrity", () => {
   });
 
   it("planned tools are excluded from live listings", () => {
-    expect(liveIds).not.toContain("pptx-to-pdf");
+    const allIds = tools.map((t) => t.id);
+    const planned = allIds.filter((id) => !liveIds.includes(id));
+    // Every registered tool is live. When a tool is marked "planned", add it
+    // here to document the exclusion.
+    expect(planned).toEqual([]);
     expect(categories.length).toBeGreaterThanOrEqual(activeCategories().length);
   });
 
