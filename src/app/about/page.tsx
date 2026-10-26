@@ -33,7 +33,7 @@ export default function AboutPage() {
           <li><strong className="text-ink">Private by physics.</strong> Your contract, your IDs, your invoices never travel anywhere — not to us, not to anyone.</li>
           <li><strong className="text-ink">Fast.</strong> No upload queue, no processing queue. Files work at the speed of your own machine.</li>
           <li><strong className="text-ink">Free forever.</strong> Since we never touch your files, there are no storage or bandwidth costs to pass on. No account, no credits, no watermark.</li>
-          <li><strong className="text-ink">Offline-capable.</strong> Install OmniToolz as an app (from your browser&apos;s menu) and the tools keep working with no connection at all.</li>
+          <li><strong className="text-ink">Installable.</strong> Add OmniToolz to your home screen from your browser&apos;s menu — it always loads the latest version straight from the network, with no offline cache in the way.</li>
         </ul>
         <p>
           Where a tool needs a heavyweight engine — the AI background remover, OCR, the HEIF codec,

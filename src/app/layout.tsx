@@ -5,7 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { SearchDialog } from "@/components/layout/search-dialog";
-import { ServiceWorkerRegister } from "@/components/layout/sw-register";
+import { ServiceWorkerCleanup } from "@/components/layout/sw-cleanup";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <Footer />
         <SearchDialog />
-        <ServiceWorkerRegister />
+        <ServiceWorkerCleanup />
         <SpeedInsights />
       </body>
     </html>

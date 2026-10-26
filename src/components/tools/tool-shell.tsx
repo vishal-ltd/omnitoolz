@@ -1,4 +1,4 @@
-import { ChevronRight, Laptop, ShieldCheck, WifiOff } from "lucide-react";
+import { ChevronRight, CloudDownload, Laptop, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { ToolIcon } from "@/components/icons";
 import { ToolCard } from "@/components/tools/tool-card";
@@ -52,7 +52,7 @@ export function ToolShell({
             <Laptop className="size-3.5" aria-hidden /> Runs in your browser
           </li>
           <li className="flex items-center gap-1.5 border-[3px] border-edge bg-canvas px-2.5 py-1 font-display text-[8px] text-ink-soft uppercase shadow-[2px_2px_0_0_var(--color-shadow)]">
-            <WifiOff className="size-3.5" aria-hidden /> Works offline once loaded
+            <CloudDownload className="size-3.5" aria-hidden /> Always the latest version
           </li>
         </ul>
       </header>

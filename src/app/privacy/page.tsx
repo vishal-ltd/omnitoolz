@@ -70,17 +70,19 @@ export default function PrivacyPage() {
             / staticimgly / this site&apos;s own static files): the OCR engine (Tesseract), the AI
             background-removal model, the HEIF codec, the qpdf compressor and the PDF rendering
             worker. These downloads contain only code and model weights. Your files are never
-            attached to these requests, and after the first download the engine is cached locally
-            and the tools keep working offline.
+            attached to these requests. OmniToolz keeps no offline copy of itself — every visit
+            loads fresh from the network.
           </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">5. The service worker</h2>
+          <h2 className="text-lg font-semibold text-ink">5. No service worker</h2>
           <p>
-            OmniToolz installs a service worker so it can work offline and be installed as an app.
-            It caches only the site&apos;s own application files (pages, scripts, fonts, icons). It
-            does not and cannot cache the contents of files you process.
+            OmniToolz does not install a service worker and does not keep an offline cache of
+            itself. If this site were ever unreachable, the tools would be too — by design, so you
+            always run the latest version. Your browser&apos;s ordinary HTTP cache may hold static
+            files (as it does for any website), and your saved preferences are limited to the
+            settings listed in section 3.
           </p>
         </section>
 

@@ -79,7 +79,7 @@ src/
                              base32/totp, diff, password, hash, jwt, ico)
 
 public/                      pdf.js worker, libheif + qpdf WASM engines,
-                             PWA manifest/service worker, icons, og image
+                             PWA manifest, icons, og image
 ```
 
 ### Key design decisions
@@ -104,8 +104,9 @@ unit tests.
 - **Honest privacy claims.** Every current tool is browser-mode; tool pages
   and the privacy policy say exactly that. If server-side tools are ever
   added, their pages must state where processing happens.
-- **PWA.** Manifest + service worker (app-shell caching only, never file
-  contents) so installed tools keep working offline.
+- **Installable.** Web app manifest for add-to-home-screen. No service
+  worker and no offline cache — every visit loads the latest version from
+  the network.
 
 ### ESLint note
 
