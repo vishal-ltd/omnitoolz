@@ -64,7 +64,8 @@ export type IconName =
   | "wand-2"
   | "camera"
   | "video"
-  | "app-window";
+  | "app-window"
+  | "pen-tool";
 
 export interface Category {
   id: CategoryId;

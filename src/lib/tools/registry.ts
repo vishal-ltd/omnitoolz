@@ -1017,6 +1017,43 @@ export const tools: ToolDefinition[] = [
     relatedToolIds: ["jpg-to-pdf", "ocr", "rotate-pdf", "merge-pdf"],
   },
   {
+    id: "edit-pdf",
+    name: "Edit PDF",
+    description:
+      "Open a PDF and edit it on the page: add text, draw, highlight, white-out and stamp images — then bake everything in permanently.",
+    category: "pdf",
+    processingMode: "browser",
+    status: "live",
+    featured: true,
+    keywords: ["edit pdf", "add text to pdf", "write on pdf", "pdf editor", "highlight pdf", "white out pdf", "annotate pdf"],
+    icon: "pen-tool",
+    acceptedFormats: ["PDF"],
+    maxFiles: 1,
+    maxFileSizeMb: 100,
+    supportsBatch: false,
+    privacyNote: BROWSER_PRIVACY,
+    howTo: [
+      "Drop a PDF — the pages render right here for editing.",
+      "Pick a tool: add text, draw, highlight, white-out or stamp an image.",
+      "Click Apply and download the edited PDF — edits become permanent page content.",
+    ],
+    faqs: [
+      {
+        q: "Can I edit the existing text?",
+        a: "Not by retyping yet — use the White-out tool to cover the old text, then add a text box with your replacement. True font-matched retype is on the roadmap.",
+      },
+      {
+        q: "Are the edits really permanent?",
+        a: "Yes — Apply bakes every addition into the page content itself, like the sign tool. Keep the original if you may need to undo later.",
+      },
+      {
+        q: "Which fonts can text use?",
+        a: "Helvetica (regular and bold) — the standard PDF font, readable everywhere. Non-Latin characters map to their closest safe form.",
+      },
+    ],
+    relatedToolIds: ["sign-pdf", "organize-pdf", "protect-pdf", "watermark-pdf"],
+  },
+  {
     id: "pptx-to-pdf",
     name: "PowerPoint to PDF",
     description:
@@ -1186,12 +1223,12 @@ export const tools: ToolDefinition[] = [
     id: "compress-image",
     name: "Compress Image",
     description:
-      "Shrink JPG, PNG and WebP files with a quality slider and optional dimension cap — and see the savings before downloading.",
+      "Shrink JPG, PNG and WebP files with a quality slider, optional dimension cap — or compress straight to a target size like 100 KB.",
     category: "image",
     processingMode: "browser",
     status: "live",
     featured: true,
-    keywords: ["reduce image size", "image optimizer", "smaller jpg", "compress png", "compress webp"],
+    keywords: ["reduce image size", "image optimizer", "smaller jpg", "compress png", "compress webp", "compress image to 100kb", "compress image to 200kb", "compress jpeg to 100kb", "resize image to specific size", "compress to target size"],
     icon: "shrink",
     acceptedFormats: ["JPG", "PNG", "WebP"],
     maxFiles: 20,
@@ -1215,6 +1252,10 @@ export const tools: ToolDefinition[] = [
       {
         q: "Is compression done on a server?",
         a: "No. Everything happens in your browser — the images are never uploaded.",
+      },
+      {
+        q: "How does “target file size” work?",
+        a: "The tool binary-searches encoder quality — and, when needed, gently scales dimensions — until the file fits your target, always keeping the best-looking version that fits. Impossible targets come back as the closest possible file, clearly labeled.",
       },
     ],
     relatedToolIds: ["resize-image", "webp-converter", "png-to-jpg", "crop-image"],

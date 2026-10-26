@@ -54,6 +54,7 @@ export const toolLoaders: Record<string, () => Promise<{ default: ComponentType 
   "audio-trimmer": () => import("./media/audio-trimmer"),
   "compress-pdf": () => import("./pdf/compress-pdf"),
   "word-to-pdf": () => import("./pdf/word-to-pdf"),
+  "edit-pdf": () => import("./pdf/edit-pdf"),
   "excel-to-pdf": () => import("./pdf/excel-to-pdf"),
   "pdf-to-word": () => import("./pdf/pdf-to-word"),
   // Developer
