@@ -14,6 +14,9 @@ export default [
       // changes, or load lazy engines inside effects. The default "error"
       // level flags all of these; they are intentional here.
       "react-hooks/set-state-in-effect": "warn",
+      // The editors paint committed overlays from refs inside effects —
+      // intentional imperative canvas syncing the compiler can't model.
+      "react-hooks/immutability": "warn",
     },
   },
 ];

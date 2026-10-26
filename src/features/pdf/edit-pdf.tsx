@@ -10,10 +10,9 @@ import { JobError, JobProgress, ToolWidget } from "@/components/tools/job-ui";
 import { Results } from "@/components/tools/results";
 import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
-import { Field, RangeInput, Select } from "@/components/ui/form";
+import { Field, RangeInput } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
-  pctToPt,
   serializeOverlays,
   simplifyInk,
   type EditOverlay,
