@@ -4,6 +4,8 @@
  * zoom-independent and baking converts to PDF points deterministically.
  */
 
+import type { PdfTextItem } from "./pdf-text-items";
+
 export type EditTool = "text" | "ink" | "highlight" | "whiteout" | "image";
 
 export interface BaseOverlay {
@@ -34,6 +36,8 @@ export interface RectOverlay extends BaseOverlay {
   type: "highlight" | "whiteout";
   widthPct: number;
   heightPct: number;
+  /** Fill for shape boxes (whiteout); defaults to white. */
+  fill?: string;
 }
 
 export interface ImageOverlay extends BaseOverlay {
@@ -44,11 +48,50 @@ export interface ImageOverlay extends BaseOverlay {
   dataUrl: string;
 }
 
+/** Replacement font for an existing-text edit ("original" = closest match). */
+export type FontChoice = "original" | "helvetica" | "times" | "courier";
+
+/**
+ * An edit of EXISTING page text: the original run is covered with a white
+ * box and the replacement is drawn at the captured baseline. Geometry lives
+ * twice on purpose — % for the zoom-independent DOM editor, user-space points
+ * (captured from pdf.js) so baking lands exactly on the original glyphs.
+ */
+export interface EditTextOverlay extends BaseOverlay {
+  type: "edit";
+  /** Display box (% of page, top-left origin) around the replaced run. */
+  widthPct: number;
+  heightPct: number;
+  /** Baseline y as % (top-left origin) — the live preview paints from here. */
+  baselinePct: number;
+  /** Original run geometry in PDF user space (points, y up). */
+  userX: number;
+  userY: number;
+  userWidth: number;
+  /** Ascender height above the baseline, in points (positive). */
+  userAscent: number;
+  /** Descender depth below the baseline, in points (positive). */
+  userDescent: number;
+  /** Replacement text + typography. */
+  text: string;
+  sizePt: number;
+  fontFamily: FontChoice;
+  bold: boolean;
+  italic: boolean;
+  color: string;
+  /** Font name detected in the document, shown in the editor sheet. */
+  fontLabel: string | null;
+  /** The run being replaced — "no changes" checks compare against these. */
+  originalText: string;
+  originalSizePt: number;
+}
+
 export type EditOverlay =
   | TextOverlay
   | InkOverlay
   | RectOverlay
-  | ImageOverlay;
+  | ImageOverlay
+  | EditTextOverlay;
 
 /** A page's PDF dimensions in points. */
 export interface PageSize {
@@ -74,6 +117,66 @@ export function ptToPct(x: number, y: number, page: PageSize): { xPct: number; y
     xPct: (x / page.width) * 100,
     yPct: ((page.height - y) / page.height) * 100,
   };
+}
+
+/**
+ * Build an existing-text edit overlay from a detected run (see
+ * pdf-text-items.ts). The display box wraps the run's ascent→descent band.
+ */
+export function editTextOverlayFromItem(
+  item: Pick<PdfTextItem, "str" | "x" | "y" | "width" | "fontSize" | "ascent" | "descent" | "fontLabel">,
+  pageIndex: number,
+  pageSize: PageSize,
+): EditTextOverlay {
+  const topPt = item.y + item.ascent * item.fontSize;
+  const bottomPt = item.y + item.descent * item.fontSize;
+  return {
+    type: "edit",
+    page: pageIndex,
+    xPct: (item.x / pageSize.width) * 100,
+    yPct: ptToPct(item.x, topPt, pageSize).yPct,
+    widthPct: (item.width / pageSize.width) * 100,
+    heightPct: ((topPt - bottomPt) / pageSize.height) * 100,
+    baselinePct: ptToPct(item.x, item.y, pageSize).yPct,
+    userX: item.x,
+    userY: item.y,
+    userWidth: item.width,
+    userAscent: item.ascent * item.fontSize,
+    userDescent: -item.descent * item.fontSize,
+    text: item.str,
+    sizePt: item.fontSize,
+    fontFamily: "original",
+    bold: false,
+    italic: false,
+    color: "#000000",
+    fontLabel: item.fontLabel,
+    originalText: item.str,
+    originalSizePt: item.fontSize,
+  };
+}
+
+/**
+ * Whether an existing-text edit actually changes anything — untouched edits
+ * are discarded on Done instead of needlessly redrawing the page.
+ */
+export function editOverlayChanged(overlay: {
+  text: string;
+  originalText: string;
+  sizePt: number;
+  originalSizePt: number;
+  fontFamily: FontChoice;
+  bold: boolean;
+  italic: boolean;
+  color: string;
+}): boolean {
+  return (
+    overlay.text !== overlay.originalText ||
+    overlay.sizePt !== overlay.originalSizePt ||
+    overlay.fontFamily !== "original" ||
+    overlay.bold ||
+    overlay.italic ||
+    overlay.color.toLowerCase() !== "#000000"
+  );
 }
 
 /** hex like #rrggbb → pdf-lib rgb triple (0–1). */

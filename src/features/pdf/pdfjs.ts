@@ -30,3 +30,34 @@ export async function loadPdfjs(): Promise<PdfjsModule> {
     { getDocument },
   ) as unknown as PdfjsModule;
 }
+
+/**
+ * Best-effort real font name (e.g. "SourceSansPro-Regular") for a text
+ * content item. Fonts resolve into pdf.js's common-object store during
+ * render; that API is internal, so every access is guarded and callers get
+ * the generic CSS family when it isn't reachable.
+ */
+export function detectFontLabel(
+  page: unknown,
+  loadedName: string,
+  fallbackFamily?: string,
+): string | null {
+  try {
+    const commonObjs = (
+      page as { commonObjs?: { has?: (id: string) => boolean; get?: (id: string) => unknown } }
+    ).commonObjs;
+    if (commonObjs?.has?.(loadedName)) {
+      const font = commonObjs.get!(loadedName) as
+        | { name?: unknown; data?: { name?: unknown } }
+        | undefined;
+      const name = font?.name ?? font?.data?.name;
+      if (typeof name === "string" && name.length > 0) {
+        // Strip the six-letter subset prefix ("ABCDEF+FontName").
+        return name.replace(/^[A-Z]{6}\+/, "");
+      }
+    }
+  } catch {
+    // Internal API shape varies across pdf.js builds — fall through.
+  }
+  return fallbackFamily ?? null;
+}

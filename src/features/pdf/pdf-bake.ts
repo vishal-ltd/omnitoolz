@@ -2,13 +2,72 @@
  * Bakes EditOverlays into a PDF with pdf-lib. Coordinate math comes from
  * lib/pdf-edit.ts; every overlay type maps to one draw primitive.
  */
-import { hexToRgb, pctToPt, simplifyInk, type EditOverlay } from "@/lib/pdf-edit";
+import { hexToRgb, pctToPt, simplifyInk, type EditOverlay, type EditTextOverlay } from "@/lib/pdf-edit";
 import { readFileBytes } from "./pdf-core";
 import { bytesToBlob, suffixedName, type ResultFile } from "@/lib/utils";
+import type { PDFFont, PDFPage } from "pdf-lib";
 
 interface PageBox {
   width: number;
   height: number;
+}
+
+/** Standard 14 variants an existing-text replacement can draw with. */
+function fontVariants(
+  StandardFonts: typeof import("pdf-lib").StandardFonts,
+): Record<EditTextOverlay["fontFamily"], Record<string, import("pdf-lib").StandardFonts>> {
+  return {
+    original: {
+      r: StandardFonts.Helvetica,
+      b: StandardFonts.HelveticaBold,
+      i: StandardFonts.HelveticaOblique,
+      bi: StandardFonts.HelveticaBoldOblique,
+    },
+    helvetica: {
+      r: StandardFonts.Helvetica,
+      b: StandardFonts.HelveticaBold,
+      i: StandardFonts.HelveticaOblique,
+      bi: StandardFonts.HelveticaBoldOblique,
+    },
+    times: {
+      r: StandardFonts.TimesRoman,
+      b: StandardFonts.TimesRomanBold,
+      i: StandardFonts.TimesRomanItalic,
+      bi: StandardFonts.TimesRomanBoldItalic,
+    },
+    courier: {
+      r: StandardFonts.Courier,
+      b: StandardFonts.CourierBold,
+      i: StandardFonts.CourierOblique,
+      bi: StandardFonts.CourierBoldOblique,
+    },
+  };
+}
+
+async function standardFontFor(
+  doc: import("pdf-lib").PDFDocument,
+  overlay: EditTextOverlay,
+  cache: Map<string, PDFFont>,
+  variants: ReturnType<typeof fontVariants>,
+): Promise<PDFFont> {
+  const family = variants[overlay.fontFamily] ?? variants.original;
+  const key = `${overlay.bold ? "b" : "r"}${overlay.italic ? "i" : ""}`;
+  const standardFont = family[key] ?? family.r;
+  let font = cache.get(standardFont);
+  if (!font) {
+    font = await doc.embedFont(standardFont);
+    cache.set(standardFont, font);
+  }
+  return font;
+}
+
+/** drawText, tolerating characters outside the standard fonts' WinAnsi set. */
+function drawTextSafe(page: PDFPage, text: string, options: Parameters<PDFPage["drawText"]>[1]) {
+  try {
+    page.drawText(text, options);
+  } catch {
+    page.drawText(text.replace(/[^\u0000-\u00ff]/g, "?"), options);
+  }
 }
 
 /** Wrap text within a box width using the real font metrics. */
@@ -52,6 +111,7 @@ export async function bakeOverlays(
   });
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontCache = new Map<string, PDFFont>();
   const imageCache = new Map<string, Awaited<ReturnType<typeof doc.embedPng>>>();
   const pageBoxes: PageBox[] = doc.getPages().map((page) => {
     const { width, height } = page.getSize();
@@ -73,7 +133,7 @@ export async function bakeOverlays(
       // Text draws upward from its baseline; the click point is the box TOP.
       let cursorY = y - overlay.fontSizePt;
       for (const line of lines) {
-        page.drawText(line, {
+        drawTextSafe(page, line, {
           x,
           y: cursorY,
           size: overlay.fontSizePt,
@@ -82,6 +142,25 @@ export async function bakeOverlays(
         });
         cursorY -= lineHeight;
       }
+    } else if (overlay.type === "edit") {
+      // Replace existing text: cover the captured run, then draw the
+      // replacement on the original baseline in the chosen typography.
+      page.drawRectangle({
+        x: overlay.userX - 1,
+        y: overlay.userY - overlay.userDescent - 1,
+        width: overlay.userWidth + 2,
+        height: overlay.userAscent + overlay.userDescent + 2,
+        color: rgb(1, 1, 1),
+      });
+      const font = await standardFontFor(doc, overlay, fontCache, fontVariants(StandardFonts));
+      const color = hexToRgb(overlay.color);
+      drawTextSafe(page, overlay.text, {
+        x: overlay.userX,
+        y: overlay.userY,
+        size: overlay.sizePt,
+        font,
+        color: rgb(color.r, color.g, color.b),
+      });
     } else if (overlay.type === "highlight") {
       const start = pctToPt(overlay.xPct, overlay.yPct, box);
       page.drawRectangle({
@@ -94,12 +173,13 @@ export async function bakeOverlays(
       });
     } else if (overlay.type === "whiteout") {
       const start = pctToPt(overlay.xPct, overlay.yPct, box);
+      const fill = overlay.fill ? hexToRgb(overlay.fill) : { r: 1, g: 1, b: 1 };
       page.drawRectangle({
         x: start.x,
         y: start.y - (overlay.heightPct / 100) * box.height,
         width: (overlay.widthPct / 100) * box.width,
         height: (overlay.heightPct / 100) * box.height,
-        color: rgb(1, 1, 1),
+        color: rgb(fill.r, fill.g, fill.b),
       });
     } else if (overlay.type === "ink") {
       const points = simplifyInk(overlay.points, 0.2);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   deserializeOverlays,
+  editOverlayChanged,
+  editTextOverlayFromItem,
   hexToRgb,
   pctToPt,
   ptToPct,
@@ -88,6 +90,12 @@ describe("serialize / deserialize", () => {
       { type: "highlight", page: 1, xPct: 5, yPct: 5, widthPct: 30, heightPct: 4 },
       { type: "whiteout", page: 2, xPct: 5, yPct: 5, widthPct: 30, heightPct: 4 },
       { type: "image", page: 2, xPct: 5, yPct: 5, widthPct: 20, heightPct: 10, dataUrl: "data:image/png;base64,AAA" },
+      {
+        type: "edit", page: 0, xPct: 10, yPct: 20, widthPct: 30, heightPct: 2, baselinePct: 21.5,
+        userX: 60, userY: 780, userWidth: 180, userAscent: 9, userDescent: 2.4,
+        text: "Replaced", sizePt: 12, fontFamily: "original", bold: false, italic: false,
+        color: "#000000", fontLabel: "SourceSansPro-Regular", originalText: "Original run", originalSizePt: 12,
+      },
     ];
     const restored = deserializeOverlays(serializeOverlays(overlays));
     expect(restored).toEqual(overlays);
@@ -95,5 +103,59 @@ describe("serialize / deserialize", () => {
 
   it("rejects non-array data", () => {
     expect(() => deserializeOverlays('{"nope":1}')).toThrow(/array/);
+  });
+});
+
+describe("editTextOverlayFromItem", () => {
+  it("derives display % geometry and keeps user-space geometry exact", () => {
+    const overlay = editTextOverlayFromItem(
+      { str: "Hello", x: 70, y: 800, width: 200, fontSize: 12, ascent: 0.8, descent: -0.2, fontLabel: "Helvetica" },
+      2,
+      A4,
+    );
+    expect(overlay.page).toBe(2);
+    expect(overlay.xPct).toBeCloseTo((70 / A4.width) * 100, 5);
+    // Top of box = baseline + ascent.
+    const topPt = 800 + 0.8 * 12;
+    expect(overlay.yPct).toBeCloseTo(ptToPct(70, topPt, A4).yPct, 5);
+    expect(overlay.baselinePct).toBeCloseTo(ptToPct(70, 800, A4).yPct, 5);
+    expect(overlay.heightPct).toBeCloseTo(((0.8 + 0.2) * 12 / A4.height) * 100, 5);
+    expect(overlay.userX).toBe(70);
+    expect(overlay.userY).toBe(800);
+    expect(overlay.userAscent).toBeCloseTo(9.6, 5);
+    expect(overlay.userDescent).toBeCloseTo(2.4, 5);
+    expect(overlay.fontLabel).toBe("Helvetica");
+    expect(overlay.originalText).toBe("Hello");
+    expect(overlay.fontFamily).toBe("original");
+  });
+});
+
+describe("editOverlayChanged", () => {
+  const untouched = {
+    text: "Same",
+    originalText: "Same",
+    sizePt: 12,
+    originalSizePt: 12,
+    fontFamily: "original" as const,
+    bold: false,
+    italic: false,
+    color: "#000000",
+  };
+
+  it("is false when nothing was touched", () => {
+    expect(editOverlayChanged(untouched)).toBe(false);
+  });
+
+  it("detects text, size, font, style and color changes", () => {
+    expect(editOverlayChanged({ ...untouched, text: "Different" })).toBe(true);
+    expect(editOverlayChanged({ ...untouched, sizePt: 13 })).toBe(true);
+    expect(editOverlayChanged({ ...untouched, fontFamily: "times" })).toBe(true);
+    expect(editOverlayChanged({ ...untouched, bold: true })).toBe(true);
+    expect(editOverlayChanged({ ...untouched, italic: true })).toBe(true);
+    expect(editOverlayChanged({ ...untouched, color: "#d61a3c" })).toBe(true);
+  });
+
+  it("treats uppercase hex black as unchanged", () => {
+    expect(editOverlayChanged({ ...untouched, color: "#000000" })).toBe(false);
   });
 });
