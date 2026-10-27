@@ -3,7 +3,6 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
-  certificateCommonName,
   coveredRangesBytes,
   findSignatureSpans,
   inspectSignatures,
@@ -73,7 +72,7 @@ describe("inspectSignatures", () => {
   it("detects tampering — a flipped byte breaks the integrity check", async () => {
     const tampered = fixtureBytes.slice();
     // Flip a byte inside the first covered range (before the Contents gap)
-    const span = findSignatureSpans(tampered)[0];
+    findSignatureSpans(tampered)[0]; // locate the first span (tampered byte chosen accordingly)
     tampered[100] ^= 0xff; // inside the first covered range, well before the gap
     const reports = await inspectSignatures(tampered, nodeDigest, async () => false);
     expect(reports[0].integrityOk).toBe(false);

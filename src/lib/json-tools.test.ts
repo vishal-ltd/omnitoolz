@@ -33,6 +33,22 @@ describe("locateJsonError", () => {
     const location = locateJsonError("boom", "");
     expect(location.line).toBe(1);
   });
+
+  it("extracts line/column from standard V8 error message", () => {
+    try {
+      JSON.parse('{"a":1,');
+    } catch (error) {
+      const location = locateJsonError(error, '{"a":1,');
+      expect(location.line).toBe(1);
+      expect(location.column).toBeGreaterThan(0);
+    }
+  });
+
+  it("handles error message without position info", () => {
+    const location = locateJsonError(new Error("invalid json"), "");
+    expect(location.line).toBe(1);
+    expect(location.column).toBe(1);
+  });
 });
 
 describe("countJsonNodes", () => {

@@ -171,16 +171,7 @@ export function parseCms(cms: Uint8Array): CmsInfo {
   if (!signerInfos) throw new Error("CMS: no signerInfos.");
   const signerInfo = readDerNode(cms, signerInfos.contentStart);
   const siChildren = derChildren(cms, signerInfo);
-  if (process.env.SIG_DEBUG) {
-  console.error("SIG_DEBUG si tags:", siChildren.map((c) => `0x${c.tag.toString(16)}@${c.contentStart}+${c.contentEnd - c.contentStart}`).join(" "));
-  for (const child of siChildren) {
-    if (child.tag === 0xa0 || child.tag === 0x80) {
-      const attrs = derChildren(cms, child);
-      console.error("SIG_DEBUG attrs node len:", child.contentEnd - child.contentStart, "| children:", attrs.length, "| first kid tag:", attrs[0] ? "0x" + attrs[0].tag.toString(16) : "none");
-    }
-  }
-}
-
+  
   let digestAlgorithmOid: string | null = null;
   let signedAttrsSet: Uint8Array | null = null;
   let signature = new Uint8Array(0);

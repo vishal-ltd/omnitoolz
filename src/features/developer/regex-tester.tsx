@@ -24,13 +24,16 @@ export default function RegexTesterTool() {
     [caseInsensitive, multiline, dotAll, flags],
   );
 
-  const { matches, error } = useMemo(() => {
+  const SAFE_TEST_TEXT_MAX = 20_000;
+
+const { matches, error } = useMemo(() => {
     if (!pattern || !testText) return { matches: [] as MatchInfo[], error: null as string | null };
+    const safeText = testText.length > SAFE_TEST_TEXT_MAX ? testText.slice(0, SAFE_TEST_TEXT_MAX) : testText;
     try {
       const regex = new RegExp(pattern, effectiveFlags);
       const found: MatchInfo[] = [];
       if (regex.global) {
-        for (const match of testText.matchAll(regex)) {
+        for (const match of safeText.matchAll(regex)) {
           found.push({
             text: match[0],
             index: match.index ?? 0,
@@ -39,7 +42,7 @@ export default function RegexTesterTool() {
           if (found.length > 500) break;
         }
       } else {
-        const match = regex.exec(testText);
+        const match = regex.exec(safeText);
         if (match) {
           found.push({
             text: match[0],
