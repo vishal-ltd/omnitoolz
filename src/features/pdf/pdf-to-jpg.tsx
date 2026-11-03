@@ -11,8 +11,8 @@ import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
 import { Field, RangeInput, Select, TextInput } from "@/components/ui/form";
 import { parsePageRanges } from "@/lib/page-ranges";
-import { bytesToBlob, baseName, type ResultFile } from "@/lib/utils";
-import { loadPdf, outputBaseName } from "./pdf-core";
+import { baseName, type ResultFile } from "@/lib/utils";
+import { outputBaseName } from "./pdf-core";
 import { loadPdfjs } from "./pdfjs";
 
 export default function PdfToJpgTool() {

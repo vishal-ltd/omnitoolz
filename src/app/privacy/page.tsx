@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -136,8 +137,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-ink">11. Contact</h2>
           <p>
-            Privacy questions or a security report? Reach out through the contact address that
-            will be published on this page alongside the final domain launch.
+             Privacy questions can be raised through our <Link className="font-medium text-brand underline" href="/contact">contact page</Link>.
+             Security vulnerabilities should be reported through the private process on our <Link className="font-medium text-brand underline" href="/security">security page</Link>.
           </p>
         </section>
       </div>

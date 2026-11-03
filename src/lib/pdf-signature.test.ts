@@ -1,5 +1,4 @@
 import { createHash, createVerify } from "node:crypto";
-import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
@@ -11,14 +10,12 @@ import {
 let fixtureBytes: Uint8Array;
 
 beforeAll(() => {
-  // Generate the fixture via the dev script (deterministic structure, fresh key).
-  execSync("node scripts/make-signed-fixture.mjs", { cwd: process.cwd() });
-  const raw = readFileSync(".signed-fixture.pdf");
+  const raw = readFileSync("src/lib/fixtures/signed-fixture.pdf");
   fixtureBytes = new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength);
 });
 
-const nodeDigest = async (data: Uint8Array) =>
-  new Uint8Array(createHash("sha256").update(data).digest());
+const nodeDigest = async (data: Uint8Array, algorithm: string) =>
+  new Uint8Array(createHash(algorithm.toLowerCase().replace("-", "") as "sha256" | "sha384" | "sha512").update(data).digest());
 
 describe("findSignatureSpans", () => {
   it("finds the ByteRange + Contents pair in the fixture", () => {
@@ -72,7 +69,7 @@ describe("inspectSignatures", () => {
   it("detects tampering — a flipped byte breaks the integrity check", async () => {
     const tampered = fixtureBytes.slice();
     // Flip a byte inside the first covered range (before the Contents gap)
-    findSignatureSpans(tampered)[0]; // locate the first span (tampered byte chosen accordingly)
+    expect(findSignatureSpans(tampered)).toHaveLength(1);
     tampered[100] ^= 0xff; // inside the first covered range, well before the gap
     const reports = await inspectSignatures(tampered, nodeDigest, async () => false);
     expect(reports[0].integrityOk).toBe(false);

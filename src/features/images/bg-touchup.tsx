@@ -15,13 +15,11 @@ import { cn } from "@/lib/utils";
 export function BgTouchUp({
   originalFile,
   cutoutBlob,
-  fileName,
   onDone,
   onCancel,
 }: {
   originalFile: File;
   cutoutBlob: Blob;
-  fileName: string;
   onDone: (blob: Blob) => void;
   onCancel: () => void;
 }) {
@@ -31,6 +29,7 @@ export function BgTouchUp({
   const viewRef = useRef<HTMLCanvasElement>(null);
   const cutoutRef = useRef<HTMLCanvasElement | null>(null);
   const originalRef = useRef<HTMLCanvasElement | null>(null);
+  const showOriginalRef = useRef(showOriginal);
   const painting = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
 
@@ -42,11 +41,16 @@ export function BgTouchUp({
     view.height = cutout.height;
     const context = view.getContext("2d")!;
     context.clearRect(0, 0, view.width, view.height);
-    if (showOriginal && originalRef.current) {
+    if (showOriginalRef.current && originalRef.current) {
       context.drawImage(originalRef.current, 0, 0);
     }
     context.drawImage(cutout, 0, 0);
-  }, [showOriginal]);
+  }, []);
+
+  useEffect(() => {
+    showOriginalRef.current = showOriginal;
+    repaint();
+  }, [showOriginal, repaint]);
 
   // Load the original + cutout images once; repaint as the peek toggle changes.
   useEffect(() => {
@@ -73,15 +77,7 @@ export function BgTouchUp({
     return () => {
       cancelled = true;
     };
-  }, [originalFile, cutoutBlob]);
-
-  // Re-composite when the peek-original toggle changes.
-  useEffect(() => {
-    repaint();
-  }, [repaint]);
-
-
-
+  }, [originalFile, cutoutBlob, repaint]);
 
   // Re-composite when the "peek original" toggle changes.
   useEffect(() => {

@@ -1,23 +1,23 @@
-import coreWebVitals from "eslint-config-next/core-web-vitals";
-import nextTypescript from "eslint-config-next/typescript";
+import { FlatCompat } from "@eslint/eslintrc";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-export default [
+const compat = new FlatCompat({
+  baseDirectory: path.dirname(fileURLToPath(import.meta.url)),
+});
+
+const config = [
   {
-    ignores: ["node_modules/**", ".next/**", "out/**", "public/**"],
+    ignores: ["node_modules/**", ".next/**", "out/**", "public/**", "next-env.d.ts"],
   },
-  ...coreWebVitals,
-  ...nextTypescript,
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      // Many tools legitimately initialize state from external stores
-      // (localStorage preferences), reset derived state when the picked file
-      // changes, or load lazy engines inside effects. The default "error"
-      // level flags all of these; they are intentional here.
-      "react-hooks/set-state-in-effect": "warn",
-      // The editors paint committed overlays from refs inside effects —
-      // intentional imperative canvas syncing the compiler can't model.
-      "react-hooks/immutability": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
+      // The Next 15 React Hooks plugin does not expose the newer React 19
+      // compiler rules. Effects that synchronize browser APIs remain covered
+      // by the standard hook dependency rules below.
     },
   },
 ];
+
+export default config;

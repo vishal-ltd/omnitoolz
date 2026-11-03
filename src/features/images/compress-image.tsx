@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Field, RangeInput, SegmentedControl, Select, TextInput } from "@/components/ui/form";
 import { baseName, formatBytes, type ResultFile } from "@/lib/utils";
 import {
-  findQualityForTarget,
   findScaleForTarget,
   parseTargetSize,
 } from "@/lib/target-size";

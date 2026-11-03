@@ -8,7 +8,7 @@ processing, no accounts and no tracking.
 **▸ Try it live: [omnitoolz.vercel.app](https://omnitoolz.vercel.app)**
 
 Built with Next.js 15, React 19, TypeScript and Tailwind CSS v4, in a
-16-bit pixel-art UI. 62 tools · 154 unit tests · 79 statically generated
+16-bit pixel-art UI. 63 tools · 158 unit tests · 82 statically generated
 pages · first-load JS ~104 kB.
 
 ## Quick start
@@ -21,9 +21,9 @@ npm run dev        # http://localhost:3000
 Other scripts:
 
 ```bash
-npm run build      # production build (79 static pages)
+npm run build      # production build (82 static pages)
 npm run start      # serve the production build
-npm test           # vitest unit tests (154)
+npm test           # vitest unit tests (158)
 npm run lint       # eslint (0 errors; see the note on react-hooks below)
 ```
 
@@ -40,7 +40,7 @@ override. There are no other environment variables, no database, no secrets.
 
 | Category | Tools |
 |---|---|
-| PDF (30) | Merge, Split, Rotate, Extract/Reorder/Delete/Organize Pages, PDF ⇄ JPG, JPG to PDF, Add Page Numbers, Protect (AES-256), Unlock, Watermark, Header & Footer, Extract Text, Document Info, Clean (metadata/comments), Flatten Forms, Repair, Crop, Remove Blank Pages, Compare, Extract Images, Read (viewer + hand-off), Invoice Generator, Sign, Camera Scan, Compress (qpdf), Word to PDF, Excel to PDF, PDF to Word |
+| PDF (33) | Merge, Split, Rotate, Extract/Reorder/Delete/Organize Pages, PDF ⇄ JPG, JPG to PDF, Add Page Numbers, Protect (AES-256), Unlock, Watermark, Header & Footer, Extract Text, Document Info, Clean (metadata/comments), Flatten Forms, Repair, Crop, Remove Blank Pages, Compare, Extract Images, Read (viewer + hand-off), Invoice Generator, Sign, Camera Scan, Edit, Verify Signature, PowerPoint to PDF, Word to PDF, Excel to PDF, PDF to Word, Compress (qpdf) |
 | Images (10) | Compress (quality or target-size mode), Resize, Crop, JPG ⇄ PNG, WebP Converter, Watermark, Background Remover (on-device AI), HEIC to JPG, Favicon Generator |
 | Text (4) | Word Counter, Case Converter, Diff Checker, Image to Text (OCR) |
 | Developer (10) | JSON Formatter, QR Generator, JWT Decoder, Base64, UUID, Hash, Timestamp, Color Toolkit, Regex Tester, QR Scanner |
@@ -118,7 +118,7 @@ picked file changes, and loading lazy engines — documented in
 
 ## Testing
 
-`npm test` — 154 unit tests covering page-range parsing, split modes,
+`npm test` — 158 unit tests covering page-range parsing, split modes,
 password generation/auditing, case conversion, JSON tools, search ranking,
 byte formatting, invoice math, page pixel analysis, ICO packing, WAV
 encoding, base32/TOTP (cross-checked against node:crypto), line diff, color

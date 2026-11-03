@@ -12,15 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox, Field, RangeInput } from "@/components/ui/form";
 import { baseName, bytesToBlob, type ResultFile } from "@/lib/utils";
 import { PAGE, sanitize } from "./convert-core";
-
-type Cell = string | number | boolean | null;
+import { readSpreadsheet, type Cell } from "./spreadsheet";
 
 /** Landscape pages fit spreadsheets far better than portrait. */
 const LANDSCAPE = { width: PAGE.height, height: PAGE.width, margin: PAGE.margin };
 const BASE_FONT = 9;
 
 export default function ExcelToPdfTool() {
-  const queue = useFileQueue({ accept: ["xlsx", "xls", "csv"], multiple: true, maxFiles: 5, maxSizeMb: 30 });
+  const queue = useFileQueue({ accept: ["xlsx", "csv"], multiple: true, maxFiles: 5, maxSizeMb: 30 });
   const { state, start, reset } = useJob();
   const [gridlines, setGridlines] = useState(true);
   const [scalePct, setScalePct] = useState(100);
@@ -32,29 +31,24 @@ export default function ExcelToPdfTool() {
     const sources = queue.files;
     setSheetSummary(null);
     await start(async ({ report }) => {
-      const XLSX = await import("xlsx");
-      const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+       const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
       const results: ResultFile[] = [];
 
       for (const [fileIndex, source] of sources.entries()) {
         report(`Reading “${source.name}”…`, (fileIndex + 0.1) / sources.length);
-        const workbook = XLSX.read(await source.arrayBuffer(), { type: "array" });
+        const sheets = await readSpreadsheet(source);
         const doc = await PDFDocument.create();
         const regular = await doc.embedFont(StandardFonts.Courier);
         const bold = await doc.embedFont(StandardFonts.CourierBold);
         const contentWidth = LANDSCAPE.width - LANDSCAPE.margin * 2;
         let y = 0;
 
-        for (const [sheetIndex, sheetName] of workbook.SheetNames.entries()) {
-          const sheet = workbook.Sheets[sheetName];
-          const rows = (XLSX.utils.sheet_to_json(sheet, {
-            header: 1,
-            raw: false,
-            defval: "",
-          }) as Cell[][]).map((row) => row.map((cell) => sanitize(String(cell ?? ""))));
+        for (const [sheetIndex, sheet] of sheets.entries()) {
+          const sheetName = sheet.name;
+          const rows = sheet.rows.map((row) => row.map((cell: Cell) => sanitize(String(cell ?? ""))));
           if (rows.length === 0) continue;
 
-          report(`Laying out “${sheetName}”…`, (fileIndex + (sheetIndex + 1) / workbook.SheetNames.length * 0.85) / sources.length);
+          report(`Laying out “${sheetName}”…`, (fileIndex + (sheetIndex + 1) / sheets.length * 0.85) / sources.length);
           const columnCount = Math.max(...rows.map((row) => row.length), 1);
           // Fixed-mono layout: every column equal width, scaled to fit.
           const columnWidth = contentWidth / columnCount;
@@ -121,7 +115,7 @@ export default function ExcelToPdfTool() {
 
         const bytes = await doc.save();
         results.push({ name: `${baseName(source.name)}.pdf`, blob: bytesToBlob(bytes, "application/pdf") });
-        setSheetSummary(`${workbook.SheetNames.length} sheet(s) rendered`);
+        setSheetSummary(`${sheets.length} sheet(s) rendered`);
       }
       return results;
     }, "Reading the spreadsheet…");
@@ -145,7 +139,7 @@ export default function ExcelToPdfTool() {
         <JobProgress state={state} />
       ) : (
         <div className="space-y-4">
-          <FileDropZone accept={["xlsx", "xls", "csv"]} multiple maxFiles={5} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} hint="xlsx · xls · csv" />
+           <FileDropZone accept={["xlsx", "csv"]} multiple maxFiles={5} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} hint="xlsx · csv" />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
           {queue.files.length > 0 && (

@@ -24,6 +24,8 @@ export function SearchDialog() {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const hits = searchTools(query, 8);
 
@@ -35,14 +37,18 @@ export function SearchDialog() {
 
   useEffect(() => {
     function onOpen() {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
       setOpen(true);
     }
     function onKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen((prev) => {
+          if (!prev) previousFocusRef.current = document.activeElement as HTMLElement | null;
+          return !prev;
+        });
       }
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape" && open) close();
     }
     window.addEventListener(OPEN_EVENT, onOpen);
     window.addEventListener("keydown", onKeyDown);
@@ -50,15 +56,16 @@ export function SearchDialog() {
       window.removeEventListener(OPEN_EVENT, onOpen);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [close, open]);
 
   useEffect(() => {
     if (open) {
       requestAnimationFrame(() => inputRef.current?.focus());
+    } else {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
     }
   }, [open]);
-
-  useEffect(() => setActiveIndex(0), [query]);
 
   function go(route: string) {
     close();
@@ -77,6 +84,25 @@ export function SearchDialog() {
         role="dialog"
         aria-modal="true"
         aria-label="Search tools"
+        ref={dialogRef}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const focusable = Array.from(
+            dialogRef.current?.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ) ?? [],
+          );
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        }}
         onClick={(event) => event.stopPropagation()}
         className="w-full max-w-xl animate-pixel-in overflow-hidden border-[3px] border-edge bg-card shadow-[8px_8px_0_0_var(--color-shadow)]"
       >
@@ -86,7 +112,10 @@ export function SearchDialog() {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+             onChange={(event) => {
+               setQuery(event.target.value);
+               setActiveIndex(0);
+             }}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
                 event.preventDefault();
@@ -102,6 +131,8 @@ export function SearchDialog() {
             placeholder="Search tools — try “merge”, “compress”, “qr”…"
             className="h-14 w-full bg-transparent font-body text-xl text-ink outline-none placeholder:text-ink-soft/70"
             aria-label="Search tools"
+            aria-controls="search-results"
+            aria-activedescendant={hits[activeIndex] ? `search-result-${hits[activeIndex].id}` : undefined}
             autoComplete="off"
           />
           <kbd className="hidden shrink-0 border-2 border-line-strong bg-card px-2 py-1 font-display text-[8px] text-ink-soft sm:block">
@@ -119,12 +150,13 @@ export function SearchDialog() {
               No tools match “{query}”. Try “pdf”, “image” or “convert”.
             </p>
           ) : (
-            <ul role="listbox">
+            <ul id="search-results" role="listbox" aria-label="Tool search results">
               {hits.map((hit, index) => (
                 <li key={hit.id}>
                   <button
                     type="button"
                     role="option"
+                    id={`search-result-${hit.id}`}
                     aria-selected={index === activeIndex}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => go(hit.route)}

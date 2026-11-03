@@ -9,7 +9,11 @@ export interface FileQueueOptions {
   multiple: boolean;
   maxFiles: number;
   maxSizeMb: number;
+  /** Optional aggregate limit for one in-memory processing batch. */
+  maxTotalSizeMb?: number;
 }
+
+export const DEFAULT_MAX_TOTAL_SIZE_MB = 500;
 
 export interface FileQueue {
   files: File[];
@@ -30,6 +34,7 @@ export function validateFiles(
   incoming: File[],
   existingCount: number,
   options: FileQueueOptions,
+  existingSizeBytes = 0,
 ): { accepted: File[]; errors: string[] } {
   const errors: string[] = [];
   const accepted: File[] = [];
@@ -59,11 +64,33 @@ export function validateFiles(
     errors.push(
       options.multiple
         ? `Only ${options.maxFiles} files can be processed at once — the first ${room} ${room === 1 ? "was" : "were"} kept.`
-        : `This tool accepts a single file — only “${accepted[0]?.name}” was kept.`,
+        : room === 0
+          ? "This tool already has a file selected — remove it before choosing another."
+          : `This tool accepts a single file — only “${accepted[0]?.name}” was kept.`,
     );
   }
 
-  return { accepted: accepted.slice(0, room), errors };
+  const countLimited = accepted.slice(0, room);
+  const totalLimitMb = options.maxTotalSizeMb ?? Math.min(
+    DEFAULT_MAX_TOTAL_SIZE_MB,
+    options.maxSizeMb * Math.max(1, options.maxFiles),
+  );
+  const totalLimitBytes = totalLimitMb * 1024 * 1024;
+  const totalRoomBytes = Math.max(0, totalLimitBytes - existingSizeBytes);
+  const totalAccepted: File[] = [];
+  let totalBytes = 0;
+  for (const file of countLimited) {
+    if (totalBytes + file.size > totalRoomBytes) break;
+    totalAccepted.push(file);
+    totalBytes += file.size;
+  }
+  if (totalAccepted.length < countLimited.length) {
+    errors.push(
+      `This batch would exceed the ${totalLimitMb} MB total in-memory limit. Choose fewer or smaller files.`,
+    );
+  }
+
+  return { accepted: totalAccepted, errors };
 }
 
 export function useFileQueue(options: FileQueueOptions): FileQueue {
@@ -73,13 +100,19 @@ export function useFileQueue(options: FileQueueOptions): FileQueue {
   const addFiles = useCallback(
     (incoming: File[] | FileList) => {
       const list = Array.from(incoming);
-      const { accepted, errors: validationErrors } = validateFiles(list, files.length, options);
+      const existingSizeBytes = files.reduce((sum, file) => sum + file.size, 0);
+      const { accepted, errors: validationErrors } = validateFiles(
+        list,
+        files.length,
+        options,
+        existingSizeBytes,
+      );
       setErrors(validationErrors);
       if (accepted.length > 0) {
         setFiles((prev) => (options.multiple ? [...prev, ...accepted] : accepted.slice(0, 1)));
       }
     },
-    [files.length, options],
+    [files, options],
   );
 
   const removeAt = useCallback((index: number) => {

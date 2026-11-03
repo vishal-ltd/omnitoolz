@@ -305,8 +305,8 @@ export interface SignatureReport {
 }
 
 /**
- * Inspect a PDF's signatures. `digestFn` computes SHA-256 (injected so the
- * tests can use node:crypto and the browser uses WebCrypto).
+ * Inspect a PDF's signatures. `digestFn` is injected so the tests can use
+ * node:crypto and the browser can use WebCrypto.
  */
 export async function inspectSignatures(
   bytes: Uint8Array,
@@ -335,8 +335,15 @@ export async function inspectSignatures(
       if (cms.certificate) report.signer = certificateCommonName(cms.certificate);
 
       const covered = coveredRangesBytes(bytes, span.byteRange);
-      const computedHex = [...await digestFn(covered, "SHA-256")].map((b) => b.toString(16).padStart(2, "0")).join("");
-      report.integrityOk = cms.messageDigestHex === null ? null : computedHex === cms.messageDigestHex;
+      const digestAlgorithm = digestAlgorithmName(cms.digestAlgorithmOid);
+      if (!digestAlgorithm) {
+        report.detail = `Unsupported digest algorithm${cms.digestAlgorithmOid ? ` (${cms.digestAlgorithmOid})` : ""}.`;
+      } else {
+        const computedHex = [...await digestFn(covered, digestAlgorithm)]
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        report.integrityOk = cms.messageDigestHex === null ? null : computedHex === cms.messageDigestHex;
+      }
 
       if (cms.certificate && cms.signedAttrsSet) {
         const spki = certificateSpki(cms.certificate);
@@ -357,6 +364,19 @@ export async function inspectSignatures(
     reports.push(report);
   }
   return reports;
+}
+
+function digestAlgorithmName(oid: string | null): string | null {
+  switch (oid) {
+    case "2.16.840.1.101.3.4.2.1":
+      return "SHA-256";
+    case "2.16.840.1.101.3.4.2.2":
+      return "SHA-384";
+    case "2.16.840.1.101.3.4.2.3":
+      return "SHA-512";
+    default:
+      return null;
+  }
 }
 
 function hexToBytes(hex: string): Uint8Array {

@@ -2,9 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Lint runs as its own gate via `npm run lint` (0 errors). The in-build
-  // pass doesn't honor the flat-config severity override for
-  // react-hooks/set-state-in-effect and would block on documented warnings.
+  poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(self), display-capture=(self)",
+          },
+        ],
+      },
+    ];
+  },
+  // Lint runs as its own CI gate via `npm run lint`.
   eslint: { ignoreDuringBuilds: true },
 };
 

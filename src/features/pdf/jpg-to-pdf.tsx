@@ -10,7 +10,7 @@ import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/form";
 import { baseName } from "@/lib/utils";
-import { loadPdf, readFileBytes, savePdf } from "./pdf-core";
+import { readFileBytes, savePdf } from "./pdf-core";
 
 const PAPER: Record<string, [number, number]> = {
   a4: [595.28, 841.89],

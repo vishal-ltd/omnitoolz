@@ -22,5 +22,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${site.url}/about`, lastModified: now, priority: 0.3 },
     { url: `${site.url}/privacy`, lastModified: now, priority: 0.3 },
     { url: `${site.url}/terms`, lastModified: now, priority: 0.3 },
+    { url: `${site.url}/contact`, lastModified: now, priority: 0.3 },
+    { url: `${site.url}/security`, lastModified: now, priority: 0.3 },
+    { url: `${site.url}/accessibility`, lastModified: now, priority: 0.3 },
   ];
 }

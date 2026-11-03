@@ -116,8 +116,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-ink">10. Contact</h2>
           <p>
-            Questions about these terms? Use the contact address that will be published on this
-            page alongside the final domain launch. See also our{" "}
+             Questions about these terms? Use our <Link href="/contact" className="font-medium text-brand hover:underline">contact page</Link>. See also our{" "}
             <Link href="/privacy" className="font-medium text-brand hover:underline">Privacy Policy</Link>.
           </p>
         </section>

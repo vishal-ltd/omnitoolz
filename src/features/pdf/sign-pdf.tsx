@@ -167,7 +167,6 @@ export default function SignPdfTool() {
       const pngBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!pngBlob) throw new Error("The signature canvas couldn't be exported — draw again.");
 
-      const { PDFDocument } = await import("pdf-lib");
       const doc = await loadPdf(source);
       const png = await doc.embedPng(await pngBlob.arrayBuffer());
 

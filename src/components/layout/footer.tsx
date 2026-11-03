@@ -63,6 +63,15 @@ export function Footer() {
             <li>
               <Link href="/terms" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Terms of use</Link>
             </li>
+            <li>
+              <Link href="/contact" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Contact & feedback</Link>
+            </li>
+            <li>
+              <Link href="/security" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Security</Link>
+            </li>
+            <li>
+              <Link href="/accessibility" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Accessibility</Link>
+            </li>
           </ul>
         </nav>
       </div>

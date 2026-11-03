@@ -717,7 +717,7 @@ export default function EditPdfTool() {
   }
 
   function onWrapperClick(event: React.MouseEvent<HTMLDivElement>) {
-    if (tool !== "text" && tool !== "select") return;
+    if (tool !== "text" && tool !== "select" && tool !== "image") return;
     if (sheet || editingText) return;
     const canvas = pageCanvasRef.current;
     if (!canvas) return;
@@ -725,6 +725,26 @@ export default function EditPdfTool() {
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
     const xPct = ((event.clientX - rect.left) / rect.width) * 100;
     const yPct = ((event.clientY - rect.top) / rect.height) * 100;
+    if (tool === "image") {
+      if (!imageDataUrl) return;
+      const widthPct = 25;
+      const heightPct = 20;
+      const next = [
+        ...overlays,
+        {
+          type: "image" as const,
+          page: current,
+          xPct: Math.max(0, Math.min(100 - widthPct, xPct - widthPct / 2)),
+          yPct: Math.max(0, Math.min(100 - heightPct, yPct - heightPct / 2)),
+          widthPct,
+          heightPct,
+          dataUrl: imageDataUrl,
+        },
+      ];
+      commit(next);
+      setSelected(next.length - 1);
+      return;
+    }
     const hit = findTextTargetAt(xPct, yPct, current);
     if (hit) {
       openSheetFromItem(hit, current);

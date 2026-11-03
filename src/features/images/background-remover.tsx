@@ -27,7 +27,7 @@ export default function BackgroundRemoverTool() {
       const results: ResultFile[] = [];
       for (const [index, source] of sources.entries()) {
         const blob = await removeBackground(source, {
-          progress: (key, current, total) => {
+          progress: (key: string, current: number, total: number) => {
             const label = key.split("/").pop() ?? key;
             setProgressLabel(`${label} ${Math.round((current / total) * 100)}%`);
           },
@@ -69,7 +69,6 @@ export default function BackgroundRemoverTool() {
             <BgTouchUp
               originalFile={queue.files[editingIndex]}
               cutoutBlob={displayedResults[editingIndex].blob}
-              fileName={displayedResults[editingIndex].name}
               onDone={applyEdit}
               onCancel={() => setEditingIndex(null)}
             />

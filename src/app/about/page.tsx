@@ -5,7 +5,7 @@ import { liveTools } from "@/lib/tools/registry";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "OmniToolz is 55+ free, privacy-first tools that run entirely in your browser — PDFs, images, text, developer, security and media. No accounts, no uploads, no tracking.",
+    "OmniToolz is 63 free, privacy-first tools that run entirely in your browser — PDFs, images, text, developer, security and media. No accounts, no uploads, no tracking.",
   alternates: { canonical: "/about" },
 };
 
