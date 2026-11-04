@@ -31,19 +31,21 @@
   --color-line-strong: #23242f;
   --color-edge: #23242f;
   --color-shadow: #23242f;
-  --color-brand: #5b54e8;
-  --color-brand-strong: #4940d6;
+  --color-brand: #4f47dd;
+  --color-brand-strong: #3b34b8;
   --color-brand-soft: #e5e2fa;
   --color-brand-softer: #cbc5f4;
-  --color-ok: #1e9e5a;
+  --color-ok: #157a43;
   --color-ok-soft: #ddf2e5;
-  --color-err: #d94a3d;
+  --color-err: #b83427;
   --color-err-soft: #fae3e0;
-  --color-warn: #d98a0a;
+  --color-warn: #9a5404;
   --color-warn-soft: #faecd2;
   --color-gold: #f2b824;
-  /* Text color on brand-filled surfaces (some funky palettes need dark ink). */
+  /* Text/icon color on brand- or gold-filled surfaces. Never use --color-ink
+     here: it flips to cream in dark mode and lands at ~1.2:1 on gold. */
   --color-on-brand: #ffffff;
+  --color-on-gold: #23242f;
 
   /* Retro shadow steps (used with shadow-* utilities, color via --color-shadow). */
   --shadow-pixel-sm: 3px 3px 0 0 var(--color-shadow);
@@ -78,6 +80,8 @@
   --color-warn: #f2b33d;
   --color-warn-soft: #3f3018;
   --color-gold: #ffd23f;
+  --color-on-brand: #12131f;
+  --color-on-gold: #12131f;
 
   color-scheme: dark;
 }
@@ -97,6 +101,7 @@
   --color-brand-soft: #dfebba;
   --color-brand-softer: #cfe08f;
   --color-gold: #7c9a2a;
+  --color-on-gold: #0a1f03;
   --color-on-brand: #ffffff;
 }
 [data-accent="gameboy"].dark {
@@ -105,16 +110,18 @@
   --color-brand-soft: #1e3d20;
   --color-brand-softer: #2a5430;
   --color-gold: #9bbc0a;
+  --color-on-gold: #0f380f;
   --color-on-brand: #0f380f;
 }
 
 /* Synthwave accent — hot pink neons with cyan chrome. */
 [data-accent="synthwave"] {
-  --color-brand: #d61a8c;
-  --color-brand-strong: #ad0f70;
+  --color-brand: #b8127a;
+  --color-brand-strong: #8f0b5e;
   --color-brand-soft: #ffd9ec;
   --color-brand-softer: #ffb8dc;
   --color-gold: #00b8d4;
+  --color-on-gold: #1a0313;
   --color-on-brand: #ffffff;
 }
 [data-accent="synthwave"].dark {
@@ -123,16 +130,18 @@
   --color-brand-soft: #3d1440;
   --color-brand-softer: #521c52;
   --color-gold: #00e5ff;
+  --color-on-gold: #1a0313;
   --color-on-brand: #1a0313;
 }
 
 /* Amber CRT accent — phosphor orange buttons, red highlights. */
 [data-accent="amber"] {
-  --color-brand: #b45309;
-  --color-brand-strong: #92400e;
+  --color-brand: #a34a08;
+  --color-brand-strong: #7c3409;
   --color-brand-soft: #fde8c8;
   --color-brand-softer: #f9d49a;
   --color-gold: #dc2626;
+  --color-on-gold: #fff8ef;
   --color-on-brand: #ffffff;
 }
 [data-accent="amber"].dark {
@@ -141,6 +150,7 @@
   --color-brand-soft: #3a2408;
   --color-brand-softer: #4a2f0e;
   --color-gold: #ff5d3d;
+  --color-on-gold: #1a0d00;
   --color-on-brand: #1a0d00;
 }
 
@@ -151,6 +161,7 @@
   --color-brand-soft: #e9e9e9;
   --color-brand-softer: #d7d7d7;
   --color-gold: #111111;
+  --color-on-gold: #f5f5f5;
   --color-on-brand: #ffffff;
 }
 [data-accent="mono"].dark {
@@ -159,6 +170,7 @@
   --color-brand-soft: #262626;
   --color-brand-softer: #333333;
   --color-gold: #f0f0f0;
+  --color-on-gold: #0a0a0a;
   --color-on-brand: #0a0a0a;
 }
 

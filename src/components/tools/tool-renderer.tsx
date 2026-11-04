@@ -10,9 +10,9 @@ function WidgetSkeleton() {
   return (
     <div className="flex h-72 animate-pixel-in flex-col items-center justify-center gap-4 border-[3px] border-edge bg-card shadow-[6px_6px_0_0_var(--color-shadow)]">
       <div className="flex gap-2" aria-hidden>
-        <span className="size-4 animate-blink bg-brand" style={{ animationDelay: "0s" }} />
-        <span className="size-4 animate-blink bg-gold" style={{ animationDelay: "0.2s" }} />
-        <span className="size-4 animate-blink bg-ok" style={{ animationDelay: "0.4s" }} />
+        <span className="size-4 animate-blink border-2 border-edge bg-brand" style={{ animationDelay: "0s" }} />
+        <span className="size-4 animate-blink border-2 border-edge bg-gold" style={{ animationDelay: "0.2s" }} />
+        <span className="size-4 animate-blink border-2 border-edge bg-ok" style={{ animationDelay: "0.4s" }} />
       </div>
       <p className="font-display text-[10px] text-ink-soft uppercase">Loading tool…</p>
     </div>

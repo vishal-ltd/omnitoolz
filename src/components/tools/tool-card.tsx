@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ToolIcon } from "@/components/icons";
+import { IconBox } from "@/components/ui/icon-box";
 import type { ToolWithRoute } from "@/lib/tools/types";
 
 /** Pixel card used on the homepage, category pages and related-tool sections. */
@@ -11,9 +12,9 @@ export function ToolCard({ tool, index = 0 }: { tool: ToolWithRoute; index?: num
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
       <div className="flex items-start justify-between">
-        <span className="flex size-11 items-center justify-center border-[3px] border-edge bg-brand-soft shadow-[3px_3px_0_0_var(--color-shadow)] transition-colors group-hover:bg-brand-softer">
-          <ToolIcon name={tool.icon} className="size-5 text-brand" />
-        </span>
+        <IconBox className="size-11 shadow-[3px_3px_0_0_var(--color-shadow)] transition-colors group-hover:bg-brand-softer">
+          <ToolIcon name={tool.icon} className="size-5" />
+        </IconBox>
         <span
           className="font-display text-xs text-brand opacity-0 transition-opacity group-hover:opacity-100"
           aria-hidden

@@ -118,7 +118,7 @@ const { matches, error } = useMemo(() => {
           <p className="mt-2 whitespace-pre-wrap break-words font-body text-lg leading-snug text-ink">
             {segments.map((segment, index) =>
               segment.hit ? (
-                <mark key={index} className="bg-gold/60 px-0.5 text-ink">
+                <mark key={index} className="bg-gold/60 px-0.5 text-on-gold">
                   {segment.text}
                 </mark>
               ) : (

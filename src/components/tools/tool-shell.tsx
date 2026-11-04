@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ToolIcon } from "@/components/icons";
 import { ToolCard } from "@/components/tools/tool-card";
 import { ToolRenderer } from "@/components/tools/tool-renderer";
+import { IconBox } from "@/components/ui/icon-box";
 import { relatedTools } from "@/lib/tools/registry";
 import type { ToolWithRoute } from "@/lib/tools/types";
 
@@ -36,9 +37,9 @@ export function ToolShell({
 
       <header className="mt-5">
         <div className="flex items-start gap-4">
-          <span className="flex size-16 shrink-0 items-center justify-center border-[3px] border-edge bg-brand-soft shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <ToolIcon name={tool.icon} className="size-8 text-brand" />
-          </span>
+          <IconBox className="size-16 shrink-0 shadow-[4px_4px_0_0_var(--color-shadow)]">
+            <ToolIcon name={tool.icon} className="size-8" />
+          </IconBox>
           <div>
             <h1 className="text-lg text-ink sm:text-xl">{tool.name}</h1>
             <p className="mt-2 max-w-2xl text-base leading-snug text-ink-soft">{tool.description}</p>

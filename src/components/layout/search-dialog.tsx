@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToolIcon } from "@/components/icons";
+import { IconBox } from "@/components/ui/icon-box";
 import { searchTools } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
@@ -170,9 +171,9 @@ export function SearchDialog() {
                     <span className="w-4 shrink-0 font-display text-[10px] text-brand" aria-hidden>
                       {index === activeIndex ? "▸" : ""}
                     </span>
-                    <span className="flex size-9 shrink-0 items-center justify-center border-[3px] border-edge bg-card shadow-[2px_2px_0_0_var(--color-shadow)]">
-                      <ToolIcon name={hit.icon} className="size-4 text-brand" />
-                    </span>
+                    <IconBox tone="card" className="size-9 shrink-0 shadow-[2px_2px_0_0_var(--color-shadow)]">
+                      <ToolIcon name={hit.icon} className="size-4" />
+                    </IconBox>
                     <span className="min-w-0 flex-1">
                       <span className="block font-display text-[10px] text-ink">{hit.name}</span>
                       <span className="block truncate font-body text-base text-ink-soft">{hit.description}</span>

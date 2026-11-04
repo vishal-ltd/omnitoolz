@@ -5,6 +5,7 @@ import { ToolIcon } from "@/components/icons";
 import { HeroSearch } from "@/components/layout/hero-search";
 import { RecentTools } from "@/components/tools/recent-tools";
 import { ToolCard } from "@/components/tools/tool-card";
+import { IconBox } from "@/components/ui/icon-box";
 import { site } from "@/lib/site";
 import { activeCategories, featuredTools, liveTools } from "@/lib/tools/registry";
 
@@ -31,10 +32,10 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative mt-2 overflow-hidden border-[3px] border-edge bg-dither px-4 pt-14 pb-10 text-center shadow-[6px_6px_0_0_var(--color-shadow)] sm:pt-20">
         {/* floating pixel decorations */}
-        <span className="absolute left-[8%] top-10 hidden size-3 animate-blink bg-brand sm:block" aria-hidden style={{ animationDelay: "0s" }} />
-        <span className="absolute right-[10%] top-16 hidden size-3 animate-blink bg-gold sm:block" aria-hidden style={{ animationDelay: "0.4s" }} />
-        <span className="absolute bottom-10 left-[16%] hidden size-2 animate-blink bg-ok sm:block" aria-hidden style={{ animationDelay: "0.8s" }} />
-        <span className="absolute bottom-16 right-[14%] hidden size-2 animate-blink bg-err sm:block" aria-hidden style={{ animationDelay: "0.2s" }} />
+        <span className="absolute left-[8%] top-10 hidden size-3 animate-blink border-2 border-edge bg-brand sm:block" aria-hidden style={{ animationDelay: "0s" }} />
+        <span className="absolute right-[10%] top-16 hidden size-3 animate-blink border-2 border-edge bg-gold sm:block" aria-hidden style={{ animationDelay: "0.4s" }} />
+        <span className="absolute bottom-10 left-[16%] hidden size-2.5 animate-blink border-2 border-edge bg-ok sm:block" aria-hidden style={{ animationDelay: "0.8s" }} />
+        <span className="absolute bottom-16 right-[14%] hidden size-2.5 animate-blink border-2 border-edge bg-err sm:block" aria-hidden style={{ animationDelay: "0.2s" }} />
 
         <div className="flex flex-wrap justify-center gap-2">
           {HERO_CHIPS.map((chip) => (
@@ -50,7 +51,7 @@ export default function HomePage() {
         <h1 className="mx-auto mt-6 max-w-3xl animate-pixel-in text-base leading-[1.7] text-ink sm:text-xl">
           Every Tool.<br />
           <span className="text-brand">One Place.</span>
-          <span className="ml-2 inline-block animate-blink text-gold" aria-hidden>▮</span>
+          <span className="ml-2 inline-block animate-blink text-ink" aria-hidden>▮</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
           Convert, compress, edit and organize documents, images and text —
@@ -81,7 +82,7 @@ export default function HomePage() {
           {ticker.map((tool, index) => (
             <span key={`${tool.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap px-3 font-display text-[9px] text-on-brand uppercase">
               {tool.name}
-              <span className="text-gold">◆</span>
+              <span className="text-on-brand">◆</span>
             </span>
           ))}
         </div>
@@ -119,9 +120,9 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-2.5 text-[11px] text-ink group-hover:text-brand">
-                  <span className="flex size-9 items-center justify-center border-[3px] border-edge bg-brand-soft">
-                    <ToolIcon name={category.icon} className="size-4.5 text-brand" />
-                  </span>
+                  <IconBox tone="soft" className="size-9">
+                    <ToolIcon name={category.icon} className="size-4.5" />
+                  </IconBox>
                   {category.name}
                 </h3>
                 <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-[9px] text-on-brand">
@@ -159,9 +160,9 @@ export default function HomePage() {
               className="animate-pixel-in border-[3px] border-edge bg-card p-6 shadow-[4px_4px_0_0_var(--color-shadow)]"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <span className="flex size-12 items-center justify-center border-[3px] border-edge bg-gold shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <Icon className="size-6 text-ink" aria-hidden />
-              </span>
+              <IconBox tone="gold" className="size-12 shadow-[3px_3px_0_0_var(--color-shadow)]">
+                <Icon className="size-6" aria-hidden />
+              </IconBox>
               <h3 className="mt-4 text-[11px] text-ink">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
             </div>
