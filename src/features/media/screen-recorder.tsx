@@ -124,7 +124,7 @@ export default function ScreenRecorderTool() {
         {recording && (
           <div className="flex flex-wrap items-center gap-4 border-[3px] border-err bg-err-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
             <span className="size-3 animate-blink bg-err" aria-hidden />
-            <p className="font-display text-[10px] text-ink uppercase">Recording {formatClock(elapsed)}</p>
+            <p className="font-display text-display-xs text-ink uppercase">Recording {formatClock(elapsed)}</p>
             <Button onClick={stop}>
               <Square className="size-4" aria-hidden />
               Stop & save
@@ -142,7 +142,7 @@ export default function ScreenRecorderTool() {
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
             {recordings.map((recordingItem, index) => (
               <li key={index} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <span className="font-display text-[8px] text-ink-soft uppercase">
+                <span className="font-display text-display-xs text-ink-soft uppercase">
                   #{recordings.length - index} · {formatClock(recordingItem.durationSec)} · {formatBytes(recordingItem.blob.size)} · {recordingItem.createdAt}
                 </span>
                 <video src={recordingItem.url} controls className="w-full border-[3px] border-edge" />

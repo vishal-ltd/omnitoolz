@@ -11,12 +11,12 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <article className="max-w-3xl">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Terms of Use</h1>
+      <h1 className="text-display-lg font-bold tracking-tight text-ink">Terms of Use</h1>
       <p className="mt-2 text-sm text-ink-soft">Last updated: October 25, 2026</p>
 
       <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink-soft">
         <section>
-          <h2 className="text-lg font-semibold text-ink">1. Acceptance</h2>
+          <h2 className="text-display-sm font-semibold text-ink">1. Acceptance</h2>
           <p>
             By using OmniToolz (&ldquo;the service&rdquo;) you agree to these terms. If you don&apos;t
             agree, please don&apos;t use the service. These terms apply to every tool on the site.
@@ -24,7 +24,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">2. What the service is</h2>
+          <h2 className="text-display-sm font-semibold text-ink">2. What the service is</h2>
           <p>
             OmniToolz provides free utilities that run in your web browser. All processing happens
             on your own device: the service has no servers that receive your files, and no
@@ -34,7 +34,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">3. Your files and content</h2>
+          <h2 className="text-display-sm font-semibold text-ink">3. Your files and content</h2>
           <ul className="list-disc space-y-1.5 pl-5">
             <li>
               <strong className="text-ink">You keep every right.</strong> We claim no ownership or
@@ -51,7 +51,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">4. Acceptable use</h2>
+          <h2 className="text-display-sm font-semibold text-ink">4. Acceptable use</h2>
           <ul className="list-disc space-y-1.5 pl-5">
             <li>Don&apos;t abuse the service: no automated bulk scraping of the site, no attempts to break or overload it, no interference with its operation.</li>
             <li>Don&apos;t redistribute or resell the site itself as your own service without permission.</li>
@@ -60,7 +60,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">5. No warranty</h2>
+          <h2 className="text-display-sm font-semibold text-ink">5. No warranty</h2>
           <p>
             The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;, without
             warranties of any kind, express or implied — including fitness for a particular
@@ -77,7 +77,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">6. Limitation of liability</h2>
+          <h2 className="text-display-sm font-semibold text-ink">6. Limitation of liability</h2>
           <p>
             To the maximum extent permitted by law, the service&apos;s operators are not liable
             for any indirect, incidental, special or consequential damages, or any loss of data,
@@ -87,7 +87,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">7. Intellectual property</h2>
+          <h2 className="text-display-sm font-semibold text-ink">7. Intellectual property</h2>
           <p>
             The site&apos;s design, code and branding are the property of OmniToolz. Open-source
             engines used by the tools remain the property of their authors under their respective
@@ -96,7 +96,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">8. Changes</h2>
+          <h2 className="text-display-sm font-semibold text-ink">8. Changes</h2>
           <p>
             We may update the service and these terms. Material changes to the terms will be
             posted on this page with a new date; continuing to use the service after a change
@@ -105,7 +105,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">9. Governing law</h2>
+          <h2 className="text-display-sm font-semibold text-ink">9. Governing law</h2>
           <p>
             These terms are governed by the laws applicable at the operator&apos;s place of
             business, without prejudice to mandatory consumer-protection rights in your country
@@ -114,7 +114,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">10. Contact</h2>
+          <h2 className="text-display-sm font-semibold text-ink">10. Contact</h2>
           <p>
              Questions about these terms? Use our <Link href="/contact" className="font-medium text-brand hover:underline">contact page</Link>. See also our{" "}
             <Link href="/privacy" className="font-medium text-brand hover:underline">Privacy Policy</Link>.

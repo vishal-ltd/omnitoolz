@@ -14,7 +14,7 @@ import { canvasToBlob, decodeToCanvas, imageResult, type ImageFormat } from "./i
 
 export default function WebPConverterTool() {
   const queue = useFileQueue({ accept: ["jpg", "jpeg", "png", "webp"], multiple: true, maxFiles: 20, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [format, setFormat] = useState<ImageFormat>("webp");
   const [quality, setQuality] = useState(80);
 
@@ -91,7 +91,7 @@ export default function WebPConverterTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Batches download together as a ZIP.</p>

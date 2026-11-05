@@ -20,7 +20,7 @@ const BASE_FONT = 9;
 
 export default function ExcelToPdfTool() {
   const queue = useFileQueue({ accept: ["xlsx", "csv"], multiple: true, maxFiles: 5, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [gridlines, setGridlines] = useState(true);
   const [scalePct, setScalePct] = useState(100);
   const [sheetSummary, setSheetSummary] = useState<string | null>(null);
@@ -153,7 +153,7 @@ export default function ExcelToPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="border-[3px] border-warn bg-warn-soft p-3">
             <p className="text-sm text-ink">

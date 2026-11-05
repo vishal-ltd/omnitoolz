@@ -9,14 +9,14 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   return (
     <article className="max-w-3xl">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Accessibility</h1>
+      <h1 className="text-display-lg font-bold tracking-tight text-ink">Accessibility</h1>
       <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink-soft">
         <p>
           OmniToolz supports keyboard navigation, visible focus indicators, semantic headings, reduced
           motion preferences, and labelled controls throughout the shared interface.
         </p>
         <section>
-          <h2 className="text-lg font-semibold text-ink">Known limitations</h2>
+          <h2 className="text-display-sm font-semibold text-ink">Known limitations</h2>
           <p className="mt-2">
             Canvas-based tools such as signing, cropping and touch-up editing have limited support for
             non-pointer input. Use the issue tracker to report a barrier or request an alternative

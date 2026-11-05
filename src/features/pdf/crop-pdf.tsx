@@ -20,7 +20,7 @@ const MM_TO_PT = 72 / 25.4;
 
 export default function CropPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [mode, setMode] = useState<Mode>("auto");
   const [marginMm, setMarginMm] = useState(5);
   const [trimCapMm, setTrimCapMm] = useState(30);
@@ -171,7 +171,7 @@ export default function CropPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Cropping only changes the visible window — content is never deleted.</p>

@@ -22,6 +22,18 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 
+  /* Display scale. Press Start 2P is an 8px bitmap grid, so every step is an
+     integer multiple of 8: 8 / 16 / 24 / 32. Sizes in between get resampled
+     and lose the crispness the whole identity is built on. */
+  --text-display-xs: 8px;
+  --text-display-xs--line-height: 1.75;
+  --text-display-sm: 16px;
+  --text-display-sm--line-height: 1.5;
+  --text-display-md: 24px;
+  --text-display-md--line-height: 1.45;
+  --text-display-lg: 32px;
+  --text-display-lg--line-height: 1.4;
+
   /* Light theme (default) — warm arcade-manual paper. */
   --color-canvas: #e9e4d3;
   --color-card: #fcfaf0;
@@ -224,12 +236,42 @@ h1, h2, h3, h4 {
 
 ::selection {
   background-color: var(--color-brand);
-  color: #fff;
+  color: var(--color-on-brand);
 }
 
 :focus-visible {
   outline: 3px solid var(--color-brand);
   outline-offset: 2px;
+}
+
+/* Surfaces the browser draws for us still belong to this design system. */
+input,
+textarea {
+  caret-color: var(--color-brand);
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand) var(--color-canvas);
+}
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+  border-left: 3px solid var(--color-edge);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand);
+  border: 3px solid var(--color-edge);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-strong);
 }
 
 /* ── Utilities ───────────────────────────────────────────────────── */
@@ -246,7 +288,13 @@ h1, h2, h3, h4 {
   background-size: 12px 12px;
 }
 .dark .bg-dither {
-  --dither-color: rgb(236 233 220 / 0.05);
+  --dither-color: rgb(236 233 220 / 0.1);
+}
+
+/* Marquee edges: items fade out instead of being sliced mid-word. */
+.ticker-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 
 /* Blinking pixel cursor / decorations. */

@@ -45,7 +45,7 @@ export default function DiffCheckerTool() {
 
         {hasDiff && (
           <div className="border-[3px] border-edge bg-card p-3 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[9px] uppercase">
+            <p className="font-display text-display-xs uppercase">
               <span className="text-ok">+{stats.added}</span> <span className="text-ink-soft">added ·</span>{" "}
               <span className="text-err">-{stats.removed}</span> <span className="text-ink-soft">removed</span>
             </p>

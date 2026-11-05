@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <article className="max-w-3xl">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Contact and feedback</h1>
+      <h1 className="text-display-lg font-bold tracking-tight text-ink">Contact and feedback</h1>
       <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink-soft">
         <p>
           OmniToolz is maintained in the open. Report a reproducible bug, suggest a tool, or tell us
@@ -25,11 +25,11 @@ export default function ContactPage() {
             href="https://github.com/vishal-ltd/omnitoolz/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center border-[3px] border-edge bg-brand px-4 py-3 font-display text-[10px] text-on-brand shadow-[3px_3px_0_0_var(--color-shadow)]"
+            className="inline-flex items-center border-[3px] border-edge bg-brand px-4 py-3 font-display text-display-xs text-on-brand shadow-[3px_3px_0_0_var(--color-shadow)]"
           >
             Open an issue ↗
           </a>
-          <Link href="/security" className="inline-flex items-center border-[3px] border-edge bg-card px-4 py-3 font-display text-[10px] text-ink shadow-[3px_3px_0_0_var(--color-shadow)]">
+          <Link href="/security" className="inline-flex items-center border-[3px] border-edge bg-card px-4 py-3 font-display text-display-xs text-ink shadow-[3px_3px_0_0_var(--color-shadow)]">
             Report a security issue
           </Link>
         </div>

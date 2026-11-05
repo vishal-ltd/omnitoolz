@@ -41,7 +41,7 @@ function todayIso(): string {
 }
 
 export default function InvoiceGeneratorTool() {
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [docType, setDocType] = useState<DocType>("invoice");
   const [number, setNumber] = useState("INV-001");
   const [date, setDate] = useState(todayIso());
@@ -342,11 +342,11 @@ export default function InvoiceGeneratorTool() {
             <div className="border-[3px] border-edge bg-card p-3 text-right font-body text-lg text-ink shadow-[3px_3px_0_0_var(--color-shadow)] sm:col-span-2">
               <p className="text-ink-soft">Subtotal {formatMoney(totals.subtotal, currency)}</p>
               {taxPercent > 0 && <p className="text-ink-soft">Tax {formatMoney(totals.tax, currency)}</p>}
-              <p className="mt-1 font-display text-[11px] text-ink uppercase">Total {formatMoney(totals.total, currency)}</p>
+              <p className="mt-1 font-display text-display-sm text-ink uppercase">Total {formatMoney(totals.total, currency)}</p>
             </div>
           </OptionsPanel>
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">The PDF is built locally — client data never leaves this tab.</p>

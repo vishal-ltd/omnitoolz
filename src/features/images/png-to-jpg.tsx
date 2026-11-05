@@ -14,7 +14,7 @@ import { canvasToBlob, decodeToCanvas, imageResult } from "./image-core";
 
 export default function PngToJpgTool() {
   const queue = useFileQueue({ accept: ["png"], multiple: true, maxFiles: 20, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [quality, setQuality] = useState(90);
   const [background, setBackground] = useState("#ffffff");
 
@@ -77,7 +77,7 @@ export default function PngToJpgTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Transparent areas are filled with the background color.</p>

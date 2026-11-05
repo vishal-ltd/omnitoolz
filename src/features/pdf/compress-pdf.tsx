@@ -77,7 +77,7 @@ async function compressBytes(bytes: Uint8Array, linearize: boolean): Promise<Uin
 
 export default function CompressPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 10, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [linearize, setLinearize] = useState(false);
   const [savingsNote, setSavingsNote] = useState<string | null>(null);
 
@@ -164,7 +164,7 @@ export default function CompressPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

@@ -1,121 +1,38 @@
-import {
-  AppWindow,
-  ArrowLeftRight,
-  Binary,
-  BookOpen,
-  Braces,
-  CaseSensitive,
-  Camera,
-  Clock,
-  Code2,
-  Crop,
-  Eraser,
-  FileCheck,
-  FileImage,
-  FileJson,
-  FileMinus,
-  FileMinus2,
-  FileOutput,
-  FileText,
-  Files,
-  Fingerprint,
-  GitCompare,
-  Hash,
-  Image,
-  ImageDown,
-  ImagePlus,
-  Info,
-  KeyRound,
-  Layers,
-  LayoutGrid,
-  Lock,
-  LockOpen,
-  Maximize2,
-  Minimize2,
-  Palette,
-  PanelTop,
-  PenLine,
-  PenTool,
-  QrCode,
-  Receipt,
-  Regex,
-  RotateCw,
-  Scale,
-  ScanLine,
-  ScanText,
-  Scissors,
-  ShieldAlert,
-  ShieldCheck,
-  Shrink,
-  Smartphone,
-  Stamp,
-  Type,
-  Video,
-  Wand2,
-  Wrench,
-} from "lucide-react";
 import type { IconName } from "@/lib/tools/types";
-import type { ComponentType } from "react";
+import { PIXEL_GLYPHS } from "./pixel-glyphs";
 
-/** Registry icon keys → Lucide components. Typed keys are verified at build time. */
-export const iconMap: Record<IconName, ComponentType<{ className?: string; "aria-hidden"?: boolean }>> = {
-  "file-text": FileText,
-  files: Files,
-  scissors: Scissors,
-  "rotate-cw": RotateCw,
-  "file-output": FileOutput,
-  "image-down": ImageDown,
-  "file-image": FileImage,
-  hash: Hash,
-  "minimize-2": Minimize2,
-  shrink: Shrink,
-  "maximize-2": Maximize2,
-  crop: Crop,
-  "arrow-left-right": ArrowLeftRight,
-  stamp: Stamp,
-  type: Type,
-  "case-sensitive": CaseSensitive,
-  braces: Braces,
-  "qr-code": QrCode,
-  "key-round": KeyRound,
-  image: Image,
-  "code-2": Code2,
-  "shield-check": ShieldCheck,
-  lock: Lock,
-  "lock-open": LockOpen,
-  "layout-grid": LayoutGrid,
-  "file-minus-2": FileMinus2,
-  "panel-top": PanelTop,
-  info: Info,
-  eraser: Eraser,
-  layers: Layers,
-  wrench: Wrench,
-  "file-minus": FileMinus,
-  scale: Scale,
-  "image-plus": ImagePlus,
-  "book-open": BookOpen,
-  receipt: Receipt,
-  "file-json": FileJson,
-  binary: Binary,
-  fingerprint: Fingerprint,
-  clock: Clock,
-  palette: Palette,
-  regex: Regex,
-  "scan-line": ScanLine,
-  "git-compare": GitCompare,
-  smartphone: Smartphone,
-  "shield-alert": ShieldAlert,
-  "file-check": FileCheck,
-  "pen-line": PenLine,
-  "pen-tool": PenTool,
-  "scan-text": ScanText,
-  "wand-2": Wand2,
-  camera: Camera,
-  video: Video,
-  "app-window": AppWindow,
-};
+/**
+ * Tool and category plates draw pixel art, not anti-aliased strokes — the one
+ * element that used to refuse the rest of the world it sits in. Glyphs come
+ * from pixel-glyphs.ts; regenerate that file rather than editing shapes.
+ */
+function toRuns(rows: string[]): Array<[number, number, number]> {
+  const runs: Array<[number, number, number]> = [];
+  rows.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      if (row[x] !== "#") {
+        x += 1;
+        continue;
+      }
+      let end = x;
+      while (end < row.length && row[end] === "#") end += 1;
+      runs.push([x, y, end - x]);
+      x = end;
+    }
+  });
+  return runs;
+}
+
+const RUNS = new Map(Object.entries(PIXEL_GLYPHS).map(([key, rows]) => [key, toRuns(rows)]));
 
 export function ToolIcon({ name, className }: { name: IconName; className?: string }) {
-  const Icon = iconMap[name];
-  return <Icon className={className} aria-hidden />;
+  const runs = RUNS.get(name) ?? [];
+  return (
+    <svg viewBox="0 0 16 16" className={className} aria-hidden fill="currentColor" shapeRendering="crispEdges">
+      {runs.map(([x, y, width]) => (
+        <rect key={`${x}-${y}-${width}`} x={x} y={y} width={width} height={1} />
+      ))}
+    </svg>
+  );
 }

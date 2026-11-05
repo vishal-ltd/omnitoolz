@@ -15,7 +15,7 @@ import { loadPdf, savePdf, yieldToUi } from "./pdf-core";
 
 export default function CleanPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 20, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [stripMetadata, setStripMetadata] = useState(true);
   const [removeAnnotations, setRemoveAnnotations] = useState(true);
   const [removeOutline, setRemoveOutline] = useState(false);
@@ -89,7 +89,7 @@ export default function CleanPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Share documents without the hidden leftovers.</p>

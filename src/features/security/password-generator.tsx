@@ -107,8 +107,8 @@ export default function PasswordGeneratorTool() {
         <div className="space-y-4">
           <div className="border-[3px] border-edge bg-canvas p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
             <div className="flex items-baseline justify-between gap-2">
-              <p className="font-display text-[9px] text-ink uppercase">Strength estimate</p>
-              <p className={cn("font-display text-[10px]", strength === "weak" ? "text-err" : strength === "fair" ? "text-warn" : "text-ok")}>
+              <p className="font-display text-display-xs text-ink uppercase">Strength estimate</p>
+              <p className={cn("font-display text-display-xs", strength === "weak" ? "text-err" : strength === "fair" ? "text-warn" : "text-ok")}>
                 {strengthLabels[strength]}
               </p>
             </div>

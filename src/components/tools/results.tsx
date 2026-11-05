@@ -67,13 +67,18 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
   return (
     <div className="animate-pixel-in space-y-4">
       <div className="border-[3px] border-ok bg-ok-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]" role="status">
-        <p className="flex items-center gap-2.5 font-display text-[10px] leading-relaxed text-ok uppercase">
+        <p className="flex items-center gap-2.5 font-display text-display-xs leading-relaxed text-ok uppercase">
           <CheckCircle2 className="size-5 shrink-0" aria-hidden />
           Done — {results.length === 1 ? "file ready" : `${results.length} files ready`}
         </p>
         <p className="mt-2 font-body text-lg text-ink-soft">
           {formatBytes(totalSize)} total
           {elapsedMs !== null && ` · took ${formatDuration(elapsedMs)}`}
+        </p>
+        {/* The claim every page makes, shown at the moment it is actually true. */}
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 font-body text-lg text-ink-soft">
+          <span className="border-[3px] border-edge bg-canvas px-1.5 font-display text-display-xs text-ok">0 B uploaded</span>
+          read and written on this device
         </p>
         {note && <p className="mt-1 font-body text-lg font-medium text-ok">{note}</p>}
       </div>
@@ -83,7 +88,7 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
         <img
           src={previewUrls.values().next().value}
           alt={`Preview of ${results[0].name}`}
-          className="max-h-72 w-auto border-[3px] border-edge bg-[repeating-conic-gradient(#d2ccb8_0%_25%,#fcfaf0_0%_50%)] bg-[length:16px_16px] object-contain shadow-[4px_4px_0_0_var(--color-shadow)]"
+          className="max-h-72 w-auto border-[3px] border-edge bg-[repeating-conic-gradient(var(--color-line)_0%_25%,var(--color-card)_0%_50%)] bg-[length:16px_16px] object-contain shadow-[4px_4px_0_0_var(--color-shadow)]"
         />
       )}
 
@@ -98,7 +103,7 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
               // eslint-disable-next-line @next/next/no-img-element
               <img src={previewUrls.get(file.name)} alt="" className="size-10 border-[3px] border-edge object-cover" />
             ) : (
-              <span className="flex size-10 items-center justify-center border-[3px] border-edge bg-canvas font-display text-[8px] text-ink-soft">
+              <span className="flex size-10 items-center justify-center border-[3px] border-edge bg-canvas font-display text-display-xs text-ink-soft">
                 {file.name.split(".").pop()?.slice(0, 4).toUpperCase()}
               </span>
             )}

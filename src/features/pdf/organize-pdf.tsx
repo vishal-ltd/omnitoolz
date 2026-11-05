@@ -25,7 +25,7 @@ type Phase = "idle" | "thumbs" | "editing" | "running" | "done";
 
 export default function OrganizePdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state: job, start, reset } = useJob();
+  const { state: job, start, reset, retry } = useJob();
   const [phase, setPhase] = useState<Phase>("idle");
   const [pages, setPages] = useState<PageState[]>([]);
   const [thumbs, setThumbs] = useState<Map<number, RenderedPage>>(new Map());
@@ -204,7 +204,7 @@ export default function OrganizePdfTool() {
       ) : phase === "thumbs" ? (
         <div className="space-y-4">
           <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[10px] text-ink uppercase">Drawing page thumbnails…</p>
+            <p className="font-display text-display-xs text-ink uppercase">Drawing page thumbnails…</p>
             <div className="mt-3 h-5 border-[3px] border-edge bg-canvas">
               <div
                 className="pixel-stripes-ok h-full transition-[width]"
@@ -233,7 +233,7 @@ export default function OrganizePdfTool() {
       ) : phase === "editing" && file ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-display text-[10px] text-ink uppercase">
+            <p className="font-display text-display-xs text-ink uppercase">
               {pages.length} {pages.length === 1 ? "page" : "pages"} — drag to reorder
             </p>
             <div className="flex gap-2">
@@ -243,7 +243,7 @@ export default function OrganizePdfTool() {
             </div>
           </div>
 
-          {job.phase === "error" && <JobError message={job.error ?? ""} />}
+          {job.phase === "error" && <JobError error={job.error} detail={job.errorDetail} kind={job.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {pages.map((page, index) => {
@@ -282,7 +282,7 @@ export default function OrganizePdfTool() {
                   ) : (
                     <div className="aspect-[1/1.414] bg-canvas" />
                   )}
-                  <span className="absolute -top-2 -left-2 border-[3px] border-edge bg-brand px-1.5 py-0.5 font-display text-[8px] text-on-brand">
+                  <span className="absolute -top-2 -left-2 border-[3px] border-edge bg-brand px-1.5 py-0.5 font-display text-display-xs text-on-brand">
                     {index + 1}
                   </span>
                   <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 border-t-[3px] border-edge bg-card/95 p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
@@ -339,8 +339,8 @@ export default function OrganizePdfTool() {
         <div className="space-y-4">
           <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
           <FileList files={queue.files} onRemove={queue.removeAt} />
-          {thumbError && <JobError message={thumbError} />}
-          {job.phase === "error" && <JobError message={job.error ?? ""} />}
+          {thumbError && <JobError error={thumbError} />}
+          {job.phase === "error" && <JobError error={job.error} detail={job.errorDetail} kind={job.errorKind} onRetry={retry} onDismiss={reset} />}
           <p className="text-sm text-ink-soft">
             Thumbnails are rendered locally — big scans may take a moment.
           </p>

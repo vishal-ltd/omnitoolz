@@ -55,7 +55,7 @@ export default function Base64Tool() {
               type="button"
               aria-pressed={mode === option}
               onClick={() => setMode(option)}
-              className={`border-[3px] border-edge px-4 py-2 font-display text-[9px] uppercase shadow-[3px_3px_0_0_var(--color-shadow)] ${
+              className={`border-[3px] border-edge px-4 py-2 font-display text-display-xs uppercase shadow-[3px_3px_0_0_var(--color-shadow)] ${
                 mode === option ? "bg-brand text-on-brand" : "bg-card text-ink-soft"
               }`}
             >

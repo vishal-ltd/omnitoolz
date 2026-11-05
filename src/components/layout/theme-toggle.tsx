@@ -61,7 +61,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
             title={`${label} theme`}
             onClick={() => choose(value)}
             className={cn(
-              "flex items-center gap-1.5 px-2 py-1.5 transition-colors",
+              "flex min-h-11 items-center gap-1.5 px-2 py-1.5 transition-colors",
               compact && "px-1.5",
               active
                 ? "bg-brand text-on-brand"
@@ -70,7 +70,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
           >
             <Icon className="size-4" aria-hidden />
             {!compact && (
-              <span className="font-display text-[8px] uppercase">{label}</span>
+              <span className="font-display text-display-xs uppercase">{label}</span>
             )}
           </button>
         );

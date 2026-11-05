@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <article className="max-w-3xl">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">About OmniToolz</h1>
+      <h1 className="text-display-lg font-bold tracking-tight text-ink">About OmniToolz</h1>
 
       <div className="mt-6 space-y-5 text-[15px] leading-relaxed text-ink-soft">
         <p>
@@ -23,7 +23,7 @@ export default function AboutPage() {
           single-purpose sites.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-ink">Everything runs on your device</h2>
+        <h2 className="pt-2 text-display-sm font-semibold text-ink">Everything runs on your device</h2>
         <p>
           All <strong className="text-ink">{liveTools().length} tools</strong> process your files
           locally, in your browser. There is no upload step because there is no server doing the
@@ -42,7 +42,7 @@ export default function AboutPage() {
           your data never meet.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-ink">The honesty bar</h2>
+        <h2 className="pt-2 text-display-sm font-semibold text-ink">The honesty bar</h2>
         <p>
           We only publish a tool when it genuinely works and has been tested end-to-end. When a
           capability can&apos;t meet the quality bar yet, we say so instead of shipping something
@@ -52,7 +52,7 @@ export default function AboutPage() {
           FAQs.
         </p>
 
-        <h2 className="pt-2 text-lg font-semibold text-ink">The name</h2>
+        <h2 className="pt-2 text-display-sm font-semibold text-ink">The name</h2>
         <p>
           OmniToolz — <em>omni</em> (every) + toolz (tools, with an arcade &ldquo;z&rdquo; because
           the whole interface is a love letter to 16-bit consoles).

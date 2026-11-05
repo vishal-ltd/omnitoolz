@@ -33,7 +33,7 @@ const PRESETS: Array<{ label: string; aspect: number | null }> = [
 
 export default function CropImageTool() {
   const queue = useFileQueue({ accept: ["jpg", "jpeg", "png", "webp"], multiple: false, maxFiles: 1, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
@@ -220,7 +220,7 @@ export default function CropImageTool() {
             </>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

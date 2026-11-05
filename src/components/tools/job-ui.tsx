@@ -1,7 +1,9 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { JobState } from "./use-job";
 
@@ -32,7 +34,7 @@ export function OptionsPanel({
 }) {
   return (
     <fieldset className="border-[3px] border-dashed border-line-strong bg-canvas/60 p-4">
-      <legend className="px-2 font-display text-[9px] tracking-wide text-ink-soft uppercase">
+      <legend className="px-2 font-display text-display-xs tracking-wide text-ink-soft uppercase">
         {title}
       </legend>
       <div
@@ -52,7 +54,7 @@ export function JobProgress({ state }: { state: JobState }) {
   const determinate = state.progress !== null;
   return (
     <div className="border-[3px] border-edge bg-brand-soft p-4" role="status" aria-live="polite">
-      <p className="font-display text-[10px] leading-relaxed text-ink uppercase">
+      <p className="font-display text-display-xs leading-relaxed text-ink uppercase">
         <span className="mr-2 inline-block animate-blink" aria-hidden>▮</span>
         {state.statusMessage || "Working…"}
       </p>
@@ -66,24 +68,74 @@ export function JobProgress({ state }: { state: JobState }) {
           <div className="pixel-stripes h-full w-full" />
         )}
       </div>
-      {determinate && (
-        <p className="mt-1.5 text-right font-body text-base text-ink-soft tabular-nums">
-          {Math.round((state.progress ?? 0) * 100)}%
-        </p>
-      )}
+      <p className="mt-1.5 flex items-center justify-between gap-2 font-body text-base text-ink-soft">
+        <span className="border-[3px] border-edge bg-canvas px-1.5 font-display text-display-xs text-ok">0 B uploaded</span>
+        {determinate && <span className="tabular-nums">{Math.round((state.progress ?? 0) * 100)}%</span>}
+      </p>
     </div>
   );
 }
 
-/** Error banner; message comes from the job state machine. */
-export function JobError({ message, children }: { message: string; children?: ReactNode }) {
+/**
+ * Error panel. The headline names the failure in the user's language, the raw
+ * engine string stays behind a disclosure for reporting, and the panel always
+ * leaves a way out — retry the same job or dismiss.
+ */
+export function JobError({
+  error,
+  detail = null,
+  kind = null,
+  onRetry,
+  onDismiss,
+}: {
+  error: string | null;
+  detail?: string | null;
+  kind?: string | null;
+  onRetry?: () => void;
+  onDismiss?: () => void;
+}) {
   return (
-    <div className="border-[3px] border-err bg-err-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]" role="alert">
-      <p className="flex items-start gap-2.5 font-display text-[10px] leading-relaxed text-err uppercase">
-        <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-        {message}
+    <div
+      role="alert"
+      className="border-[3px] border-err bg-err-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]"
+    >
+      <p className="flex items-center gap-2.5 font-display text-display-xs uppercase text-ink">
+        <CircleAlert className="size-4 shrink-0 text-err" aria-hidden />
+        Run failed
       </p>
-      {children}
+      <p className="mt-2 text-sm leading-relaxed text-ink">{error}</p>
+      <p className="mt-1.5 text-xs text-ink-soft">
+        Nothing was written and your files are still queued.
+      </p>
+
+      {detail && (
+        <details className="mt-3">
+          <summary className="cursor-pointer font-display text-display-xs uppercase text-ink-soft hover:text-ink">
+            Technical detail
+          </summary>
+          <p className="mt-2 break-words font-body text-base leading-snug text-ink">
+            {kind ? `${kind}: ` : ""}
+            {detail}
+          </p>
+          <Link
+            href="/contact"
+            className="mt-2 inline-block font-body text-base text-brand-strong underline underline-offset-4 hover:text-brand"
+          >
+            Report this
+          </Link>
+        </details>
+      )}
+
+      {(onRetry || onDismiss) && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {onRetry && <Button size="sm" onClick={onRetry}>Try again</Button>}
+          {onDismiss && (
+            <Button size="sm" variant="secondary" onClick={onDismiss}>
+              Dismiss
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

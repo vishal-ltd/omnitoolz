@@ -18,7 +18,7 @@ import { loadPdf, savePdf } from "./pdf-core";
 
 export default function DeletePdfPagesTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [pagesInput, setPagesInput] = useState("");
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
@@ -81,7 +81,7 @@ export default function DeletePdfPagesTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

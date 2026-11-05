@@ -79,7 +79,7 @@ function htmlToBlocks(html: string): Block[] {
 
 export default function WordToPdfTool() {
   const queue = useFileQueue({ accept: ["docx"], multiple: true, maxFiles: 5, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
 
@@ -168,7 +168,7 @@ export default function WordToPdfTool() {
           <FileDropZone accept={["docx"]} multiple maxFiles={5} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} hint=".docx (Word 2007+) — .doc is not supported" />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="border-[3px] border-warn bg-warn-soft p-3">
             <p className="text-sm text-ink">

@@ -194,7 +194,7 @@ export default function AudioTrimmerTool() {
         {recording && (
           <div className="flex flex-wrap items-center gap-4 border-[3px] border-err bg-err-soft p-4">
             <span className="size-3 animate-blink bg-err" aria-hidden />
-            <p className="font-display text-[10px] text-ink uppercase">Recording {clock(elapsed)}</p>
+            <p className="font-display text-display-xs text-ink uppercase">Recording {clock(elapsed)}</p>
             <Button onClick={stopRecording}>
               <Square className="size-4" aria-hidden />
               Stop
@@ -220,7 +220,7 @@ export default function AudioTrimmerTool() {
         {audioBuffer && peaks.length > 0 && (
           <>
             <div className="border-[3px] border-edge bg-card p-3 shadow-[4px_4px_0_0_var(--color-shadow)]">
-              <p className="font-display text-[8px] text-ink-soft uppercase">
+              <p className="font-display text-display-xs text-ink-soft uppercase">
                 Waveform — {formatBytes(file?.size ?? 0)} · {clock(duration)} total
               </p>
               <canvas

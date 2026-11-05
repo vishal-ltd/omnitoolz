@@ -28,7 +28,7 @@ const ANCHORS: Array<{ value: Anchor; label: string }> = [
 
 export default function WatermarkImageTool() {
   const queue = useFileQueue({ accept: ["jpg", "jpeg", "png", "webp"], multiple: true, maxFiles: 20, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [text, setText] = useState("© Your Name");
   const [anchor, setAnchor] = useState<Anchor>("bottom-right");
   const [sizePct, setSizePct] = useState(4);
@@ -151,7 +151,7 @@ export default function WatermarkImageTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">The watermark scales with each image, so batches stay consistent.</p>

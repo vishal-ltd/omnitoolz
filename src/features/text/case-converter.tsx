@@ -59,7 +59,7 @@ export default function CaseConverterTool() {
               type="button"
               aria-pressed={style === option.id}
               onClick={() => setStyle(option.id)}
-              className={`border-[3px] px-3 py-2 font-display text-[9px] uppercase transition-all duration-100 ${
+              className={`border-[3px] px-3 py-2 font-display text-display-xs uppercase transition-all duration-100 ${
                 style === option.id
                   ? "border-edge bg-brand text-on-brand shadow-[3px_3px_0_0_var(--color-shadow)]"
                   : "border-edge bg-card text-ink shadow-[3px_3px_0_0_var(--color-shadow)] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"

@@ -57,7 +57,7 @@ function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: 
         integrity === false ? "border-err bg-err-soft" : "border-edge bg-card"
       }`}
     >
-      <p className="font-display text-[10px] text-ink uppercase">
+      <p className="font-display text-display-xs text-ink uppercase">
         {report.signer ?? "Unknown signer"} · {fileName}
       </p>
 
@@ -145,7 +145,7 @@ export default function VerifyPdfSignatureTool() {
 
         {reports && reports.length === 0 && (
           <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[10px] text-ink uppercase">No digital signatures</p>
+            <p className="font-display text-display-xs text-ink uppercase">No digital signatures</p>
             <p className="mt-2 font-body text-lg text-ink-soft">
               “{file?.name}” ({formatBytes(file?.size ?? 0)}) carries no signature fields — nothing
               to verify. That&apos;s normal for most everyday PDFs.

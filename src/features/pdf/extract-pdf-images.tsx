@@ -14,7 +14,7 @@ import { loadPdf } from "./pdf-core";
 
 export default function ExtractPdfImagesTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [stats, setStats] = useState<{ extracted: number; skipped: number } | null>(null);
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
@@ -88,7 +88,7 @@ export default function ExtractPdfImagesTool() {
           <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Pictures come out byte-for-byte — no re-compression.</p>

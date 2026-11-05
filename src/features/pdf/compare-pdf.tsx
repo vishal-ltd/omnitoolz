@@ -60,7 +60,7 @@ function Row({ label, a, b }: { label: string; a: string; b: string }) {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2.5">
       <span className={`break-words font-body text-lg ${differs ? "text-ink" : "text-ink-soft"}`}>{a}</span>
-      <span className="font-display text-[8px] text-ink-soft uppercase">{label}</span>
+      <span className="font-display text-display-xs text-ink-soft uppercase">{label}</span>
       <span className={`break-words text-right font-body text-lg ${differs ? "text-ink" : "text-ink-soft"}`}>{b}</span>
     </div>
   );
@@ -68,7 +68,7 @@ function Row({ label, a, b }: { label: string; a: string; b: string }) {
 
 export default function ComparePdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 2, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [report, setReport] = useState<CompareReport | null>(null);
 
   const [a, b] = queue.files;
@@ -125,7 +125,7 @@ export default function ComparePdfTool() {
         <JobProgress state={state} />
       ) : state.phase === "error" ? (
         <div className="space-y-4">
-          <JobError message={state.error ?? ""} />
+          <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />
           <Button variant="secondary" onClick={() => { queue.clear(); reset(); }}>
             Start over
           </Button>
@@ -140,7 +140,7 @@ export default function ComparePdfTool() {
             }`}
             role="status"
           >
-            <p className="font-display text-[10px] uppercase">
+            <p className="font-display text-display-xs uppercase">
               {differentCount === 0 && report.samePageCount
                 ? "Text-wise identical"
                 : `${differentCount} ${differentCount === 1 ? "page differs" : "pages differ"}`}
@@ -163,7 +163,7 @@ export default function ComparePdfTool() {
 
           {differentCount > 0 && (
             <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-              <p className="font-display text-[9px] text-ink-soft uppercase">Pages with different text</p>
+              <p className="font-display text-display-xs text-ink-soft uppercase">Pages with different text</p>
               <p className="mt-2 font-body text-lg text-ink">
                 {shownDiffs.join(", ")}
                 {differentCount > shownDiffs.length && ` … and ${differentCount - shownDiffs.length} more`}
@@ -182,11 +182,11 @@ export default function ComparePdfTool() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="mb-1.5 font-display text-[9px] text-ink-soft uppercase">1 · Original</p>
+              <p className="mb-1.5 font-display text-display-xs text-ink-soft uppercase">1 · Original</p>
               <FileDropZone accept={["pdf"]} multiple={false} maxFiles={2} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
             </div>
             <div>
-              <p className="mb-1.5 font-display text-[9px] text-ink-soft uppercase">2 · Revised</p>
+              <p className="mb-1.5 font-display text-display-xs text-ink-soft uppercase">2 · Revised</p>
               <FileDropZone accept={["pdf"]} multiple={false} maxFiles={2} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
             </div>
           </div>

@@ -70,7 +70,7 @@ export default function TotpGeneratorTool() {
 
         {code && (
           <div className="border-[3px] border-edge bg-card p-6 text-center shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[28px] tracking-[0.2em] text-ink">
+            <p className="font-display text-display-lg tracking-[0.2em] text-ink">
               {code.slice(0, 3)} {code.slice(3)}
             </p>
             <div className="mx-auto mt-4 h-4 w-48 border-[3px] border-edge bg-canvas">

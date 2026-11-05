@@ -14,7 +14,7 @@ import { loadPdfjs } from "./pdfjs";
 
 export default function PdfToWordTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [paragraphCount, setParagraphCount] = useState<number | null>(null);
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
@@ -119,7 +119,7 @@ export default function PdfToWordTool() {
           <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="border-[3px] border-warn bg-warn-soft p-3">
             <p className="text-sm text-ink">

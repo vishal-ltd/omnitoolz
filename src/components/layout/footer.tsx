@@ -18,7 +18,7 @@ export function Footer() {
               OMNI<span className="text-brand">TOOLZ</span>
             </span>
           </div>
-          <p className="mt-3 font-display text-[10px] text-ink-soft uppercase">{site.tagline}</p>
+          <p className="mt-3 font-display text-display-xs text-ink-soft uppercase">{site.tagline}</p>
           <p className="mt-3 text-sm leading-relaxed text-ink-soft">
             Every tool runs locally in your browser. Your files never leave your
             device — no upload, no storage, no tracking.
@@ -26,11 +26,11 @@ export function Footer() {
         </div>
 
         <nav aria-label="Categories">
-          <h2 className="font-display text-[10px] text-ink uppercase">Categories</h2>
+          <h2 className="font-display text-display-xs text-ink uppercase">Categories</h2>
           <ul className="mt-4 space-y-2">
             {categories.map((category) => (
               <li key={category.id}>
-                <Link href={`/${category.slug}`} className="font-body text-lg text-ink-soft transition-colors hover:text-brand">
+                <Link href={`/${category.slug}`} className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">
                   ▸ {category.name}
                 </Link>
               </li>
@@ -39,11 +39,11 @@ export function Footer() {
         </nav>
 
         <nav aria-label="Featured tools">
-          <h2 className="font-display text-[10px] text-ink uppercase">Popular tools</h2>
+          <h2 className="font-display text-display-xs text-ink uppercase">Popular tools</h2>
           <ul className="mt-4 space-y-2">
             {featured.map((tool) => (
               <li key={tool.id}>
-                <Link href={tool.route} className="font-body text-lg text-ink-soft transition-colors hover:text-brand">
+                <Link href={tool.route} className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">
                   ▸ {tool.name}
                 </Link>
               </li>
@@ -52,25 +52,25 @@ export function Footer() {
         </nav>
 
         <nav aria-label="Company">
-          <h2 className="font-display text-[10px] text-ink uppercase">Company</h2>
+          <h2 className="font-display text-display-xs text-ink uppercase">Company</h2>
           <ul className="mt-4 space-y-2">
             <li>
-              <Link href="/about" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ About</Link>
+              <Link href="/about" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ About</Link>
             </li>
             <li>
-              <Link href="/privacy" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Privacy policy</Link>
+              <Link href="/privacy" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Privacy policy</Link>
             </li>
             <li>
-              <Link href="/terms" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Terms of use</Link>
+              <Link href="/terms" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Terms of use</Link>
             </li>
             <li>
-              <Link href="/contact" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Contact & feedback</Link>
+              <Link href="/contact" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Contact & feedback</Link>
             </li>
             <li>
-              <Link href="/security" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Security</Link>
+              <Link href="/security" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Security</Link>
             </li>
             <li>
-              <Link href="/accessibility" className="font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Accessibility</Link>
+              <Link href="/accessibility" className="inline-flex min-h-11 items-center font-body text-lg text-ink-soft transition-colors hover:text-brand">▸ Accessibility</Link>
             </li>
           </ul>
         </nav>

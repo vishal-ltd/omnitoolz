@@ -95,7 +95,7 @@ function previewFontFamily(choice: FontChoice, fontLabel: string | null): string
 
 export default function EditPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   useHandoffFile(queue.addFiles, queue.files.length > 0);
 
   const file = queue.files[0];
@@ -811,7 +811,7 @@ export default function EditPdfTool() {
       ) : state.phase === "running" ? (
         <JobProgress state={state} />
       ) : phase === "loading" ? (
-        <div className="border-[3px] border-edge bg-card p-4 font-display text-[10px] text-ink uppercase shadow-[4px_4px_0_0_var(--color-shadow)]">
+        <div className="border-[3px] border-edge bg-card p-4 font-display text-display-xs text-ink uppercase shadow-[4px_4px_0_0_var(--color-shadow)]">
           Opening document…
         </div>
       ) : phase === "editing" && file ? (
@@ -821,7 +821,7 @@ export default function EditPdfTool() {
             <Button variant="ghost" size="sm" onClick={startOver} aria-label="Start over">
               <X className="size-4" aria-hidden />
             </Button>
-            <span className="font-display text-[10px] tracking-wide text-ink uppercase">Edit PDF</span>
+            <span className="font-display text-display-xs tracking-wide text-ink uppercase">Edit PDF</span>
             <div className="ml-auto flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={undo} disabled={stackSizes.undo === 0} aria-label="Undo">
                 <Undo2 className="size-4" aria-hidden />
@@ -852,7 +852,7 @@ export default function EditPdfTool() {
                   if (entry.id !== "select" && entry.id !== "text") setSelected(null);
                 }}
                 className={cn(
-                  "border-[3px] border-edge px-3 py-1.5 font-display text-[9px] uppercase shadow-[2px_2px_0_0_var(--color-shadow)]",
+                  "border-[3px] border-edge px-3 py-1.5 font-display text-display-xs uppercase shadow-[2px_2px_0_0_var(--color-shadow)]",
                   tool === entry.id ? "bg-brand text-on-brand" : "bg-canvas text-ink-soft",
                 )}
               >
@@ -871,7 +871,7 @@ export default function EditPdfTool() {
           {sheet ? (
             <div className="space-y-3 border-[3px] border-edge bg-card p-3 shadow-[4px_4px_0_0_var(--color-shadow)]">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-display text-[10px] tracking-wide text-ink uppercase">
+                <p className="font-display text-display-xs tracking-wide text-ink uppercase">
                   Edit existing text
                 </p>
                 <Button variant="ghost" size="sm" onClick={() => setSheet(null)} aria-label="Close text editor">
@@ -974,7 +974,7 @@ export default function EditPdfTool() {
                     >
                       +
                     </Button>
-                    <span className="font-display text-[9px] tracking-wide text-ink-soft uppercase">pt</span>
+                    <span className="font-display text-display-xs tracking-wide text-ink-soft uppercase">pt</span>
                   </div>
                 </Field>
                 <Button onClick={commitSheet} className="ml-auto">
@@ -1084,8 +1084,8 @@ export default function EditPdfTool() {
             </div>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
-          {editorError && <JobError message={editorError} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
+          {editorError && <JobError error={editorError} />}
 
           {/* Page + zoom navigation */}
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1103,7 +1103,7 @@ export default function EditPdfTool() {
               >
                 <ChevronLeft className="size-4" aria-hidden />
               </Button>
-              <span className="px-1 font-display text-[10px] tracking-wide text-ink">
+              <span className="px-1 font-display text-display-xs tracking-wide text-ink">
                 Page {current + 1} of {pageCount}
               </span>
               <Button
@@ -1124,7 +1124,7 @@ export default function EditPdfTool() {
               <Button variant="ghost" size="sm" onClick={() => setZoom((z) => clampZoom(z - 0.1))} aria-label="Zoom out">
                 <Minus className="size-4" aria-hidden />
               </Button>
-              <span className="w-12 text-center font-display text-[10px] tracking-wide text-ink">
+              <span className="w-12 text-center font-display text-display-xs tracking-wide text-ink">
                 {Math.round(zoom * 100)}%
               </span>
               <Button variant="ghost" size="sm" onClick={() => setZoom((z) => clampZoom(z + 0.1))} aria-label="Zoom in">
@@ -1158,7 +1158,7 @@ export default function EditPdfTool() {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={thumb.dataUrl} alt={`Page ${thumb.pageNumber}`} className="block w-full" />
-                  <span className="block border-t-[3px] border-inherit bg-card py-0.5 text-center font-display text-[8px] text-ink">
+                  <span className="block border-t-[3px] border-inherit bg-card py-0.5 text-center font-display text-display-xs text-ink">
                     {thumb.pageNumber}
                   </span>
                 </button>
@@ -1338,7 +1338,7 @@ export default function EditPdfTool() {
                 ? `${overlays.length} edit${overlays.length === 1 ? "" : "s"} queued — Save bakes them in permanently.`
                 : "Tap existing text to rewrite it, or pick a tool and click the page."}
             </p>
-            <p className="font-display text-[10px] text-ink uppercase">
+            <p className="font-display text-display-xs text-ink uppercase">
               {selected !== null ? "Element selected" : `${Math.round(zoom * 100)}% zoom`}
             </p>
           </div>

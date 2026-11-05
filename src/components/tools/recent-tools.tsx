@@ -54,11 +54,11 @@ export function RecentTools() {
   return (
     <section className="mt-12" aria-label="Recently used tools">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm text-ink">Continue playing</h2>
+        <h2 className="text-display-sm sm:text-display-md text-ink">Continue playing</h2>
         <button
           type="button"
           onClick={clear}
-          className="inline-flex items-center gap-1 border-2 border-edge bg-card px-2 py-1 font-display text-[8px] text-ink-soft uppercase transition-colors hover:border-err hover:bg-err hover:text-canvas"
+          className="inline-flex items-center gap-1 border-2 border-edge bg-card px-2 py-1 font-display text-display-xs text-ink-soft uppercase transition-colors hover:border-err hover:bg-err hover:text-canvas"
         >
           <X className="size-3" aria-hidden />
           Clear

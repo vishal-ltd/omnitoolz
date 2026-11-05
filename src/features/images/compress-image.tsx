@@ -28,7 +28,7 @@ const TARGET_PRESETS = [50, 100, 200, 500, 1024] as const; // KB
 
 export default function CompressImageTool() {
   const queue = useFileQueue({ accept: ["jpg", "jpeg", "png", "webp"], multiple: true, maxFiles: 20, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [mode, setMode] = useState<Mode>("balanced");
   const [quality, setQuality] = useState(75);
   const [formatMode, setFormatMode] = useState("smart");
@@ -214,7 +214,7 @@ export default function CompressImageTool() {
                         key={kb}
                         type="button"
                         onClick={() => applyPreset(kb)}
-                        className={`border-[3px] border-edge px-3 py-1.5 font-display text-[9px] uppercase shadow-[2px_2px_0_0_var(--color-shadow)] transition-colors ${
+                        className={`border-[3px] border-edge px-3 py-1.5 font-display text-display-xs uppercase shadow-[2px_2px_0_0_var(--color-shadow)] transition-colors ${
                           targetBytes === kb * 1024 ? "bg-brand text-on-brand" : "bg-card text-ink-soft"
                         }`}
                       >
@@ -231,7 +231,7 @@ export default function CompressImageTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

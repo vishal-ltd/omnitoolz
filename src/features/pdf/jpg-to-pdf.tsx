@@ -19,7 +19,7 @@ const PAPER: Record<string, [number, number]> = {
 
 export default function JpgToPdfTool() {
   const queue = useFileQueue({ accept: ["jpg", "jpeg", "png", "webp"], multiple: true, maxFiles: 30, maxSizeMb: 30 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [pageSize, setPageSize] = useState("auto");
   const [margin, setMargin] = useState("36");
 
@@ -118,7 +118,7 @@ export default function JpgToPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

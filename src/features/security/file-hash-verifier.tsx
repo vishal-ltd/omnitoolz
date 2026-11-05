@@ -99,7 +99,7 @@ export default function FileHashVerifierTool() {
             {computed && (
               <div className="space-y-3">
                 <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-                  <p className="font-display text-[8px] text-ink-soft uppercase">{algorithm} of {file.name}</p>
+                  <p className="font-display text-display-xs text-ink-soft uppercase">{algorithm} of {file.name}</p>
                   <p className="mt-1.5 break-all font-mono text-sm text-ink">{computed}</p>
                 </div>
 
@@ -110,7 +110,7 @@ export default function FileHashVerifierTool() {
                     }`}
                     role="status"
                   >
-                    <p className="font-display text-[10px] uppercase">
+                    <p className="font-display text-display-xs uppercase">
                       {match === "match" ? "✓ Checksums match" : "✗ Checksums differ"}
                     </p>
                     <p className="mt-2 font-body text-lg text-ink-soft">

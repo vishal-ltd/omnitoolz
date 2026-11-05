@@ -28,9 +28,9 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-9 px-3 text-[9px] gap-1.5",
-  md: "h-11 px-4 text-[10px] gap-2",
-  lg: "h-12 px-6 text-[11px] gap-2",
+  sm: "h-10 px-3 text-display-xs gap-1.5",
+  md: "h-11 px-4 text-display-xs gap-2",
+  lg: "h-12 px-6 text-display-sm gap-2",
 };
 
 export function Button({
@@ -50,7 +50,7 @@ export function Button({
         "transition-[transform,box-shadow,background-color,color] duration-100",
         "hover:-translate-x-px hover:-translate-y-px hover:shadow-[4px_4px_0_0_var(--color-shadow)]",
         "active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:pointer-events-none disabled:border-line disabled:bg-canvas disabled:text-ink-soft disabled:shadow-none",
         variantClasses[variant],
         sizeClasses[size],
         className,

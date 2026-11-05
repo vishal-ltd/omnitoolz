@@ -46,8 +46,8 @@ export function AccentPicker() {
             title={`${option.label} accent`}
             onClick={() => select(option.id)}
             className={cn(
-              // 24px square keeps the tap target above the WCAG 2.5.8 minimum.
-              "size-6 border-[2px] transition-transform hover:-translate-y-0.5",
+              // 44px swatches: reachable with a thumb and still small enough to read as chips.
+              "size-11 border-[3px] transition-transform hover:-translate-y-0.5",
               active ? "border-ink" : "border-transparent",
             )}
             style={{

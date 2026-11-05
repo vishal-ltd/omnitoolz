@@ -38,7 +38,7 @@ export default function PasswordAuditorTool() {
         {active && (
           <>
             <div className={`border-[3px] p-4 shadow-[4px_4px_0_0_var(--color-shadow)] ${VERDICT_STYLE[audit.verdict]}`}>
-              <p className="font-display text-[10px] uppercase">{audit.verdict}</p>
+              <p className="font-display text-display-xs uppercase">{audit.verdict}</p>
               <div className="mt-3 h-4 border-[3px] border-edge bg-canvas">
                 <div
                   className={`h-full transition-[width] ${
@@ -61,7 +61,7 @@ export default function PasswordAuditorTool() {
               ].map(([label, on]) => (
                 <span
                   key={label as string}
-                  className={`border-[3px] border-edge px-2 py-1 text-center font-display text-[9px] uppercase ${
+                  className={`border-[3px] border-edge px-2 py-1 text-center font-display text-display-xs uppercase ${
                     on ? "bg-ok-soft text-ink" : "bg-canvas text-ink-soft"
                   }`}
                 >

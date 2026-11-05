@@ -10,7 +10,7 @@ export function LogoMark({ className }: { className?: string }) {
       <rect x="0" y="0" width="16" height="16" fill="var(--color-edge)" />
       <rect x="2" y="2" width="12" height="12" fill="var(--color-brand)" />
       {/* pixel ring (8 blocks, corners cut for an octagon "O") */}
-      <g fill="#ffffff">
+      <g fill="var(--color-on-brand)">
         <rect x="4" y="6" width="2" height="2" />
         <rect x="4" y="8" width="2" height="2" />
         <rect x="10" y="6" width="2" height="2" />

@@ -48,7 +48,7 @@ export default function JwtDecoderTool() {
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="border-[3px] border-edge bg-card p-3 shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <p className="font-display text-[8px] text-ink-soft uppercase">Header</p>
+                <p className="font-display text-display-xs text-ink-soft uppercase">Header</p>
                 <ul className="mt-2 space-y-1 font-body text-lg text-ink">
                   {Object.entries(decoded.header).map(([key, value]) => (
                     <li key={key}>
@@ -59,7 +59,7 @@ export default function JwtDecoderTool() {
                 </ul>
               </div>
               <div className="border-[3px] border-edge bg-card p-3 shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <p className="font-display text-[8px] text-ink-soft uppercase">Lifetime</p>
+                <p className="font-display text-display-xs text-ink-soft uppercase">Lifetime</p>
                 <ul className="mt-2 space-y-1 font-body text-lg text-ink">
                   {decoded.problems.map((problem) => (
                     <li key={problem}>▸ {problem}</li>

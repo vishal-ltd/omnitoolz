@@ -27,7 +27,7 @@ const CANVAS_H = 200;
 
 export default function SignPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [pages, setPages] = useState<RenderedPage[]>([]);
   const [loadingPages, setLoadingPages] = useState(false);
   const [sigMode, setSigMode] = useState<SigMode>("draw");
@@ -224,7 +224,7 @@ export default function SignPdfTool() {
                       type="button"
                       aria-pressed={sigMode === mode}
                       onClick={() => setSigMode(mode)}
-                      className={`flex items-center gap-2 border-[3px] border-edge px-4 py-2 font-display text-[9px] uppercase shadow-[3px_3px_0_0_var(--color-shadow)] ${
+                      className={`flex items-center gap-2 border-[3px] border-edge px-4 py-2 font-display text-display-xs uppercase shadow-[3px_3px_0_0_var(--color-shadow)] ${
                         sigMode === mode ? "bg-brand text-on-brand" : "bg-card text-ink-soft"
                       }`}
                     >
@@ -270,7 +270,7 @@ export default function SignPdfTool() {
               </OptionsPanel>
 
               <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-                <p className="font-display text-[9px] text-ink uppercase">
+                <p className="font-display text-display-xs text-ink uppercase">
                   Tap where the signature should go
                   {placement && !everyPage && ` — page ${placement.pageIndex + 1}`}
                 </p>
@@ -307,7 +307,7 @@ export default function SignPdfTool() {
                 </div>
               </div>
 
-              {state.phase === "error" && <JobError message={state.error ?? ""} />}
+              {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm text-ink-soft">

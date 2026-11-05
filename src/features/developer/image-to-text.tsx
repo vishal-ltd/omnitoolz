@@ -12,7 +12,7 @@ import { baseName, bytesToBlob, type ResultFile } from "@/lib/utils";
 
 export default function ImageToTextTool() {
   const queue = useFileQueue({ accept: ["png", "jpg", "jpeg", "webp", "bmp"], multiple: true, maxFiles: 10, maxSizeMb: 20 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [preview, setPreview] = useState<string | null>(null);
 
   async function extract() {
@@ -52,7 +52,7 @@ export default function ImageToTextTool() {
         <div className="space-y-4">
           {preview && (
             <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-              <p className="font-display text-[9px] text-ink-soft uppercase">Preview</p>
+              <p className="font-display text-display-xs text-ink-soft uppercase">Preview</p>
               <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap font-body text-lg leading-snug text-ink">
                 {preview}
                 {preview.length >= 1200 ? "…" : ""}
@@ -84,7 +84,7 @@ export default function ImageToTextTool() {
           />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

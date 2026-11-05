@@ -27,6 +27,7 @@ export function SearchDialog() {
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
 
   const hits = searchTools(query, 8);
 
@@ -61,11 +62,22 @@ export function SearchDialog() {
 
   useEffect(() => {
     if (open) {
+      wasOpenRef.current = true;
       requestAnimationFrame(() => inputRef.current?.focus());
-    } else {
-      previousFocusRef.current?.focus();
-      previousFocusRef.current = null;
+      return;
     }
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
+    // Ctrl+K usually opens with focus on <body>, so the remembered element is
+    // often useless — fall back to the header trigger instead of dropping
+    // focus at the top of the document.
+    const remembered = previousFocusRef.current;
+    const target =
+      remembered && remembered !== document.body && remembered.isConnected
+        ? remembered
+        : document.querySelector<HTMLElement>('button[aria-label="Search tools"]');
+    target?.focus();
+    previousFocusRef.current = null;
   }, [open]);
 
   function go(route: string) {
@@ -136,7 +148,7 @@ export function SearchDialog() {
             aria-activedescendant={hits[activeIndex] ? `search-result-${hits[activeIndex].id}` : undefined}
             autoComplete="off"
           />
-          <kbd className="hidden shrink-0 border-2 border-line-strong bg-card px-2 py-1 font-display text-[8px] text-ink-soft sm:block">
+          <kbd className="hidden shrink-0 border-2 border-line-strong bg-card px-2 py-1 font-display text-display-xs text-ink-soft sm:block">
             ESC
           </kbd>
         </div>
@@ -168,14 +180,14 @@ export function SearchDialog() {
                         : "border-transparent hover:bg-canvas",
                     )}
                   >
-                    <span className="w-4 shrink-0 font-display text-[10px] text-brand" aria-hidden>
+                    <span className="w-4 shrink-0 font-display text-display-xs text-brand" aria-hidden>
                       {index === activeIndex ? "▸" : ""}
                     </span>
                     <IconBox tone="card" className="size-9 shrink-0 shadow-[2px_2px_0_0_var(--color-shadow)]">
                       <ToolIcon name={hit.icon} className="size-4" />
                     </IconBox>
                     <span className="min-w-0 flex-1">
-                      <span className="block font-display text-[10px] text-ink">{hit.name}</span>
+                      <span className="block font-display text-display-xs text-ink">{hit.name}</span>
                       <span className="block truncate font-body text-base text-ink-soft">{hit.description}</span>
                     </span>
                     <span className="shrink-0 font-body text-sm uppercase text-ink-soft">{hit.categoryName}</span>

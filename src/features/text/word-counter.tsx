@@ -93,19 +93,19 @@ export default function WordCounterTool() {
           {cards.map((card) => (
             <div key={card.label} className="border-[3px] border-edge bg-canvas px-3 py-3 text-center shadow-[3px_3px_0_0_var(--color-shadow)]">
               <p className="font-body text-2xl text-ink tabular-nums">{card.value}</p>
-              <p className="mt-1 font-display text-[8px] tracking-wide text-ink-soft uppercase">{card.label}</p>
+              <p className="mt-1 font-display text-display-xs tracking-wide text-ink-soft uppercase">{card.label}</p>
             </div>
           ))}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="border-[3px] border-edge bg-canvas px-4 py-3 shadow-[3px_3px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[8px] tracking-wide text-ink-soft uppercase">Reading time</p>
+            <p className="font-display text-display-xs tracking-wide text-ink-soft uppercase">Reading time</p>
             <p className="mt-1 font-body text-2xl text-ink">{minutesLabel(stats.readingMinutes)}</p>
             <p className="font-body text-sm text-ink-soft">at 200 words per minute</p>
           </div>
           <div className="border-[3px] border-edge bg-canvas px-4 py-3 shadow-[3px_3px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[8px] tracking-wide text-ink-soft uppercase">Speaking time</p>
+            <p className="font-display text-display-xs tracking-wide text-ink-soft uppercase">Speaking time</p>
             <p className="mt-1 font-body text-2xl text-ink">{minutesLabel(stats.speakingMinutes)}</p>
             <p className="font-body text-sm text-ink-soft">at 130 words per minute</p>
           </div>
@@ -113,12 +113,12 @@ export default function WordCounterTool() {
 
         {stats.topKeywords.length > 0 && (
           <div className="border-[3px] border-dashed border-line-strong bg-canvas/60 px-4 py-3">
-            <p className="font-display text-[8px] tracking-wide text-ink-soft uppercase">Top keywords</p>
+            <p className="font-display text-display-xs tracking-wide text-ink-soft uppercase">Top keywords</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {stats.topKeywords.map((keyword) => (
                 <span key={keyword.word} className="border-[3px] border-edge bg-brand-soft px-3 py-1 font-body text-lg text-brand">
                   {keyword.word}
-                  <span className="ml-1.5 font-display text-[9px]">{keyword.count}</span>
+                  <span className="ml-1.5 font-display text-display-xs">{keyword.count}</span>
                 </span>
               ))}
             </div>

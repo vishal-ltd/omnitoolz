@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StructuredData } from "@/components/structured-data";
 import { ToolIcon } from "@/components/icons";
-import { ToolCard } from "@/components/tools/tool-card";
+import { ToolCatalog } from "@/components/tools/tool-catalog";
+import { IconBox } from "@/components/ui/icon-box";
 import { activeCategories, toolsInCategory } from "@/lib/tools/registry";
 import { site } from "@/lib/site";
 
@@ -71,29 +72,25 @@ export default async function CategoryPage({
       <StructuredData data={graph} />
       <nav aria-label="Breadcrumb" className="font-body text-base text-ink-soft">
         <ol className="flex items-center gap-1.5">
-          <li><Link href="/" className="transition-colors hover:text-brand">Home</Link></li>
-          <li aria-hidden className="font-display text-[8px]">▸</li>
+          <li><Link href="/" className="inline-flex min-h-11 items-center px-1 transition-colors hover:text-brand">Home</Link></li>
+          <li aria-hidden className="font-display text-display-xs">▸</li>
           <li aria-current="page" className="text-ink">{category.name}</li>
         </ol>
       </nav>
 
       <header className="mt-5">
-        <span className="flex size-16 animate-pixel-in items-center justify-center border-[3px] border-edge bg-brand-soft shadow-[4px_4px_0_0_var(--color-shadow)]">
-          <ToolIcon name={category.icon} className="size-8 text-brand" />
-        </span>
-        <h1 className="mt-4 text-lg text-ink sm:text-xl">{category.name}</h1>
+        <IconBox className="size-16 animate-pixel-in shadow-[4px_4px_0_0_var(--color-shadow)]">
+          <ToolIcon name={category.icon} className="size-8" />
+        </IconBox>
+        <h1 className="mt-4 text-display-md text-ink sm:text-display-lg">{category.name}</h1>
         <p className="mt-2 max-w-2xl text-base leading-snug text-ink-soft">{category.description}</p>
         <p className="mt-1 font-body text-lg text-ink-soft">
-          <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-[9px] text-on-brand">{tools.length}</span>{" "}
+          <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-display-xs text-on-brand">{tools.length}</span>{" "}
           {tools.length === 1 ? "tool" : "tools"} · all run in your browser
         </p>
       </header>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tools.map((tool, index) => (
-          <ToolCard key={tool.id} tool={tool} index={index} />
-        ))}
-      </div>
+      <ToolCatalog tools={tools} showCategory={false} />
     </>
   );
 }

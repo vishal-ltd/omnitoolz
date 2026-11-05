@@ -12,16 +12,17 @@ interface MatchInfo {
 
 export default function RegexTesterTool() {
   const [pattern, setPattern] = useState("");
-  const [flags, setFlags] = useState("g");
   const [caseInsensitive, setCaseInsensitive] = useState(false);
   const [multiline, setMultiline] = useState(false);
   const [dotAll, setDotAll] = useState(false);
+  const [unicode, setUnicode] = useState(false);
   const [testText, setTestText] = useState("");
 
+  // One model only. A free-text flags box used to sit next to these checkboxes
+  // and quietly ignored everything except "u".
   const effectiveFlags = useMemo(
-    () =>
-      `g${caseInsensitive ? "i" : ""}${multiline ? "m" : ""}${dotAll ? "s" : ""}` + (flags.includes("u") ? "u" : ""),
-    [caseInsensitive, multiline, dotAll, flags],
+    () => `g${caseInsensitive ? "i" : ""}${multiline ? "m" : ""}${dotAll ? "s" : ""}${unicode ? "u" : ""}`,
+    [caseInsensitive, multiline, dotAll, unicode],
   );
 
   const SAFE_TEST_TEXT_MAX = 20_000;
@@ -75,26 +76,22 @@ const { matches, error } = useMemo(() => {
   return (
     <ToolWidget>
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_110px]">
-          <Field label="Pattern">
-            <TextInput
-              value={pattern}
-              onChange={(event) => setPattern(event.target.value)}
-              placeholder="\b\w+@\w+\.\w+\b"
-              aria-label="Regular expression"
-              className="font-mono"
-            />
-          </Field>
-          <Field label="Flags">
-            <TextInput value={flags} onChange={(event) => setFlags(event.target.value)} aria-label="Regex flags" />
-          </Field>
-        </div>
+        <Field label="Pattern">
+          <TextInput
+            value={pattern}
+            onChange={(event) => setPattern(event.target.value)}
+            placeholder="\b\w+@\w+\.\w+\b"
+            aria-label="Regular expression"
+            className="font-body"
+          />
+        </Field>
 
-        <OptionsPanel title="Common flags">
+        <OptionsPanel title="Flags">
           <div className="flex flex-wrap gap-4 sm:col-span-2">
             <Checkbox checked={caseInsensitive} onChange={setCaseInsensitive} label="i — case-insensitive" />
             <Checkbox checked={multiline} onChange={setMultiline} label="m — multiline ^$" />
             <Checkbox checked={dotAll} onChange={setDotAll} label="s — dot matches all" />
+            <Checkbox checked={unicode} onChange={setUnicode} label="u — unicode" />
           </div>
         </OptionsPanel>
 
@@ -111,7 +108,7 @@ const { matches, error } = useMemo(() => {
         {error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</p>}
 
         <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-          <p className="font-display text-[9px] text-ink-soft uppercase">
+          <p className="font-display text-display-xs text-ink-soft uppercase">
             {matches.length} {matches.length === 1 ? "match" : "matches"}
             {matches.length > 0 && ` · flags /${effectiveFlags}/`}
           </p>

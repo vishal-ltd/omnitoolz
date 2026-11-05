@@ -53,7 +53,7 @@ function parseSlideXml(xml: string): SlideText {
 
 export default function PptxToPdfTool() {
   const queue = useFileQueue({ accept: ["pptx"], multiple: true, maxFiles: 5, maxSizeMb: 50 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [slideSummary, setSlideSummary] = useState<string | null>(null);
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
@@ -167,7 +167,7 @@ export default function PptxToPdfTool() {
           <FileDropZone accept={["pptx"]} multiple maxFiles={5} maxSizeMb={50} onFiles={queue.addFiles} existingCount={queue.files.length} hint=".pptx (PowerPoint 2007+)" />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="border-[3px] border-warn bg-warn-soft p-3">
             <p className="text-sm text-ink">

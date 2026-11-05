@@ -93,7 +93,7 @@ export default function TimestampConverterTool() {
         <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
           {formatParts(target).map(([label, value]) => (
             <li key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <span className="shrink-0 font-display text-[8px] text-ink-soft uppercase">{label}</span>
+              <span className="shrink-0 font-display text-display-xs text-ink-soft uppercase">{label}</span>
               <span className="break-all text-right font-body text-lg text-ink">{value}</span>
             </li>
           ))}

@@ -18,7 +18,7 @@ type Angle = "90" | "180" | "270";
 
 export default function RotatePdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
   const [angle, setAngle] = useState<Angle>("90");
@@ -96,7 +96,7 @@ export default function RotatePdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Rotation never re-encodes page content — quality is untouched.</p>

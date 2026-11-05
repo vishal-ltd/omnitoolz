@@ -24,7 +24,7 @@ const PAGE_SIZES: Record<string, { label: string; pt: [number, number] }> = {
 };
 
 export default function CameraScanPdfTool() {
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [shots, setShots] = useState<Shot[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
@@ -236,7 +236,7 @@ export default function CameraScanPdfTool() {
 
           {shots.length > 0 && (
             <>
-              <p className="font-display text-[10px] text-ink uppercase">
+              <p className="font-display text-display-xs text-ink uppercase">
                 {shots.length} {shots.length === 1 ? "shot" : "shots"} — drag order coming via the file list
               </p>
               <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -244,7 +244,7 @@ export default function CameraScanPdfTool() {
                   <li key={shot.url} className="relative animate-pixel-in border-[3px] border-edge bg-white shadow-[3px_3px_0_0_var(--color-shadow)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={shot.url} alt={`Shot ${index + 1}`} className="w-full" />
-                    <span className="absolute -top-2 -left-2 border-[3px] border-edge bg-brand px-1.5 py-0.5 font-display text-[8px] text-on-brand">
+                    <span className="absolute -top-2 -left-2 border-[3px] border-edge bg-brand px-1.5 py-0.5 font-display text-display-xs text-on-brand">
                       {index + 1}
                     </span>
                     <button
@@ -262,7 +262,7 @@ export default function CameraScanPdfTool() {
                 ))}
               </ol>
 
-              {state.phase === "error" && <JobError message={state.error ?? ""} />}
+              {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
               <Button size="lg" onClick={() => buildPdf(shots, pageSize, marginMm)}>
                 Build PDF ({shots.length} {shots.length === 1 ? "page" : "pages"})

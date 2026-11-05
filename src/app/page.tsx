@@ -41,14 +41,14 @@ export default function HomePage() {
           {HERO_CHIPS.map((chip) => (
             <span
               key={chip}
-              className="border-[3px] border-edge bg-card px-2.5 py-1 font-display text-[8px] text-ink-soft uppercase shadow-[2px_2px_0_0_var(--color-shadow)]"
+              className="border-[3px] border-edge bg-card px-2.5 py-1 font-display text-display-xs text-ink-soft uppercase shadow-[2px_2px_0_0_var(--color-shadow)]"
             >
               {chip}
             </span>
           ))}
         </div>
 
-        <h1 className="mx-auto mt-6 max-w-3xl animate-pixel-in text-base leading-[1.7] text-ink sm:text-xl">
+        <h1 className="mx-auto mt-6 max-w-3xl animate-pixel-in text-display-md leading-[1.5] text-ink sm:text-display-lg">
           Every Tool.<br />
           <span className="text-brand">One Place.</span>
           <span className="ml-2 inline-block animate-blink text-ink" aria-hidden>▮</span>
@@ -67,7 +67,7 @@ export default function HomePage() {
             <Link
               key={tool.id}
               href={tool.route}
-              className="animate-pixel-in border-[3px] border-edge bg-card px-3.5 py-1.5 font-display text-[9px] text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
+              className="animate-pixel-in flex min-h-11 items-center border-[3px] border-edge bg-card px-3.5 py-2 font-display text-display-xs text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
               style={{ animationDelay: `${index * 70}ms` }}
             >
               {tool.name}
@@ -78,13 +78,15 @@ export default function HomePage() {
 
       {/* ── Retro ticker ─────────────────────────────────────────── */}
       <div className="mt-6 overflow-hidden border-[3px] border-edge bg-brand py-2 shadow-[4px_4px_0_0_var(--color-shadow)]" aria-hidden>
-        <div className="flex w-max animate-ticker gap-0">
-          {ticker.map((tool, index) => (
-            <span key={`${tool.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap px-3 font-display text-[9px] text-on-brand uppercase">
-              {tool.name}
-              <span className="text-on-brand">◆</span>
-            </span>
-          ))}
+        <div className="ticker-mask overflow-hidden">
+          <div className="flex w-max animate-ticker gap-0">
+            {ticker.map((tool, index) => (
+              <span key={`${tool.id}-${index}`} className="flex items-center gap-3 whitespace-nowrap px-3 font-display text-display-xs text-on-brand uppercase">
+                {tool.name}
+                <span className="text-on-brand">◆</span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -93,7 +95,7 @@ export default function HomePage() {
       {/* ── Featured tools ───────────────────────────────────────── */}
       <section className="mt-14" aria-labelledby="featured-heading">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 id="featured-heading" className="text-sm text-ink">
+          <h2 id="featured-heading" className="text-display-sm sm:text-display-md text-ink">
             Featured tools <span className="text-brand" aria-hidden>★</span>
           </h2>
           <p className="font-body text-lg text-ink-soft">{liveTools().length} tools and counting</p>
@@ -107,7 +109,7 @@ export default function HomePage() {
 
       {/* ── Categories ───────────────────────────────────────────── */}
       <section className="mt-14" aria-labelledby="categories-heading">
-        <h2 id="categories-heading" className="text-sm text-ink">
+        <h2 id="categories-heading" className="text-display-sm sm:text-display-md text-ink">
           Browse categories <span className="text-brand" aria-hidden>▸▸</span>
         </h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -119,13 +121,13 @@ export default function HomePage() {
               style={{ animationDelay: `${index * 60}ms` }}
             >
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2.5 text-[11px] text-ink group-hover:text-brand">
+                <h3 className="flex items-center gap-2.5 text-display-sm text-ink group-hover:text-brand">
                   <IconBox tone="soft" className="size-9">
                     <ToolIcon name={category.icon} className="size-4.5" />
                   </IconBox>
                   {category.name}
                 </h3>
-                <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-[9px] text-on-brand">
+                <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-display-xs text-on-brand">
                   {category.toolCount}
                 </span>
               </div>
@@ -163,7 +165,7 @@ export default function HomePage() {
               <IconBox tone="gold" className="size-12 shadow-[3px_3px_0_0_var(--color-shadow)]">
                 <Icon className="size-6" aria-hidden />
               </IconBox>
-              <h3 className="mt-4 text-[11px] text-ink">{title}</h3>
+              <h3 className="mt-4 text-display-sm text-ink">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
             </div>
           ))}

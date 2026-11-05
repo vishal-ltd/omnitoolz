@@ -51,7 +51,7 @@ export default function HashGeneratorTool() {
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
             {rows.map(([algorithm, value]) => (
               <li key={algorithm} className="flex items-center gap-3 px-4 py-3">
-                <span className="w-20 shrink-0 font-display text-[8px] text-ink-soft uppercase">{algorithm}</span>
+                <span className="w-20 shrink-0 font-display text-display-xs text-ink-soft uppercase">{algorithm}</span>
                 <code className="min-w-0 flex-1 break-all font-body text-lg text-ink">{value}</code>
                 <Button variant="secondary" size="sm" onClick={() => copy(value)}>
                   Copy

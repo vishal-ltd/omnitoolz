@@ -55,7 +55,7 @@ function InfoTile({ label, value, wide }: { label: string; value: string; wide?:
     <div
       className={`border-[3px] border-edge bg-card p-3 shadow-[3px_3px_0_0_var(--color-shadow)] ${wide ? "sm:col-span-2" : ""}`}
     >
-      <p className="font-display text-[8px] text-ink-soft uppercase">{label}</p>
+      <p className="font-display text-display-xs text-ink-soft uppercase">{label}</p>
       <p className="mt-1.5 break-words font-body text-lg leading-snug text-ink">{value || "—"}</p>
     </div>
   );
@@ -160,7 +160,7 @@ export default function PdfInformationTool() {
       ) : encrypted ? (
         <div className="space-y-4">
           <div className="border-[3px] border-warn bg-warn-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[10px] text-warn uppercase">Password-protected</p>
+            <p className="font-display text-display-xs text-warn uppercase">Password-protected</p>
             <p className="mt-2 font-body text-lg text-ink">
               “{file?.name}” is encrypted, so its details can&apos;t be read. Unlock it first — the
               unlocked copy can be inspected here.

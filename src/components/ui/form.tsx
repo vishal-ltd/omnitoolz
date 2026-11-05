@@ -22,7 +22,7 @@ export function Field({
 }) {
   return (
     <label className={cn("flex flex-col gap-1.5", className)}>
-      <span className="font-display text-[9px] tracking-wide text-ink uppercase">{label}</span>
+      <span className="font-display text-display-xs tracking-wide text-ink uppercase">{label}</span>
       {children}
       {hint && <span className="text-xs leading-snug text-ink-soft">{hint}</span>}
     </label>
@@ -55,7 +55,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
         {children}
       </select>
       <span
-        className="pointer-events-none absolute right-3 top-1/2 font-display text-[10px] text-ink-soft -translate-y-1/2"
+        className="pointer-events-none absolute right-3 top-1/2 font-display text-display-xs text-ink-soft -translate-y-1/2"
         aria-hidden
       >
         ▼
@@ -76,7 +76,7 @@ export function Checkbox({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
+    <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink">
       <input
         type="checkbox"
         className="pixel-check"
@@ -157,7 +157,7 @@ export function SegmentedControl<T extends string>({
             aria-checked={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "px-3 py-1.5 font-display text-[9px] uppercase transition-colors",
+              "px-3 py-1.5 font-display text-display-xs uppercase transition-colors",
               active
                 ? "bg-brand text-on-brand shadow-[2px_2px_0_0_var(--color-shadow)]"
                 : "text-ink-soft hover:bg-brand-soft hover:text-brand",

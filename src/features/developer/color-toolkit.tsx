@@ -52,7 +52,7 @@ export default function ColorToolkitTool() {
                     ["HSL → RGB", roundTrip ? `rgb(${roundTrip.r}, ${roundTrip.g}, ${roundTrip.b})` : "—"],
                   ].map(([label, value]) => (
                     <li key={label} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                      <span className="font-display text-[8px] text-ink-soft uppercase">{label}</span>
+                      <span className="font-display text-display-xs text-ink-soft uppercase">{label}</span>
                       <code className="font-body text-lg text-ink">{value}</code>
                     </li>
                   ))}
@@ -66,7 +66,7 @@ export default function ColorToolkitTool() {
                   wcagGrade(ratio) === "Fail" ? "border-err bg-err-soft" : "border-ok bg-ok-soft"
                 }`}
               >
-                <p className="font-display text-[10px] uppercase">
+                <p className="font-display text-display-xs uppercase">
                   Contrast {ratio.toFixed(2)}:1 — {wcagGrade(ratio)}
                 </p>
                 <p className="mt-2 font-body text-lg text-ink-soft">

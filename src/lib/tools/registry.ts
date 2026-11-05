@@ -84,7 +84,7 @@ export const tools: ToolDefinition[] = [
     privacyNote: BROWSER_PRIVACY,
     howTo: [
       "Drop two or more PDF files into the upload area (or click to browse).",
-      "Drag the arrows to put the files in the order you want them to appear in the merged document.",
+      "Use the arrows to put the files in the order you want them to appear in the merged document.",
       "Click “Merge PDFs” and download the combined file.",
     ],
     faqs: [

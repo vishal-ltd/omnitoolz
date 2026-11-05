@@ -14,7 +14,7 @@ function WidgetSkeleton() {
         <span className="size-4 animate-blink border-2 border-edge bg-gold" style={{ animationDelay: "0.2s" }} />
         <span className="size-4 animate-blink border-2 border-edge bg-ok" style={{ animationDelay: "0.4s" }} />
       </div>
-      <p className="font-display text-[10px] text-ink-soft uppercase">Loading tool…</p>
+      <p className="font-display text-display-xs text-ink-soft uppercase">Loading tool…</p>
     </div>
   );
 }

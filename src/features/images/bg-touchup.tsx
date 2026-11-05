@@ -151,7 +151,7 @@ export function BgTouchUp({
 
   return (
     <div className="space-y-3 border-[3px] border-brand bg-brand-soft/40 p-3">
-      <p className="font-display text-[10px] text-ink uppercase">Touch up</p>
+      <p className="font-display text-display-xs text-ink uppercase">Touch up</p>
       <canvas
         ref={viewRef}
         className="w-full touch-none border-[3px] border-edge bg-dither"
@@ -178,7 +178,7 @@ export function BgTouchUp({
             aria-pressed={mode === "erase"}
             onClick={() => setMode("erase")}
             className={cn(
-              "flex items-center gap-2 border-[3px] border-edge px-3 py-2 font-display text-[9px] uppercase shadow-[3px_3px_0_0_var(--color-shadow)]",
+              "flex items-center gap-2 border-[3px] border-edge px-3 py-2 font-display text-display-xs uppercase shadow-[3px_3px_0_0_var(--color-shadow)]",
               mode === "erase" ? "bg-brand text-on-brand" : "bg-card text-ink-soft",
             )}
           >
@@ -190,7 +190,7 @@ export function BgTouchUp({
             aria-pressed={mode === "restore"}
             onClick={() => setMode("restore")}
             className={cn(
-              "flex items-center gap-2 border-[3px] border-edge px-3 py-2 font-display text-[9px] uppercase shadow-[3px_3px_0_0_var(--color-shadow)]",
+              "flex items-center gap-2 border-[3px] border-edge px-3 py-2 font-display text-display-xs uppercase shadow-[3px_3px_0_0_var(--color-shadow)]",
               mode === "restore" ? "bg-brand text-on-brand" : "bg-card text-ink-soft",
             )}
           >

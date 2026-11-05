@@ -70,7 +70,7 @@ export function FileList({
                   aria-label={`Move ${file.name} up`}
                   disabled={index === 0}
                   onClick={() => onMove(index, -1)}
-                  className="border-2 border-edge bg-card p-0.5 text-ink-soft transition-colors hover:bg-brand-soft hover:text-brand disabled:opacity-30"
+                  className="min-h-6 min-w-6 border-2 border-edge bg-card p-0.5 text-ink-soft transition-colors hover:bg-brand-soft hover:text-brand disabled:opacity-30"
                 >
                   <ArrowUp className="size-3.5" aria-hidden />
                 </button>
@@ -79,7 +79,7 @@ export function FileList({
                   aria-label={`Move ${file.name} down`}
                   disabled={index === files.length - 1}
                   onClick={() => onMove(index, 1)}
-                  className="mt-0.5 border-2 border-edge bg-card p-0.5 text-ink-soft transition-colors hover:bg-brand-soft hover:text-brand disabled:opacity-30"
+                  className="mt-0.5 min-h-6 min-w-6 border-2 border-edge bg-card p-0.5 text-ink-soft transition-colors hover:bg-brand-soft hover:text-brand disabled:opacity-30"
                 >
                   <ArrowDown className="size-3.5" aria-hidden />
                 </button>

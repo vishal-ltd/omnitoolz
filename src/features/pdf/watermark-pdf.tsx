@@ -25,7 +25,7 @@ const COLORS: Record<ColorKey, [number, number, number]> = {
 
 export default function WatermarkPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 20, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [text, setText] = useState("DRAFT");
   const [position, setPosition] = useState<Position>("center");
   const [size, setSize] = useState(48);
@@ -148,7 +148,7 @@ export default function WatermarkPdfTool() {
             </OptionsPanel>
           )}
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">The watermark is drawn into every page — up to 20 files per run.</p>

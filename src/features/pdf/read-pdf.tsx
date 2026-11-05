@@ -158,7 +158,7 @@ export default function ReadPdfTool() {
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-[3px] border-edge bg-card p-3 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="min-w-0 truncate font-display text-[10px] text-ink uppercase">
+            <p className="min-w-0 truncate font-display text-display-xs text-ink uppercase">
               {file?.name} — page {current} of {pageCount}
             </p>
             <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function ReadPdfTool() {
 
           {(phase === "opening" || renderedCount < Math.min(pageCount, RENDER_CAP)) && (
             <div className="border-[3px] border-edge bg-card p-3 shadow-[4px_4px_0_0_var(--color-shadow)]">
-              <p className="font-display text-[9px] text-ink-soft uppercase">
+              <p className="font-display text-display-xs text-ink-soft uppercase">
                 {phase === "opening" ? "Opening document…" : `Rendering page ${renderedCount + 1}…`}
               </p>
               <div className="mt-2 h-4 border-[3px] border-edge bg-canvas">
@@ -204,7 +204,7 @@ export default function ReadPdfTool() {
                   className="block w-full border-[3px] border-edge bg-white shadow-[4px_4px_0_0_var(--color-shadow)]"
                 />
                 {renderedCount <= index && (
-                  <span className="absolute inset-0 flex items-center justify-center border-[3px] border-edge bg-canvas font-display text-[10px] text-ink-soft">
+                  <span className="absolute inset-0 flex items-center justify-center border-[3px] border-edge bg-canvas font-display text-display-xs text-ink-soft">
                     PAGE {index + 1}
                   </span>
                 )}
@@ -220,7 +220,7 @@ export default function ReadPdfTool() {
           )}
 
           <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
-            <p className="font-display text-[9px] text-ink uppercase">Continue with…</p>
+            <p className="font-display text-display-xs text-ink uppercase">Continue with…</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {QUICK_TARGETS.map((id) => (
                 <Button key={id} variant="secondary" size="sm" onClick={() => sendTo(id)}>

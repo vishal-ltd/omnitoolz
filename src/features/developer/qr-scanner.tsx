@@ -144,7 +144,7 @@ export default function QrScannerTool() {
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
             {results.map((result, index) => (
               <li key={`${result.at}-${index}`} className="px-4 py-3">
-                <p className="flex items-center gap-2 font-display text-[8px] text-ink-soft uppercase">
+                <p className="flex items-center gap-2 font-display text-display-xs text-ink-soft uppercase">
                   <ImageIcon className="size-3" aria-hidden />
                   {result.source} · {result.at}
                 </p>

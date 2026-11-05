@@ -4,7 +4,15 @@ import { IconBox } from "@/components/ui/icon-box";
 import type { ToolWithRoute } from "@/lib/tools/types";
 
 /** Pixel card used on the homepage, category pages and related-tool sections. */
-export function ToolCard({ tool, index = 0 }: { tool: ToolWithRoute; index?: number }) {
+export function ToolCard({
+  tool,
+  index = 0,
+  showCategory = true,
+}: {
+  tool: ToolWithRoute;
+  index?: number;
+  showCategory?: boolean;
+}) {
   return (
     <Link
       href={tool.route}
@@ -23,12 +31,14 @@ export function ToolCard({ tool, index = 0 }: { tool: ToolWithRoute; index?: num
         </span>
       </div>
       <div>
-        <h3 className="text-[11px] text-ink group-hover:text-brand">{tool.name}</h3>
+        <h3 className="text-display-sm text-ink group-hover:text-brand">{tool.name}</h3>
         <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-ink-soft">{tool.description}</p>
       </div>
-      <span className="mt-auto border-t-2 border-dashed border-line pt-2 font-display text-[8px] tracking-wide text-ink-soft uppercase">
-        {tool.categoryName}
-      </span>
+      {showCategory && (
+        <span className="mt-auto border-t-2 border-dashed border-line pt-2 font-display text-display-xs tracking-wide text-ink-soft uppercase">
+          {tool.categoryName}
+        </span>
+      )}
     </Link>
   );
 }

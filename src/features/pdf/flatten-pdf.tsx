@@ -14,7 +14,7 @@ import { loadPdf, savePdf, yieldToUi } from "./pdf-core";
 
 export default function FlattenPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 20, maxSizeMb: 100 });
-  const { state, start, reset } = useJob();
+  const { state, start, reset, retry } = useJob();
   const [bakedTotal, setBakedTotal] = useState<number | null>(null);
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
@@ -70,7 +70,7 @@ export default function FlattenPdfTool() {
           <FileDropZone accept={["pdf"]} multiple maxFiles={20} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
           <FileList files={queue.files} onRemove={queue.removeAt} />
 
-          {state.phase === "error" && <JobError message={state.error ?? ""} />}
+          {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

@@ -68,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-screen flex-col">
         <a
           href="#content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:border-[3px] focus:border-edge focus:bg-brand focus:px-4 focus:py-2 focus:font-display focus:text-[10px] focus:text-on-brand focus:uppercase"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:border-[3px] focus:border-edge focus:bg-brand focus:px-4 focus:py-2 focus:font-display focus:text-display-xs focus:text-on-brand focus:uppercase"
         >
           Skip to content
         </a>

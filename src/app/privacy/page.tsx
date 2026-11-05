@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <article className="max-w-3xl">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Privacy Policy</h1>
+      <h1 className="text-display-lg font-bold tracking-tight text-ink">Privacy Policy</h1>
       <p className="mt-2 text-sm text-ink-soft">Last updated: October 25, 2026</p>
 
       <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink-soft">
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">1. What stays on your device</h2>
+          <h2 className="text-display-sm font-semibold text-ink">1. What stays on your device</h2>
           <p>
             Files you select, text you type, passwords you generate and results you download are
             handled by client-side JavaScript running in your browser. When a tool says &ldquo;runs
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">2. What we collect</h2>
+          <h2 className="text-display-sm font-semibold text-ink">2. What we collect</h2>
           <p>Nothing, in the ordinary sense of the word:</p>
           <ul className="list-disc space-y-1.5 pl-5">
             <li><strong className="text-ink">No accounts.</strong> There is no sign-up, so there are no user profiles.</li>
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">3. What is stored in your browser (localStorage)</h2>
+          <h2 className="text-display-sm font-semibold text-ink">3. What is stored in your browser (localStorage)</h2>
           <p>
             Three small preferences live in your browser&apos;s localStorage, all of which you
             control and can delete at any time from your browser settings:
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">4. Engines downloaded from CDNs</h2>
+          <h2 className="text-display-sm font-semibold text-ink">4. Engines downloaded from CDNs</h2>
           <p>
             A few heavyweight tools fetch their processing engine once from a public CDN (jsDelivr
             / staticimgly / this site&apos;s own static files): the OCR engine (Tesseract), the AI
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">5. No service worker</h2>
+          <h2 className="text-display-sm font-semibold text-ink">5. No service worker</h2>
           <p>
             OmniToolz does not install a service worker and does not keep an offline cache of
             itself. If this site were ever unreachable, the tools would be too — by design, so you
@@ -88,7 +88,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">6. Third-party content</h2>
+          <h2 className="text-display-sm font-semibold text-ink">6. Third-party content</h2>
           <p>
             The site loads its two bitmap fonts from its own files and, where noted, engines from
             public CDNs. We do not embed advertising scripts, social-media widgets or third-party
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">7. Children&apos;s privacy</h2>
+          <h2 className="text-display-sm font-semibold text-ink">7. Children&apos;s privacy</h2>
           <p>
             The service collects no personal information from anyone, of any age — there is
             nothing to disclose under children&apos;s privacy rules because there is no data.
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">8. Your rights (GDPR, CCPA &amp; friends)</h2>
+          <h2 className="text-display-sm font-semibold text-ink">8. Your rights (GDPR, CCPA &amp; friends)</h2>
           <p>
             Regulations like the GDPR and CCPA give you rights over personal data that services
             hold about you. OmniToolz holds nothing: there is no account, no database of users, no
@@ -116,7 +116,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">9. If server-side tools are ever added</h2>
+          <h2 className="text-display-sm font-semibold text-ink">9. If server-side tools are ever added</h2>
           <p>
             Some future capabilities (pixel-perfect document conversion, for example) may require
             server processing. Before any such tool ships, this policy will be updated to disclose
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">10. Changes to this policy</h2>
+          <h2 className="text-display-sm font-semibold text-ink">10. Changes to this policy</h2>
           <p>
             If this policy changes, the updated version will be posted on this page with a new
             &ldquo;last updated&rdquo; date. Material changes will be called out at the top.
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-ink">11. Contact</h2>
+          <h2 className="text-display-sm font-semibold text-ink">11. Contact</h2>
           <p>
              Privacy questions can be raised through our <Link className="font-medium text-brand underline" href="/contact">contact page</Link>.
              Security vulnerabilities should be reported through the private process on our <Link className="font-medium text-brand underline" href="/security">security page</Link>.
