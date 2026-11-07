@@ -1,7 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { ChromeIcon } from "@/components/icons";
 import { liveTools } from "@/lib/tools/registry";
 
 const STORAGE_KEY = "omnitoolz:recent-tools";
@@ -60,19 +60,18 @@ export function RecentTools() {
           onClick={clear}
           className="inline-flex items-center gap-1 border-2 border-edge bg-card px-2 py-1 font-display text-display-xs text-ink-soft uppercase transition-colors hover:border-err hover:bg-err hover:text-canvas"
         >
-          <X className="size-3" aria-hidden />
+          <ChromeIcon name="close" className="size-3" />
           Clear
         </button>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {tools.map((tool, index) => (
+        {tools.map((tool) => (
           <a
             key={tool.id}
             href={tool.route}
-            className="animate-pixel-in border-[3px] border-edge bg-card px-4 py-2 font-body text-lg text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
-            style={{ animationDelay: `${index * 60}ms` }}
+            className="border-[3px] border-edge bg-card px-4 py-2 font-body text-lg text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
           >
-            ▸ {tool.name}
+            {tool.name}
           </a>
         ))}
       </div>

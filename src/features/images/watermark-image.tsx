@@ -114,7 +114,7 @@ export default function WatermarkImageTool() {
             existingCount={queue.files.length}
             onFiles={queue.addFiles}
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} thumbnails />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} thumbnails />
 
           {queue.files.length > 0 && (
             <OptionsPanel title="Watermark">

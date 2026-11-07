@@ -121,7 +121,7 @@ export default function QrScannerTool() {
               onFiles={queue.addFiles}
               existingCount={queue.files.length}
             />
-            <FileList files={queue.files} onRemove={queue.removeAt} />
+            <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
           </>
         )}
 

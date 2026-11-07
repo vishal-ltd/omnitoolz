@@ -54,7 +54,7 @@ export default function JpgToPngTool() {
             existingCount={queue.files.length}
             onFiles={queue.addFiles}
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} thumbnails />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} thumbnails />
 
           {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 

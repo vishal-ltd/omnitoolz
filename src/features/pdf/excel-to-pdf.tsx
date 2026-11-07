@@ -140,7 +140,7 @@ export default function ExcelToPdfTool() {
       ) : (
         <div className="space-y-4">
            <FileDropZone accept={["xlsx", "csv"]} multiple maxFiles={5} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} hint="xlsx · csv" />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           {queue.files.length > 0 && (
             <OptionsPanel title="Layout">

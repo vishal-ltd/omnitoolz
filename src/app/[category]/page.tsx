@@ -79,13 +79,13 @@ export default async function CategoryPage({
       </nav>
 
       <header className="mt-5">
-        <IconBox className="size-16 animate-pixel-in shadow-[4px_4px_0_0_var(--color-shadow)]">
+        <IconBox className="size-16 shadow-[4px_4px_0_0_var(--color-shadow)]">
           <ToolIcon name={category.icon} className="size-8" />
         </IconBox>
         <h1 className="mt-4 text-display-md text-ink sm:text-display-lg">{category.name}</h1>
         <p className="mt-2 max-w-2xl text-base leading-snug text-ink-soft">{category.description}</p>
         <p className="mt-1 font-body text-lg text-ink-soft">
-          <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-display-xs text-on-brand">{tools.length}</span>{" "}
+          <span className="font-body text-lg text-ink-soft tabular-nums">{tools.length}</span>{" "}
           {tools.length === 1 ? "tool" : "tools"} · all run in your browser
         </p>
       </header>

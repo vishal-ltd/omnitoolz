@@ -92,7 +92,7 @@ export default function JpgToPdfTool() {
             onFiles={queue.addFiles}
             hint="JPG, PNG and WebP — one image per page, reorder freely."
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} onMove={queue.move} thumbnails />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} onMove={queue.move} thumbnails />
 
           {ready && (
             <OptionsPanel title="Page layout">

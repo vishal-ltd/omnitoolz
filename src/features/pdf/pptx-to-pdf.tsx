@@ -165,7 +165,7 @@ export default function PptxToPdfTool() {
       ) : (
         <div className="space-y-4">
           <FileDropZone accept={["pptx"]} multiple maxFiles={5} maxSizeMb={50} onFiles={queue.addFiles} existingCount={queue.files.length} hint=".pptx (PowerPoint 2007+)" />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { CloudUpload } from "lucide-react";
 import { useRef, useId, useState, type DragEvent } from "react";
+import { ChromeIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { validateFiles, type FileQueueOptions } from "./file-queue";
 
@@ -95,10 +95,10 @@ export function FileDropZone({
         <span
           className={cn(
             "flex shrink-0 items-center justify-center border-[3px] border-edge bg-brand shadow-[3px_3px_0_0_var(--color-shadow)]",
-            compact ? "size-9" : "size-12 animate-pixel-in",
+            compact ? "size-9" : "size-12",
           )}
         >
-          <CloudUpload className={cn("text-on-brand", compact ? "size-4" : "size-6")} aria-hidden />
+          <ChromeIcon name="upload" className={cn("text-on-brand", compact ? "size-4" : "size-6")} />
         </span>
         <p
           className={cn(
@@ -138,7 +138,7 @@ export function FileDropZone({
         <ul className="mt-3 space-y-1 border-[3px] border-err bg-err-soft p-3" role="alert">
           {errors.map((error) => (
             <li key={error} className="flex items-start gap-2 font-body text-base leading-snug text-err">
-              <span aria-hidden className="font-display text-display-xs">✕</span>
+              <span aria-hidden className="mt-1.5 size-1.5 shrink-0 bg-err" />
               {error}
             </li>
           ))}

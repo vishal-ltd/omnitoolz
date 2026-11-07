@@ -38,7 +38,7 @@ export function AppearanceControl() {
         aria-controls="appearance-panel"
         aria-label="Appearance"
         title="Screen and palette"
-        className="flex size-11 items-center justify-center border-[3px] border-edge bg-card text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)] active:translate-y-0.5 active:shadow-none aria-expanded:bg-brand-soft"
+        className="flex size-11 items-center justify-center border-[3px] border-edge bg-card text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)] active:translate-y-0.5 active:shadow-none aria-expanded:bg-brand-soft"
       >
         <PixelContrastIcon aria-hidden />
       </button>

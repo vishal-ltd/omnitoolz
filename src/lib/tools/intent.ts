@@ -91,6 +91,32 @@ export function intentOf(tool: Pick<ToolDefinition, "id">): Intent {
   return INTENT_BY_TOOL[tool.id] ?? "create";
 }
 
+/**
+ * Tools whose output loses content the input had — pages, form fields, pixels
+ * that are gone by design. Nothing is destructive to the original (every tool
+ * writes a new file), but the result deserves checking before it is shared.
+ */
+const DROPS_CONTENT = new Set([
+  "delete-pdf-pages",
+  "remove-blank-pages",
+  "clean-pdf",
+  "flatten-pdf",
+  "crop-pdf",
+  "extract-pdf-pages",
+  "split-pdf",
+  "organize-pdf",
+  "compress-pdf",
+  "compress-image",
+  "crop-image",
+  "background-remover",
+  "edit-pdf",
+  "repair-pdf",
+]);
+
+export function dropsContent(id: string): boolean {
+  return DROPS_CONTENT.has(id);
+}
+
 export function isMapped(id: string): boolean {
   return id in INTENT_BY_TOOL;
 }

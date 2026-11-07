@@ -166,7 +166,7 @@ export default function WordToPdfTool() {
       ) : (
         <div className="space-y-4">
           <FileDropZone accept={["docx"]} multiple maxFiles={5} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} hint=".docx (Word 2007+) — .doc is not supported" />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 

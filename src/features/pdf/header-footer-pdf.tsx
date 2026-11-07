@@ -89,7 +89,7 @@ export default function HeaderFooterPdfTool() {
       ) : (
         <div className="space-y-4">
           <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           {file && (
             <OptionsPanel title="Header & footer text">

@@ -1,7 +1,7 @@
 "use client";
 
-import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
+import { ChromeIcon } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { site } from "@/lib/site";
 import { activeCategories } from "@/lib/tools/registry";
@@ -40,9 +40,6 @@ export function Header() {
               href={`/${category.slug}`}
               className="group flex items-center border-[3px] border-transparent px-2.5 py-3 font-display text-display-xs text-ink-soft uppercase transition-colors hover:border-edge hover:bg-brand-soft hover:text-brand"
             >
-              <span className="mr-1 inline-block opacity-0 transition-opacity group-hover:opacity-100" aria-hidden>
-                ▸
-              </span>
               {category.shortName}
             </Link>
           ))}
@@ -52,10 +49,10 @@ export function Header() {
           <button
             type="button"
             onClick={() => openSearch()}
-            className="flex h-11 items-center gap-2 border-[3px] border-edge bg-card px-2.5 font-display text-display-xs text-ink-soft uppercase shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-ink hover:shadow-[4px_4px_0_0_var(--color-shadow)] active:translate-y-0.5 active:shadow-none sm:px-3"
+            className="flex h-11 items-center gap-2 border-[3px] border-edge bg-card px-2.5 font-display text-display-xs text-ink-soft uppercase shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-ink hover:shadow-[4px_4px_0_0_var(--color-shadow)] active:translate-y-0.5 active:shadow-none sm:px-3"
             aria-label="Search tools"
           >
-            <Search className="size-4" aria-hidden />
+            <ChromeIcon name="search" className="size-4" />
             <span className="hidden md:inline">Search</span>
             <kbd className="hidden whitespace-nowrap border-2 border-line-strong bg-canvas px-1 py-0.5 text-[8px] lg:inline">
               {isMac ? "⌘K" : "CTRL K"}
@@ -66,13 +63,13 @@ export function Header() {
 
           <button
             type="button"
-            className="flex size-11 items-center justify-center border-[3px] border-edge bg-card shadow-[3px_3px_0_0_var(--color-shadow)] transition-all active:translate-y-0.5 active:shadow-none xl:hidden"
+            className="flex size-11 items-center justify-center border-[3px] border-edge bg-card shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] active:translate-y-0.5 active:shadow-none xl:hidden"
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            {menuOpen ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+            {menuOpen ? <ChromeIcon name="close" className="size-5" /> : <ChromeIcon name="menu" className="size-5" />}
           </button>
         </div>
       </div>

@@ -211,7 +211,7 @@ export default function AudioTrimmerTool() {
           existingCount={queue.files.length}
           hint="wav · mp3 · ogg · webm · m4a · flac — also trims the audio of a .webm screen recording"
         />
-        <FileList files={queue.files} onRemove={queue.removeAt} />
+        <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
         {error && (
           <div className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</div>

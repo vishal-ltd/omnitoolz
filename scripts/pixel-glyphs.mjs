@@ -1,39 +1,84 @@
 /**
- * Rasterizes each registry icon to a 16x16 bitmap so the pixel plates draw
- * pixel art instead of anti-aliased strokes. Writes src/components/pixel-glyphs.ts.
+ * Rasterizes the icon set to 16x16 bitmaps so plates and chrome draw pixel art
+ * instead of anti-aliased strokes. Writes src/components/pixel-glyphs.ts.
+ *
+ *   node scripts/pixel-glyphs.mjs
+ *
+ * Tool keys come from the IconName union; chrome keys are listed below with the
+ * Lucide module they are drawn from. Regenerate rather than hand-editing shapes.
  */
-import { readdirSync, statSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-const puppeteer = (await import(pathToFileURL("C:/Users/diddi/AppData/Roaming/npm/node_modules/puppeteer/lib/puppeteer/puppeteer.js").href)).default;
 
-const iconsSource = readFileSync("src/components/icons.tsx", "utf8");
-const keys = [...iconsSource.matchAll(/^\s+"?([a-z0-9-]+)"?:\s*[A-Z][A-Za-z0-9]*,\s*$/gm)].map((m) => m[1]);
+async function loadPuppeteer() {
+  try {
+    return (await import("puppeteer")).default;
+  } catch {
+    const globalPath = `${process.env.APPDATA ?? ""}/npm/node_modules/puppeteer/lib/puppeteer/puppeteer.js`;
+    if (existsSync(globalPath)) return (await import(pathToFileURL(globalPath).href)).default;
+    throw new Error("Puppeteer is required to rasterize glyphs (npm i -D puppeteer).");
+  }
+}
+const puppeteer = await loadPuppeteer();
+
+/** Chrome marks: the name the app uses → the Lucide module it is drawn from. */
+const CHROME = {
+  search: "search",
+  menu: "menu",
+  close: "x",
+  sun: "sun",
+  moon: "moon",
+  monitor: "monitor",
+  upload: "cloud-upload",
+  alert: "circle-alert",
+  check: "circle-check",
+  download: "download",
+  eye: "eye",
+  sparkles: "sparkles",
+  "arrow-up": "arrow-up",
+  "arrow-down": "arrow-down",
+  shield: "shield-check",
+  laptop: "laptop",
+  zap: "zap",
+  restart: "rotate-ccw",
+};
+
+/** Icons renamed upstream; the registry still uses the old key. */
+const MODULE_ALIAS = {
+  fingerprint: "fingerprint-pattern",
+  "code-2": "code-xml",
+  "wand-2": "wand-sparkles",
+  "file-json": "file-json-2",
+  "file-minus-2": "file-minus-corner",
+};
+
+const types = readFileSync("src/lib/tools/types.ts", "utf8");
+const union = types.slice(types.indexOf("export type IconName"));
+const toolKeys = [...union.slice(0, union.indexOf(";")).matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1]);
+
+const wanted = [
+  ...toolKeys.map((key) => [key, MODULE_ALIAS[key] ?? key]),
+  ...Object.entries(CHROME),
+];
 
 const glyphData = {};
-/** Icons renamed upstream; the app still uses the old key. */
-const MODULE_ALIAS = { fingerprint: "fingerprint-pattern" };
-for (const key of keys) {
-  const modulePath = `./node_modules/lucide-react/dist/esm/icons/${MODULE_ALIAS[key] || key}.mjs`;
+for (const [key, moduleName] of wanted) {
+  let target = `./node_modules/lucide-react/dist/esm/icons/${moduleName}.mjs`;
   let data;
-  try {
-    let target = modulePath;
-    // deprecated aliases (code-2, wand-2, …) just re-export another module
-    for (let hop = 0; hop < 3; hop += 1) {
-      const mod = await import(pathToFileURL(target).href);
-      if (mod.__iconData) {
-        data = mod.__iconData;
-        break;
-      }
-      const shim = readFileSync(target, "utf8").match(/from ['"]\.\/([^'"]+)['"]/);
-      if (!shim) break;
-      target = `./node_modules/lucide-react/dist/esm/icons/${shim[1]}`;
+  for (let hop = 0; hop < 3; hop += 1) {
+    if (!existsSync(target)) break;
+    const mod = await import(pathToFileURL(target).href);
+    if (mod.__iconData) {
+      data = mod.__iconData;
+      break;
     }
-  } catch (error) {
-    console.log(`MISSING MODULE ${key}: ${String(error).slice(0, 60)}`);
-    continue;
+    // deprecated aliases just re-export another module
+    const shim = readFileSync(target, "utf8").match(/from ['"]\.\/([^'"]+)['"]/);
+    if (!shim) break;
+    target = `./node_modules/lucide-react/dist/esm/icons/${shim[1]}`;
   }
   if (!data?.node) {
-    console.log(`NO NODE DATA ${key}`);
+    console.log(`NO DATA ${key} (${moduleName})`);
     continue;
   }
   const body = data.node
@@ -45,11 +90,12 @@ for (const key of keys) {
       return `<${tag} ${rest}/>`;
     })
     .join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
-  glyphData[key] = svg;
+  glyphData[key] = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 }
 
-const browser = await puppeteer.launch({ executablePath: "C:/Users/diddi/.cache/puppeteer/chrome/win64-155.0.8059.79/chrome-win64/chrome.exe", args: ["--no-sandbox"] });
+const launchOptions = { args: ["--no-sandbox"] };
+if (process.env.CHROME_PATH) launchOptions.executablePath = process.env.CHROME_PATH;
+const browser = await puppeteer.launch(launchOptions);
 const page = await browser.newPage();
 await page.setContent("<html><body></body></html>");
 
@@ -76,7 +122,7 @@ for (const [key, svg] of Object.entries(glyphData)) {
 }
 await browser.close();
 
-const empty = Object.entries(rows).filter(([, r]) => r.join("").includes("#") === false).map(([k]) => k);
+const empty = Object.entries(rows).filter(([, r]) => !r.join("").includes("#")).map(([k]) => k);
 if (empty.length) console.log(`WARNING empty glyphs: ${empty.join(", ")}`);
 
 const body = Object.entries(rows)
@@ -95,4 +141,4 @@ ${body}
 };
 `,
 );
-console.log(`wrote ${Object.keys(rows).length} glyphs`);
+console.log(`wrote ${Object.keys(rows).length} glyphs (${toolKeys.length} tool keys, ${Object.keys(CHROME).length} chrome)`);

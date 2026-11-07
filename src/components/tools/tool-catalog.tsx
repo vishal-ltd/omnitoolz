@@ -6,6 +6,9 @@ import type { ToolWithRoute } from "@/lib/tools/types";
 import { cn } from "@/lib/utils";
 import { ToolCard } from "./tool-card";
 
+/** Two rows on the widest grid. A 19-card group is a wall, not a choice. */
+const PREVIEW_COUNT = 6;
+
 /**
  * Category catalogue: a filter row and the tools grouped by intent. A flat
  * wall of 33 identical cards gives nothing to grab onto; four named groups and
@@ -20,6 +23,7 @@ export function ToolCatalog({
 }) {
   const [query, setQuery] = useState("");
   const [intent, setIntent] = useState<Intent | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const groups = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -43,7 +47,7 @@ export function ToolCatalog({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Filter by name or what it does…"
+            placeholder="Filter tools"
             className="h-11 w-full border-[3px] border-edge bg-canvas px-3 font-body text-lg text-ink placeholder:text-ink-soft focus:border-brand focus:outline-none"
           />
         </label>
@@ -85,7 +89,7 @@ export function ToolCatalog({
               setQuery("");
               setIntent(null);
             }}
-            className="mt-4 h-11 border-[3px] border-edge bg-brand px-4 font-display text-display-xs text-on-brand uppercase shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
+            className="mt-4 h-11 border-[3px] border-edge bg-brand px-4 font-display text-display-xs text-on-brand uppercase shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
           >
             Clear filters
           </button>
@@ -102,10 +106,29 @@ export function ToolCatalog({
               <p className="font-body text-lg text-ink-soft">{group.intent.blurb}</p>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {group.tools.map((tool, index) => (
-                <ToolCard key={tool.id} tool={tool} index={index} showCategory={showCategory} />
+              {(expanded.has(group.intent.id) ? group.tools : group.tools.slice(0, PREVIEW_COUNT)).map((tool) => (
+                <ToolCard key={tool.id} tool={tool} showCategory={showCategory} />
               ))}
             </div>
+            {group.tools.length > PREVIEW_COUNT && (
+              <button
+                type="button"
+                aria-expanded={expanded.has(group.intent.id)}
+                onClick={() =>
+                  setExpanded((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(group.intent.id)) next.delete(group.intent.id);
+                    else next.add(group.intent.id);
+                    return next;
+                  })
+                }
+                className="mt-4 min-h-11 border-[3px] border-edge bg-canvas px-4 font-display text-display-xs text-ink uppercase transition-colors hover:bg-brand-soft hover:text-brand"
+              >
+                {expanded.has(group.intent.id)
+                  ? `Show fewer ${group.intent.label.toLowerCase()} tools`
+                  : `Show all ${group.tools.length} ${group.intent.label.toLowerCase()} tools`}
+              </button>
+            )}
           </section>
         ))}
       </div>

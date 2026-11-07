@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircle2, Download, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ChromeIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { downloadBlob, formatBytes, formatDuration, isImageBlob, type ResultFile } from "@/lib/utils";
 
@@ -68,7 +68,7 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
     <div className="animate-pixel-in space-y-4">
       <div className="border-[3px] border-ok bg-ok-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]" role="status">
         <p className="flex items-center gap-2.5 font-display text-display-xs leading-relaxed text-ok uppercase">
-          <CheckCircle2 className="size-5 shrink-0" aria-hidden />
+          <ChromeIcon name="check" className="size-5 shrink-0" />
           Done — {results.length === 1 ? "file ready" : `${results.length} files ready`}
         </p>
         <p className="mt-2 font-body text-lg text-ink-soft">
@@ -77,7 +77,7 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
         </p>
         {/* The claim every page makes, shown at the moment it is actually true. */}
         <p className="mt-1 flex flex-wrap items-center gap-x-2 font-body text-lg text-ink-soft">
-          <span className="border-[3px] border-edge bg-canvas px-1.5 font-display text-display-xs text-ok">0 B uploaded</span>
+          <span className="border-[3px] border-edge bg-ok-soft px-1.5 font-display text-display-xs text-ink">0 B uploaded</span>
           read and written on this device
         </p>
         {note && <p className="mt-1 font-body text-lg font-medium text-ok">{note}</p>}
@@ -114,7 +114,7 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
               <p className="font-body text-sm text-ink-soft">{formatBytes(file.blob.size)}</p>
             </div>
             <Button variant="secondary" size="sm" onClick={() => downloadBlob(file.blob, file.name)}>
-              <Download className="size-4" aria-hidden />
+              <ChromeIcon name="download" className="size-4" />
               Save
             </Button>
           </li>
@@ -124,12 +124,12 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
       <div className="flex flex-wrap gap-3">
         {results.length > 1 && (
           <Button onClick={downloadAll} loading={zipping}>
-            <Download className="size-4" aria-hidden />
+            <ChromeIcon name="download" className="size-4" />
             Download all (ZIP)
           </Button>
         )}
         <Button variant="secondary" onClick={onReset}>
-          <RotateCcw className="size-4" aria-hidden />
+          <ChromeIcon name="restart" className="size-4" />
           {resetLabel}
         </Button>
       </div>

@@ -70,7 +70,7 @@ export default function WebPConverterTool() {
             onFiles={queue.addFiles}
             hint="Convert to WebP for smaller files, or from WebP to classic formats."
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} thumbnails />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} thumbnails />
 
           {ready && (
             <OptionsPanel title="Conversion">

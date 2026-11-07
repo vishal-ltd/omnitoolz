@@ -62,7 +62,7 @@ export default function JwtDecoderTool() {
                 <p className="font-display text-display-xs text-ink-soft uppercase">Lifetime</p>
                 <ul className="mt-2 space-y-1 font-body text-lg text-ink">
                   {decoded.problems.map((problem) => (
-                    <li key={problem}>▸ {problem}</li>
+                    <li key={problem}>{problem}</li>
                   ))}
                 </ul>
               </div>

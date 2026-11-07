@@ -64,7 +64,7 @@ export default function FileHashVerifierTool() {
     <ToolWidget>
       <div className="space-y-4">
         <FileDropZone accept={[]} multiple={false} maxFiles={1} maxSizeMb={500} onFiles={queue.addFiles} existingCount={queue.files.length} hint="Any file — up to 500 MB" />
-        <FileList files={queue.files} onRemove={queue.removeAt} />
+        <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
         {file && (
           <>

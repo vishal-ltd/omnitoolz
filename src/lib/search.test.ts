@@ -44,3 +44,29 @@ describe("searchTools", () => {
     }
   });
 });
+
+describe("search vocabulary", () => {
+  // People do not type the catalogue's words. These are the phrasings that used
+  // to return nothing at all.
+  it.each([
+    ["resize photo", "resize-image"],
+    ["resize picture", "resize-image"],
+    ["shrink a picture", "compress-image"],
+    ["make an image smaller", "compress-image"],
+    ["combine pdfs", "merge-pdf"],
+    ["join two pdfs", "merge-pdf"],
+    ["erase background", "background-remover"],
+    ["remove background", "background-remover"],
+    ["make a qr code", "qr-code-generator"],
+    ["secure a pdf", "protect-pdf"],
+    ["check a password", "password-auditor"],
+    ["count words", "word-counter"],
+  ])("finds %s", (query, expectedId) => {
+    const hits = searchTools(query);
+    expect(hits.map((hit) => hit.id)).toContain(expectedId);
+  });
+
+  it("still returns nothing when a word means nothing here", () => {
+    expect(searchTools("merge unicorns")).toEqual([]);
+  });
+});

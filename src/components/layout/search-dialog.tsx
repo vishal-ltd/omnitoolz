@@ -1,9 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ToolIcon } from "@/components/icons";
+import { ChromeIcon, PixelIcon, ToolIcon } from "@/components/icons";
 import { IconBox } from "@/components/ui/icon-box";
 import { searchTools } from "@/lib/search";
 import { cn } from "@/lib/utils";
@@ -120,7 +119,7 @@ export function SearchDialog() {
         className="w-full max-w-xl animate-pixel-in overflow-hidden border-[3px] border-edge bg-card shadow-[8px_8px_0_0_var(--color-shadow)]"
       >
         <div className="flex items-center gap-3 border-b-[3px] border-edge bg-canvas px-4">
-          <Search className="size-5 shrink-0 text-brand" aria-hidden />
+          <ChromeIcon name="search" className="size-5 shrink-0 text-brand" />
           <input
             ref={inputRef}
             type="text"
@@ -142,7 +141,7 @@ export function SearchDialog() {
               }
             }}
             placeholder="Search tools — try “merge”, “compress”, “qr”…"
-            className="h-14 w-full bg-transparent font-body text-xl text-ink outline-none placeholder:text-ink-soft/70"
+            className="h-14 w-full bg-transparent font-body text-xl text-ink outline-none placeholder:text-ink-soft"
             aria-label="Search tools"
             aria-controls="search-results"
             aria-activedescendant={hits[activeIndex] ? `search-result-${hits[activeIndex].id}` : undefined}
@@ -160,7 +159,7 @@ export function SearchDialog() {
             </p>
           ) : hits.length === 0 ? (
             <p className="px-3 py-6 text-center font-body text-lg text-ink-soft">
-              No tools match “{query}”. Try “pdf”, “image” or “convert”.
+              Nothing matches “{query}”. Try fewer words — “merge”, “compress”, “password”.
             </p>
           ) : (
             <ul id="search-results" role="listbox" aria-label="Tool search results">
@@ -181,7 +180,7 @@ export function SearchDialog() {
                     )}
                   >
                     <span className="w-4 shrink-0 font-display text-display-xs text-brand" aria-hidden>
-                      {index === activeIndex ? "▸" : ""}
+                      {index === activeIndex && <PixelIcon name="chevron" className="size-4" />}
                     </span>
                     <IconBox tone="card" className="size-9 shrink-0 shadow-[2px_2px_0_0_var(--color-shadow)]">
                       <ToolIcon name={hit.icon} className="size-4" />

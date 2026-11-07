@@ -31,7 +31,7 @@ export function Field({
 
 const controlClasses =
   "w-full h-11 border-[3px] border-edge bg-card px-3 font-body text-lg text-ink " +
-  "placeholder:text-ink-soft/60 focus:border-brand focus:outline-none " +
+  "placeholder:text-ink-soft focus:border-brand focus:outline-none " +
   "focus:shadow-[3px_3px_0_0_var(--color-brand)] " +
   "disabled:bg-canvas disabled:text-ink-soft";
 

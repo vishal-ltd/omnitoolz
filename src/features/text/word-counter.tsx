@@ -89,9 +89,14 @@ export default function WordCounterTool() {
           className="min-h-56 text-lg"
         />
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label="Text counts"
+          className="grid grid-cols-2 gap-[3px] border-[3px] border-edge bg-line p-[3px] shadow-[3px_3px_0_0_var(--color-shadow)] sm:grid-cols-3 lg:grid-cols-6"
+        >
           {cards.map((card) => (
-            <div key={card.label} className="border-[3px] border-edge bg-canvas px-3 py-3 text-center shadow-[3px_3px_0_0_var(--color-shadow)]">
+            <div key={card.label} className="bg-canvas px-3 py-3 text-center">
               <p className="font-body text-2xl text-ink tabular-nums">{card.value}</p>
               <p className="mt-1 font-display text-display-xs tracking-wide text-ink-soft uppercase">{card.label}</p>
             </div>

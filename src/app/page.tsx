@@ -1,18 +1,16 @@
-import { Laptop, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
-import { ToolIcon } from "@/components/icons";
+import { ChromeIcon, PixelIcon, ToolIcon, type ChromeName } from "@/components/icons";
 import { HeroSearch } from "@/components/layout/hero-search";
+import { HeroPreview } from "@/components/layout/hero-preview";
 import { RecentTools } from "@/components/tools/recent-tools";
-import { ToolCard } from "@/components/tools/tool-card";
 import { IconBox } from "@/components/ui/icon-box";
 import { site } from "@/lib/site";
-import { activeCategories, featuredTools, liveTools } from "@/lib/tools/registry";
+import { activeCategories, liveTools, toolsInCategory } from "@/lib/tools/registry";
 
 const HERO_CHIPS = ["FREE", "NO SIGN-UP", "100% IN-BROWSER"];
 
 export default function HomePage() {
-  const featured = featuredTools();
   const categories = activeCategories();
   const tickerTools = liveTools();
 
@@ -32,10 +30,10 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative mt-2 overflow-hidden border-[3px] border-edge bg-dither px-4 pt-14 pb-10 text-center shadow-[6px_6px_0_0_var(--color-shadow)] sm:pt-20">
         {/* floating pixel decorations */}
-        <span className="absolute left-[8%] top-10 hidden size-3 animate-blink border-2 border-edge bg-brand sm:block" aria-hidden style={{ animationDelay: "0s" }} />
-        <span className="absolute right-[10%] top-16 hidden size-3 animate-blink border-2 border-edge bg-gold sm:block" aria-hidden style={{ animationDelay: "0.4s" }} />
-        <span className="absolute bottom-10 left-[16%] hidden size-2.5 animate-blink border-2 border-edge bg-ok sm:block" aria-hidden style={{ animationDelay: "0.8s" }} />
-        <span className="absolute bottom-16 right-[14%] hidden size-2.5 animate-blink border-2 border-edge bg-err sm:block" aria-hidden style={{ animationDelay: "0.2s" }} />
+        <span className="absolute left-[8%] top-10 hidden size-3 border-2 border-edge bg-brand sm:block" aria-hidden style={{ animationDelay: "0s" }} />
+        <span className="absolute right-[10%] top-16 hidden size-3 border-2 border-edge bg-gold sm:block" aria-hidden style={{ animationDelay: "0.4s" }} />
+        <span className="absolute bottom-10 left-[16%] hidden size-2.5 border-2 border-edge bg-ok sm:block" aria-hidden style={{ animationDelay: "0.8s" }} />
+        <span className="absolute bottom-16 right-[14%] hidden size-2.5 border-2 border-edge bg-err sm:block" aria-hidden style={{ animationDelay: "0.2s" }} />
 
         <div className="flex flex-wrap justify-center gap-2">
           {HERO_CHIPS.map((chip) => (
@@ -62,18 +60,7 @@ export default function HomePage() {
           <HeroSearch />
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          {featured.slice(0, 6).map((tool, index) => (
-            <Link
-              key={tool.id}
-              href={tool.route}
-              className="animate-pixel-in flex min-h-11 items-center border-[3px] border-edge bg-card px-3.5 py-2 font-display text-display-xs text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
-              style={{ animationDelay: `${index * 70}ms` }}
-            >
-              {tool.name}
-            </Link>
-          ))}
-        </div>
+        <HeroPreview />
       </section>
 
       {/* ── Retro ticker ─────────────────────────────────────────── */}
@@ -92,81 +79,86 @@ export default function HomePage() {
 
       <RecentTools />
 
-      {/* ── Featured tools ───────────────────────────────────────── */}
-      <section className="mt-14" aria-labelledby="featured-heading">
+      {/* ── Level select ─────────────────────────────────────────── */}
+      <section className="mt-14" aria-labelledby="levels-heading">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 id="featured-heading" className="text-display-sm sm:text-display-md text-ink">
-            Featured tools <span className="text-brand" aria-hidden>★</span>
+          <h2 id="levels-heading" className="text-display-sm sm:text-display-md text-ink">
+            Level select
           </h2>
-          <p className="font-body text-lg text-ink-soft">{liveTools().length} tools and counting</p>
+          <p className="font-body text-lg text-ink-soft">
+            {liveTools().length} tools · {categories.length} worlds
+          </p>
         </div>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {featured.map((tool, index) => (
-            <ToolCard key={tool.id} tool={tool} index={index} />
-          ))}
-        </div>
-      </section>
 
-      {/* ── Categories ───────────────────────────────────────────── */}
-      <section className="mt-14" aria-labelledby="categories-heading">
-        <h2 id="categories-heading" className="text-display-sm sm:text-display-md text-ink">
-          Browse categories <span className="text-brand" aria-hidden>▸▸</span>
-        </h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category, index) => (
-            <Link
-              key={category.id}
-              href={`/${category.slug}`}
-              className="group animate-pixel-in border-[3px] border-edge bg-card p-5 shadow-[4px_4px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-brand-soft/40 hover:shadow-[6px_6px_0_0_var(--color-shadow)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-              style={{ animationDelay: `${index * 60}ms` }}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2.5 text-display-sm text-ink group-hover:text-brand">
-                  <IconBox tone="soft" className="size-9">
-                    <ToolIcon name={category.icon} className="size-4.5" />
+        <ul className="mt-5 divide-y-[3px] divide-line border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
+          {categories.map((category) => {
+            const categoryTools = toolsInCategory(category.id);
+            return (
+              <li key={category.id} className="group transition-colors hover:bg-brand-soft/40">
+                <div className="flex items-center gap-3 px-4 pt-3 sm:px-5">
+                  <IconBox tone="soft" className="size-9 shrink-0">
+                    <ToolIcon name={category.icon} className="size-4" />
                   </IconBox>
-                  {category.name}
-                </h3>
-                <span className="border-[3px] border-edge bg-brand px-2 py-0.5 font-display text-display-xs text-on-brand">
-                  {category.toolCount}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">{category.description}</p>
-            </Link>
-          ))}
-        </div>
+                  <h3 className="text-display-sm text-ink">
+                    <Link href={`/${category.slug}`} className="inline-flex min-h-6 items-center transition-colors group-hover:text-brand">
+                      {category.name}
+                    </Link>
+                  </h3>
+                  <span className="font-body text-lg text-ink-soft tabular-nums">{categoryTools.length}</span>
+                  <Link
+                    href={`/${category.slug}`}
+                    className="ml-auto inline-flex min-h-11 items-center gap-1 font-display text-display-xs text-ink-soft uppercase transition-colors group-hover:text-brand"
+                  >
+                    All <PixelIcon name="chevron" className="size-4" />
+                  </Link>
+                </div>
+                <ul className="flex flex-wrap gap-x-3 gap-y-1 px-4 pb-3 font-body text-lg leading-snug text-ink-soft sm:px-5 sm:pl-[4.25rem]">
+                  {categoryTools.slice(0, 4).map((tool) => (
+                    <li key={tool.id}>
+                      <Link href={tool.route} className="inline-flex min-h-6 items-center transition-colors hover:text-brand hover:underline">
+                        {tool.name}
+                      </Link>
+                    </li>
+                  ))}
+                  {categoryTools.length > 4 && (
+                    <li className="text-ink-soft">+{categoryTools.length - 4} more</li>
+                  )}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {/* ── Why ──────────────────────────────────────────────────── */}
-      <section className="mt-14" aria-label="Why OmniToolz">
-        <div className="grid gap-4 sm:grid-cols-3">
+      <section
+        className="mt-14 border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]"
+        aria-label="Why OmniToolz"
+      >
+        <div className="grid divide-y-[3px] divide-line sm:grid-cols-3 sm:divide-x-[3px] sm:divide-y-0">
           {[
             {
-              Icon: ShieldCheck,
+              icon: "shield" as ChromeName,
               title: "Private by design",
               body: "Files are processed on your device — nothing is uploaded, stored or shared.",
             },
             {
-              Icon: Zap,
+              icon: "zap" as ChromeName,
               title: "Fast by default",
               body: "No upload queues. Processing starts the moment you click the button.",
             },
             {
-              Icon: Laptop,
+              icon: "laptop" as ChromeName,
               title: "Free, no account",
               body: "Every tool works without sign-up, without watermarks and without surprises.",
             },
-          ].map(({ Icon, title, body }, index) => (
-            <div
-              key={title}
-              className="animate-pixel-in border-[3px] border-edge bg-card p-6 shadow-[4px_4px_0_0_var(--color-shadow)]"
-              style={{ animationDelay: `${index * 80}ms` }}
-            >
-              <IconBox tone="gold" className="size-12 shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <Icon className="size-6" aria-hidden />
+          ].map(({ icon, title, body }) => (
+            <div key={title} className="p-5">
+              <IconBox tone="gold" className="size-10 shadow-[3px_3px_0_0_var(--color-shadow)]">
+                <ChromeIcon name={icon} className="size-6" />
               </IconBox>
-              <h3 className="mt-4 text-display-sm text-ink">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
+              <h3 className="mt-3 text-display-sm text-ink">{title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{body}</p>
             </div>
           ))}
         </div>

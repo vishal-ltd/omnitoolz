@@ -68,11 +68,11 @@ function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: 
         {integrity === false && (
           <p className="text-err">✗ MODIFIED after signing — the covered bytes don&apos;t match the signed digest. Distrust this document.</p>
         )}
-        {integrity === null && <p>▸ Integrity couldn&apos;t be checked ({report.detail || "unsupported structure"}).</p>}
+        {integrity === null && <p>Integrity couldn&apos;t be checked ({report.detail || "unsupported structure"}).</p>}
 
         {crypto === true && <p className="text-ok">✓ Signature verified cryptographically with the certificate embedded in the file.</p>}
         {crypto === false && <p className="text-err">✗ Signature does NOT verify with the embedded certificate.</p>}
-        {crypto === null && <p>▸ Signature bytes present but not cryptographically verified here.</p>}
+        {crypto === null && <p>Signature bytes present but not cryptographically verified here.</p>}
 
         {report.signingTime && <p className="text-ink-soft">Claimed signing time: {report.signingTime}</p>}
         {report.digestAlgorithmOid && (
@@ -124,7 +124,7 @@ export default function VerifyPdfSignatureTool() {
         {!reports && !scanning && (
           <>
             <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
-            <FileList files={queue.files} onRemove={queue.removeAt} />
+            <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-ink-soft">
                 Everything is checked locally — the file, its signatures and its certificates never leave this tab.

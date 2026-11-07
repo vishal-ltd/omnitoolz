@@ -190,7 +190,7 @@ export default function ComparePdfTool() {
               <FileDropZone accept={["pdf"]} multiple={false} maxFiles={2} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
             </div>
           </div>
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">Both files stay on your device the whole time.</p>

@@ -60,7 +60,7 @@ export default function MergePdfTool() {
             onFiles={queue.addFiles}
             hint="Add files in any order — you can reorder them before merging."
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} onMove={queue.move} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} onMove={queue.move} />
           {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">

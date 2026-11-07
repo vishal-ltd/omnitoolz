@@ -23,6 +23,9 @@ export interface FileQueue {
   move: (index: number, direction: -1 | 1) => void;
   clear: () => void;
   canAddMore: boolean;
+  /** Name of the file just removed, so the list can offer a way back. */
+  lastRemoved: string | null;
+  undoRemove: () => void;
 }
 
 /**
@@ -93,9 +96,21 @@ export function validateFiles(
   return { accepted: totalAccepted, errors };
 }
 
+/**
+ * Puts a removed file back at its old position. Pure so the rule is testable
+ * without rendering: never duplicates, never exceeds the tool's file limit.
+ */
+export function insertAt(files: File[], file: File, index: number, maxFiles: number): File[] {
+  if (files.length >= maxFiles || files.includes(file)) return files;
+  const next = [...files];
+  next.splice(Math.min(Math.max(0, index), next.length), 0, file);
+  return next;
+}
+
 export function useFileQueue(options: FileQueueOptions): FileQueue {
   const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [removed, setRemoved] = useState<{ file: File; index: number } | null>(null);
 
   const addFiles = useCallback(
     (incoming: File[] | FileList) => {
@@ -108,6 +123,7 @@ export function useFileQueue(options: FileQueueOptions): FileQueue {
         existingSizeBytes,
       );
       setErrors(validationErrors);
+      setRemoved(null);
       if (accepted.length > 0) {
         setFiles((prev) => (options.multiple ? [...prev, ...accepted] : accepted.slice(0, 1)));
       }
@@ -115,10 +131,22 @@ export function useFileQueue(options: FileQueueOptions): FileQueue {
     [files, options],
   );
 
-  const removeAt = useCallback((index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setErrors([]);
-  }, []);
+  const removeAt = useCallback(
+    (index: number) => {
+      const file = files[index];
+      if (file) setRemoved({ file, index });
+      setFiles((prev) => prev.filter((_, i) => i !== index));
+      setErrors([]);
+    },
+    [files],
+  );
+
+  /** Puts the last removed file back where it was, unless the queue filled up. */
+  const undoRemove = useCallback(() => {
+    if (!removed) return;
+    setFiles((prev) => insertAt(prev, removed.file, removed.index, options.maxFiles));
+    setRemoved(null);
+  }, [removed, options.maxFiles]);
 
   const move = useCallback((index: number, direction: -1 | 1) => {
     setFiles((prev) => {
@@ -133,12 +161,14 @@ export function useFileQueue(options: FileQueueOptions): FileQueue {
   const clear = useCallback(() => {
     setFiles([]);
     setErrors([]);
+    setRemoved(null);
   }, []);
 
   const canAddMore = options.multiple ? files.length < options.maxFiles : files.length === 0;
+  const lastRemoved = removed?.file.name ?? null;
 
   return useMemo(
-    () => ({ files, errors, addFiles, removeAt, move, clear, canAddMore }),
-    [files, errors, addFiles, removeAt, move, clear, canAddMore],
+    () => ({ files, errors, addFiles, removeAt, move, clear, canAddMore, lastRemoved, undoRemove }),
+    [files, errors, addFiles, removeAt, move, clear, canAddMore, lastRemoved, undoRemove],
   );
 }

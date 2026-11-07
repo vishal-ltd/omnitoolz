@@ -182,7 +182,7 @@ export default function CropImageTool() {
         <JobProgress state={state} />
       ) : (
         <div className="space-y-4">
-          <FileDropZone accept={["jpg", "jpeg", "png", "webp"]} multiple={false} maxFiles={1} maxSizeMb={30} onFiles={queue.addFiles} />
+          <FileDropZone accept={["jpg", "jpeg", "png", "webp"]} multiple={false} maxFiles={1} maxSizeMb={30} onFiles={queue.addFiles} existingCount={queue.files.length} />
 
           {file && imageSize && crop && (
             <>

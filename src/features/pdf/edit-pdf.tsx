@@ -892,7 +892,7 @@ export default function EditPdfTool() {
                 }}
                 rows={2}
                 aria-label="Replacement text"
-                className="w-full border-[3px] border-edge bg-card p-2 font-body text-lg leading-snug text-ink placeholder:text-ink-soft/60 focus:border-brand focus:outline-none focus:shadow-[3px_3px_0_0_var(--color-brand)]"
+                className="w-full border-[3px] border-edge bg-card p-2 font-body text-lg leading-snug text-ink placeholder:text-ink-soft focus:border-brand focus:outline-none focus:shadow-[3px_3px_0_0_var(--color-brand)]"
               />
               <div className="flex flex-wrap items-end gap-3">
                 <Field label="Font" className="w-56">
@@ -1346,7 +1346,7 @@ export default function EditPdfTool() {
       ) : (
         <div className="space-y-4">
           <FileDropZone accept={["pdf"]} multiple={false} maxFiles={1} maxSizeMb={100} onFiles={queue.addFiles} existingCount={queue.files.length} />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
           <p className="text-sm text-ink-soft">
             Rewrite existing text, add new text, draw, highlight, white-out and stamp images directly
             on the page — everything happens locally and bakes in permanently.

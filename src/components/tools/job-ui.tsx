@@ -1,7 +1,7 @@
 "use client";
 
-import { CircleAlert } from "lucide-react";
 import Link from "next/link";
+import { ChromeIcon } from "@/components/icons";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function JobProgress({ state }: { state: JobState }) {
         )}
       </div>
       <p className="mt-1.5 flex items-center justify-between gap-2 font-body text-base text-ink-soft">
-        <span className="border-[3px] border-edge bg-canvas px-1.5 font-display text-display-xs text-ok">0 B uploaded</span>
+        <span className="border-[3px] border-edge bg-ok-soft px-1.5 font-display text-display-xs text-ink">0 B uploaded</span>
         {determinate && <span className="tabular-nums">{Math.round((state.progress ?? 0) * 100)}%</span>}
       </p>
     </div>
@@ -100,7 +100,7 @@ export function JobError({
       className="border-[3px] border-err bg-err-soft p-4 shadow-[4px_4px_0_0_var(--color-shadow)]"
     >
       <p className="flex items-center gap-2.5 font-display text-display-xs uppercase text-ink">
-        <CircleAlert className="size-4 shrink-0 text-err" aria-hidden />
+        <ChromeIcon name="alert" className="size-4 shrink-0 text-err" />
         Run failed
       </p>
       <p className="mt-2 text-sm leading-relaxed text-ink">{error}</p>

@@ -143,7 +143,7 @@ export default function HeicToJpgTool() {
       ) : (
         <div className="space-y-4">
           <FileDropZone accept={["heic", "heif"]} multiple maxFiles={10} maxSizeMb={50} onFiles={queue.addFiles} existingCount={queue.files.length} />
-          <FileList files={queue.files} onRemove={queue.removeAt} />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} />
 
           {queue.files.length > 0 && (
             <OptionsPanel title="JPG quality">

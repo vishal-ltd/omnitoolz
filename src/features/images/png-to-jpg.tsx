@@ -58,7 +58,7 @@ export default function PngToJpgTool() {
             existingCount={queue.files.length}
             onFiles={queue.addFiles}
           />
-          <FileList files={queue.files} onRemove={queue.removeAt} thumbnails />
+          <FileList files={queue.files} onRemove={queue.removeAt} onUndo={queue.undoRemove} undoLabel={queue.lastRemoved} thumbnails />
 
           {ready && (
             <OptionsPanel title="JPG settings">

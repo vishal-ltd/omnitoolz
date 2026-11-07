@@ -80,7 +80,7 @@ export default function PasswordAuditorTool() {
               <ul className="space-y-1 border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
                 {audit.advice.map((tip) => (
                   <li key={tip} className="font-body text-lg text-ink">
-                    ▸ {tip}
+                    {tip}
                   </li>
                 ))}
               </ul>

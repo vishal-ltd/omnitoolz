@@ -22,7 +22,7 @@ export default function NotFound() {
           <Link
             key={tool.id}
             href={tool.route}
-            className="border-[3px] border-edge bg-card px-3.5 py-2 font-display text-display-xs text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
+            className="border-[3px] border-edge bg-card px-3.5 py-2 font-display text-display-xs text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
           >
             {tool.name}
           </Link>
@@ -30,9 +30,9 @@ export default function NotFound() {
       </div>
       <Link
         href="/"
-        className="mt-8 inline-block border-[3px] border-edge bg-brand px-6 py-3 font-display text-display-xs text-on-brand uppercase shadow-[4px_4px_0_0_var(--color-shadow)] transition-all hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_var(--color-shadow)] active:translate-y-1 active:shadow-none"
+        className="mt-8 inline-block border-[3px] border-edge bg-brand px-6 py-3 font-display text-display-xs text-on-brand uppercase shadow-[4px_4px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_var(--color-shadow)] active:translate-y-1 active:shadow-none"
       >
-        ▸ Back to homepage
+        Back to homepage
       </Link>
     </div>
   );
