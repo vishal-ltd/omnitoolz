@@ -292,6 +292,12 @@ a {
 }
 
 /* Marquee edges: items fade out instead of being sliced mid-word. */
+/* Pointing at the marquee stops it. */
+.ticker-mask:hover .animate-ticker,
+.ticker-mask:focus-within .animate-ticker {
+  animation-play-state: paused;
+}
+
 .ticker-mask {
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);

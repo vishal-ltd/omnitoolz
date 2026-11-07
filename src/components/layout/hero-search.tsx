@@ -21,9 +21,6 @@ export function HeroSearch() {
         Search {liveTools().length} tools
         <span className="hidden sm:inline"> — “merge pdf”, “resize photo”…</span>
       </span>
-      <span className="animate-blink font-display text-sm text-brand" aria-hidden>
-        ▮
-      </span>
     </button>
   );
 }

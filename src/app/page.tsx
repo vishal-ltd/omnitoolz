@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
-import { ChromeIcon, PixelIcon, ToolIcon, type ChromeName } from "@/components/icons";
+import { PixelIcon, ToolIcon } from "@/components/icons";
 import { HeroSearch } from "@/components/layout/hero-search";
-import { HeroPreview } from "@/components/layout/hero-preview";
 import { RecentTools } from "@/components/tools/recent-tools";
 import { IconBox } from "@/components/ui/icon-box";
 import { site } from "@/lib/site";
@@ -28,7 +27,7 @@ export default function HomePage() {
         }}
       />
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative mt-2 overflow-hidden border-[3px] border-edge bg-dither px-4 pt-14 pb-10 text-center shadow-[6px_6px_0_0_var(--color-shadow)] sm:pt-20">
+      <section className="relative mt-2 overflow-hidden border-[3px] border-edge bg-dither px-4 pt-10 pb-8 text-center shadow-[6px_6px_0_0_var(--color-shadow)] sm:pt-12">
         {/* floating pixel decorations */}
         <span className="absolute left-[8%] top-10 hidden size-3 border-2 border-edge bg-brand sm:block" aria-hidden style={{ animationDelay: "0s" }} />
         <span className="absolute right-[10%] top-16 hidden size-3 border-2 border-edge bg-gold sm:block" aria-hidden style={{ animationDelay: "0.4s" }} />
@@ -47,20 +46,18 @@ export default function HomePage() {
         </div>
 
         <h1 className="mx-auto mt-6 max-w-3xl animate-pixel-in text-display-md leading-[1.5] text-ink sm:text-display-lg">
-          Every Tool.<br />
-          <span className="text-brand">One Place.</span>
-          <span className="ml-2 inline-block animate-blink text-ink" aria-hidden>▮</span>
+          {liveTools().length} tools.<br />
+          <span className="text-brand">No uploads.</span>
+          <span className="ml-2 hidden animate-blink text-ink sm:inline-block" aria-hidden>▮</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
           Convert, compress, edit and organize documents, images and text —
-          all free, all right in your browser. No uploads, ever.
+          all free, all right in your browser.
         </p>
 
-        <div className="mx-auto mt-8 max-w-xl">
+        <div className="mx-auto mt-6 max-w-xl">
           <HeroSearch />
         </div>
-
-        <HeroPreview />
       </section>
 
       {/* ── Retro ticker ─────────────────────────────────────────── */}
@@ -121,7 +118,14 @@ export default function HomePage() {
                     </li>
                   ))}
                   {categoryTools.length > 4 && (
-                    <li className="text-ink-soft">+{categoryTools.length - 4} more</li>
+                    <li>
+                      <Link
+                        href={`/${category.slug}`}
+                        className="inline-flex min-h-6 items-center text-ink-soft transition-colors hover:text-brand hover:underline"
+                      >
+                        +{categoryTools.length - 4} more
+                      </Link>
+                    </li>
                   )}
                 </ul>
               </li>
@@ -130,39 +134,6 @@ export default function HomePage() {
         </ul>
       </section>
 
-      {/* ── Why ──────────────────────────────────────────────────── */}
-      <section
-        className="mt-14 border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]"
-        aria-label="Why OmniToolz"
-      >
-        <div className="grid divide-y-[3px] divide-line sm:grid-cols-3 sm:divide-x-[3px] sm:divide-y-0">
-          {[
-            {
-              icon: "shield" as ChromeName,
-              title: "Private by design",
-              body: "Files are processed on your device — nothing is uploaded, stored or shared.",
-            },
-            {
-              icon: "zap" as ChromeName,
-              title: "Fast by default",
-              body: "No upload queues. Processing starts the moment you click the button.",
-            },
-            {
-              icon: "laptop" as ChromeName,
-              title: "Free, no account",
-              body: "Every tool works without sign-up, without watermarks and without surprises.",
-            },
-          ].map(({ icon, title, body }) => (
-            <div key={title} className="p-5">
-              <IconBox tone="gold" className="size-10 shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <ChromeIcon name={icon} className="size-6" />
-              </IconBox>
-              <h3 className="mt-3 text-display-sm text-ink">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
     </>
   );
 }
