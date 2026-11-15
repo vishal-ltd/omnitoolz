@@ -23,11 +23,19 @@ const PAGE_SIZES: Record<string, { label: string; pt: [number, number] }> = {
   letter: { label: "Letter portrait", pt: [612, 792] },
 };
 
+/** A degenerate preview frame would bake a 1×1 page into the PDF. */
+function previewIsLive(video: HTMLVideoElement | null): video is HTMLVideoElement {
+  return Boolean(
+    video && video.readyState >= 2 && video.videoWidth >= 32 && video.videoHeight >= 32,
+  );
+}
+
 export default function CameraScanPdfTool() {
   const { state, start, reset, retry } = useJob();
   const [shots, setShots] = useState<Shot[]>([]);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
   const [pageSize, setPageSize] = useState("auto");
   const [marginMm, setMarginMm] = useState(0);
   const [autoTrim, setAutoTrim] = useState(true);
@@ -39,21 +47,20 @@ export default function CameraScanPdfTool() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setCameraOn(false);
+    setPreviewReady(false);
   }, []);
 
   useEffect(() => stopCamera, [stopCamera]);
 
   async function startCamera() {
     setCameraError(null);
+    setPreviewReady(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 2560 }, height: { ideal: 1440 } },
       });
       streamRef.current = stream;
       setCameraOn(true);
-      const video = videoRef.current!;
-      video.srcObject = stream;
-      await video.play();
     } catch {
       setCameraError(
         "Camera access isn't available — allow it in the browser, or use “JPG to PDF” with photos you've already taken.",
@@ -61,9 +68,22 @@ export default function CameraScanPdfTool() {
     }
   }
 
+  // The <video> mounts only once cameraOn flips, so the ref is still null in
+  // startCamera — attach the stream here, after the element exists.
+  useEffect(() => {
+    if (!cameraOn) return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+    video.srcObject = stream;
+    video.play().catch(() => {
+      setCameraError("The camera preview couldn't start — close the camera and open it again.");
+    });
+  }, [cameraOn]);
+
   function capture() {
     const video = videoRef.current;
-    if (!video || video.readyState < 2) return;
+    if (!previewIsLive(video)) return;
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -224,9 +244,13 @@ export default function CameraScanPdfTool() {
                 className="w-full border-[3px] border-edge bg-black shadow-[4px_4px_0_0_var(--color-shadow)]"
                 playsInline
                 muted
+                onPlaying={() => setPreviewReady(previewIsLive(videoRef.current))}
+                onResize={() => setPreviewReady(previewIsLive(videoRef.current))}
               />
               <div className="flex flex-wrap gap-3">
-                <Button onClick={capture}>Capture page</Button>
+                <Button onClick={capture} disabled={!previewReady}>
+                  Capture page
+                </Button>
                 <Button variant="secondary" onClick={stopCamera}>
                   Close camera
                 </Button>

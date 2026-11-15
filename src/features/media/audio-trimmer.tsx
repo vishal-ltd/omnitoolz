@@ -9,7 +9,7 @@ import { OptionsPanel, ToolWidget } from "@/components/tools/job-ui";
 import { Button } from "@/components/ui/button";
 import { Field, RangeInput } from "@/components/ui/form";
 import { baseName, bytesToBlob, downloadBlob, formatBytes } from "@/lib/utils";
-import { computePeaks, encodeWav, type Peak } from "@/lib/wav";
+import { computePeaks, encodeWav, wavSampleRate, type Peak } from "@/lib/wav";
 
 function clock(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -41,8 +41,12 @@ export default function AudioTrimmerTool() {
   const analyze = useCallback(async (source: File | Blob) => {
     setError(null);
     try {
-      const context = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      const buffer = await context.decodeAudioData(await source.arrayBuffer());
+      const data = await source.arrayBuffer();
+      const rate = wavSampleRate(new Uint8Array(data));
+      const AudioCtor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      // Decode at the file's own rate so trimming a WAV doesn't resample it.
+      const context = rate && rate >= 8000 && rate <= 96000 ? new AudioCtor({ sampleRate: rate }) : new AudioCtor();
+      const buffer = await context.decodeAudioData(data);
       await context.close();
       setAudioBuffer(buffer);
       setPeaks(computePeaks(buffer.getChannelData(0), 400));

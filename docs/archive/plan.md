@@ -1,5 +1,13 @@
 # Toolora — Complete Product & Development Plan
 
+> **ARCHIVED — original pre-ship blueprint, not a current specification.**
+> This was written before the product shipped, under the provisional name
+> "Toolora". The shipped product is **OmniToolz**; `src/lib/site.ts` is the
+> source of brand truth and `README.md` describes what actually exists. The
+> tagline below did survive into the shipped product. Section numbers are kept
+> intact because code comments still cite them (e.g. "plan §7", "plan.md §11").
+> Read it as design history and rationale, not as a description of the build.
+
 > **Working brand:** Toolora  
 > **Tagline:** Every Tool. One Place.  
 > **Product type:** All-in-one online productivity and file-processing platform  

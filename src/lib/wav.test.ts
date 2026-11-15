@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePeaks, encodeWav } from "./wav";
+import { computePeaks, encodeWav, wavSampleRate } from "./wav";
 
 describe("encodeWav", () => {
   it("writes a valid RIFF/PCM16 header", () => {
@@ -39,6 +39,32 @@ describe("encodeWav", () => {
     expect(() =>
       encodeWav([new Float32Array([1, 2]), new Float32Array([1])], 44100),
     ).toThrow(/equal length/);
+  });
+});
+
+describe("wavSampleRate", () => {
+  it("reads the rate back out of an encoded WAV", () => {
+    expect(wavSampleRate(encodeWav([new Float32Array([0, 0.5])], 8000))).toBe(8000);
+    expect(wavSampleRate(encodeWav([new Float32Array([0, 0.5])], 44100))).toBe(44100);
+  });
+
+  it("walks past leading chunks to find fmt", () => {
+    const wav = encodeWav([new Float32Array([0])], 22050);
+    const junk = new Uint8Array(8 + 4);
+    const junkView = new DataView(junk.buffer);
+    junk.set([0x4a, 0x55, 0x4e, 0x4b], 0); // "JUNK"
+    junkView.setUint32(4, 4, true);
+    const withJunk = new Uint8Array(12 + junk.length + wav.length - 12);
+    withJunk.set(wav.subarray(0, 12), 0);
+    withJunk.set(junk, 12);
+    withJunk.set(wav.subarray(12), 12 + junk.length);
+    expect(wavSampleRate(withJunk)).toBe(22050);
+  });
+
+  it("returns null for anything that isn't a WAV", () => {
+    expect(wavSampleRate(new Uint8Array([0xff, 0xfb, 0x90, 0x00]))).toBeNull();
+    expect(wavSampleRate(new Uint8Array(0))).toBeNull();
+    expect(wavSampleRate(new TextEncoder().encode("RIFFxxxxWAVE"))).toBeNull();
   });
 });
 

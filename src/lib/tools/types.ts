@@ -1,6 +1,6 @@
 /**
- * Tool registry types (plan.md §11). The registry is pure data so it can be
- * imported from server components, search, the sitemap and tests alike.
+ * Tool registry types (docs/archive/plan.md §11). The registry is pure data so
+ * it can be imported from server components, search, the sitemap and tests alike.
  * A tool is only marked "live" when its handler component exists and works.
  */
 

@@ -80,13 +80,13 @@ export default function SignPdfTool() {
   }, [file]);
 
   // ── Signature canvas ─────────────────────────────────────────────
+  // The pad stays transparent (CSS paints it white) so the exported PNG
+  // doesn't white-out whatever the signature is placed over.
   const resetCanvas = useCallback(() => {
     const canvas = sigCanvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
     setHasInk(false);
   }, []);
 
@@ -100,8 +100,7 @@ export default function SignPdfTool() {
     const canvas = sigCanvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
     const text = typedName.trim();
     setHasInk(text.length > 0);
     if (!text) return;
@@ -202,6 +201,7 @@ export default function SignPdfTool() {
             queue.clear();
             setPages([]);
             setPlacement(null);
+            setEveryPage(false);
             reset();
             resetCanvas();
             setTypedName("");

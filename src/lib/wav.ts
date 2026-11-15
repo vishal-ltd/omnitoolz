@@ -1,5 +1,24 @@
 /** WAV (RIFF/PCM16) encoding + waveform peaks — pure, testable. */
 
+/**
+ * Sample rate declared in a RIFF/WAVE header, or null for anything else.
+ * Trimming re-encodes through an AudioContext, which resamples to the context
+ * rate — reading this first is what keeps an 8 kHz recording at 8 kHz.
+ */
+export function wavSampleRate(bytes: Uint8Array): number | null {
+  if (bytes.length < 44) return null;
+  const tag = (offset: number) => String.fromCharCode(...bytes.subarray(offset, offset + 4));
+  if (tag(0) !== "RIFF" || tag(8) !== "WAVE") return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let offset = 12;
+  while (offset + 8 <= bytes.length) {
+    const size = view.getUint32(offset + 4, true);
+    if (tag(offset) === "fmt ") return size >= 16 ? view.getUint32(offset + 12, true) : null;
+    offset += 8 + size + (size % 2);
+  }
+  return null;
+}
+
 export function encodeWav(channels: Float32Array[], sampleRate: number): Uint8Array {
   if (channels.length === 0) throw new Error("A WAV needs at least one channel.");
   const frames = channels[0].length;

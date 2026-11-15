@@ -207,7 +207,7 @@ export function BgTouchUp({
       </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={apply}>
-          Apply & download
+          Apply touch-up
         </Button>
         <Button variant="secondary" size="sm" onClick={onCancel}>
           Cancel

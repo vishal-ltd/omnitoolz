@@ -23,6 +23,7 @@ export default function BackgroundRemoverTool() {
     setProgressLabel(null);
     await start(async ({ report }) => {
       report("Loading the AI model (first run downloads it once)…", 0.05);
+      // onnxruntime-web is pinned to 1.16.0: this library ships 1.16.0 WASM binaries.
       const { removeBackground } = await import("@imgly/background-removal");
       const results: ResultFile[] = [];
       for (const [index, source] of sources.entries()) {

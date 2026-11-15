@@ -9,8 +9,9 @@ import { JobError, JobProgress, ToolWidget } from "@/components/tools/job-ui";
 import { Results } from "@/components/tools/results";
 import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
-import { baseName, bytesToBlob, type ResultFile } from "@/lib/utils";
-import { loadPdf } from "./pdf-core";
+import { baseName, type ResultFile } from "@/lib/utils";
+import { loadPdf, yieldToUi } from "./pdf-core";
+import { exportEmbeddedImage } from "./pdf-image-export";
 
 export default function ExtractPdfImagesTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: false, maxFiles: 1, maxSizeMb: 100 });
@@ -33,19 +34,12 @@ export default function ExtractPdfImagesTool() {
       let skipped = 0;
       for (const [, object] of doc.context.enumerateIndirectObjects()) {
         if (!(object instanceof PDFRawStream)) continue;
-        const dict = object.dict;
-        const subtype = dict.get(PDFName.of("Subtype"));
+        const subtype = object.dict.get(PDFName.of("Subtype"));
         if (!subtype || subtype.toString() !== "/Image") continue;
-        const filter = dict.get(PDFName.of("Filter"))?.toString() ?? "";
-        if (filter.includes("DCTDecode")) {
-          // A plain embedded JPEG — export bytes untouched.
-          results.push({
-            name: `image-${results.length + 1}.jpg`,
-            blob: bytesToBlob(object.contents, "image/jpeg"),
-          });
-        } else {
-          skipped++;
-        }
+        const exported = await exportEmbeddedImage(doc, object, results.length + 1);
+        if (exported) results.push(exported);
+        else skipped++;
+        await yieldToUi();
       }
 
       if (results.length === 0) {
@@ -62,9 +56,9 @@ export default function ExtractPdfImagesTool() {
 
   const note =
     stats && stats.skipped > 0
-      ? `${stats.extracted} JPEG ${stats.extracted === 1 ? "image" : "images"} recovered at original quality · ${stats.skipped} in other ${stats.skipped === 1 ? "encoding" : "encodings"} skipped.`
+      ? `${stats.extracted} ${stats.extracted === 1 ? "picture" : "pictures"} recovered at original quality · ${stats.skipped} in ${stats.skipped === 1 ? "an encoding" : "encodings"} this tool can't export skipped.`
       : stats
-        ? `${stats.extracted} JPEG ${stats.extracted === 1 ? "image" : "images"} recovered at original quality.`
+        ? `${stats.extracted} ${stats.extracted === 1 ? "picture" : "pictures"} recovered at original quality.`
         : undefined;
 
   return (
@@ -91,7 +85,7 @@ export default function ExtractPdfImagesTool() {
           {state.phase === "error" && <JobError error={state.error} detail={state.errorDetail} kind={state.errorKind} onRetry={retry} onDismiss={reset} />}
 
           <div className="flex items-center justify-between gap-4">
-            <p className="text-sm text-ink-soft">Pictures come out byte-for-byte — no re-compression.</p>
+            <p className="text-sm text-ink-soft">JPEGs come out byte-for-byte — other pictures are saved as lossless PNG.</p>
             <Button size="lg" disabled={!file} onClick={extract}>
               Extract Images
             </Button>

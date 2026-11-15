@@ -79,11 +79,22 @@ export default function QrScannerTool() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       streamRef.current = stream;
       setCameraOn(true);
-      const video = videoRef.current!;
-      video.srcObject = stream;
-      await video.play();
-      const tick = async () => {
-        if (!streamRef.current || video.readyState < 2) return;
+    } catch {
+      setError("Camera access was blocked — allow it in the browser or scan an image instead.");
+    }
+  }
+
+  // The <video> mounts only once cameraOn flips, so the ref is still null in
+  // startCamera — attach the stream and start scanning here.
+  useEffect(() => {
+    if (!cameraOn) return;
+    const video = videoRef.current;
+    if (!video || !streamRef.current) return;
+    let cancelled = false;
+    video.srcObject = streamRef.current;
+    const tick = async () => {
+      if (cancelled || !streamRef.current) return;
+      if (video.readyState >= 2) {
         try {
           const text = await decode(video, video.videoWidth, video.videoHeight);
           if (text) {
@@ -94,13 +105,16 @@ export default function QrScannerTool() {
         } catch {
           // keep scanning
         }
-        window.setTimeout(tick, 250);
-      };
-      tick();
-    } catch {
-      setError("Camera access was blocked — allow it in the browser or scan an image instead.");
-    }
-  }
+      }
+      window.setTimeout(tick, 250);
+    };
+    video.play().then(tick).catch(() => {
+      setError("The camera preview couldn't start — stop the camera and try again.");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cameraOn, decode, stopCamera]);
 
   return (
     <ToolWidget>

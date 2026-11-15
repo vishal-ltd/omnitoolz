@@ -1,7 +1,7 @@
 import type { Category, ToolDefinition, ToolWithRoute } from "./types";
 
 /**
- * Central tool registry (plan.md §11). Every public surface — navigation,
+ * Central tool registry (docs/archive/plan.md §11). Every public surface — navigation,
  * homepage cards, category pages, search, related tools, the sitemap — is
  * derived from this file. A tool must have a working handler component
  * registered in src/features/tool-loaders.ts before it is marked "live".

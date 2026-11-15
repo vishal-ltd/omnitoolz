@@ -11,16 +11,17 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test
       - run: npm run lint
       - run: npm run build
       - run: npm run test:smoke
+      - run: npm run test:render
       - run: npm audit --audit-level=moderate
