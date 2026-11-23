@@ -55,7 +55,7 @@ export default function ExcelToPdfTool() {
           const font = (boldFlag: boolean) => (boldFlag ? bold : regular);
           const size = Math.max(4, Math.min(BASE_FONT * (scalePct / 100), (columnWidth / 6)));
 
-          const drawRow = (row: Cell[], header: boolean, rowIndex: number) => {
+          const drawRow = (row: Cell[], header: boolean) => {
             const lineHeight = size + 2;
             if (y < LANDSCAPE.margin + lineHeight) {
               doc.addPage([LANDSCAPE.width, LANDSCAPE.height]);
@@ -91,7 +91,6 @@ export default function ExcelToPdfTool() {
               });
             }
             y -= lineHeight;
-            void rowIndex;
           };
 
           // Sheet header block
@@ -109,7 +108,7 @@ export default function ExcelToPdfTool() {
           });
           y -= 20;
 
-          rows.forEach((row, rowIndex) => drawRow(row, rowIndex === 0, rowIndex));
+          rows.forEach((row, rowIndex) => drawRow(row, rowIndex === 0));
           y -= 14;
         }
 

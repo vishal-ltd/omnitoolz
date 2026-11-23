@@ -47,7 +47,6 @@ const CHROME = {
 const MODULE_ALIAS = {
   fingerprint: "fingerprint-pattern",
   "code-2": "code-xml",
-  "wand-2": "wand-sparkles",
   "file-json": "file-json-2",
   "file-minus-2": "file-minus-corner",
 };

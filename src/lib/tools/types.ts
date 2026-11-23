@@ -61,7 +61,6 @@ export type IconName =
   | "file-check"
   | "pen-line"
   | "scan-text"
-  | "wand-2"
   | "camera"
   | "video"
   | "app-window"

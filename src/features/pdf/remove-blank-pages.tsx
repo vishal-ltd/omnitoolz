@@ -70,12 +70,11 @@ export default function RemoveBlankPagesTool() {
       const fresh = await PDFDocument.create();
       const copied = await fresh.copyPages(out, keep);
       for (const page of copied) fresh.addPage(page);
-      const out2 = fresh;
 
       setRemovedNote(
         `Removed ${removed.length} blank ${removed.length === 1 ? "page" : "pages"} (${removed.join(", ")}).`,
       );
-      return [await savePdf(out2, suffixedName(source.name, "-trimmed"))];
+      return [await savePdf(fresh, suffixedName(source.name, "-trimmed"))];
     }, "Scanning pages…");
   }
 

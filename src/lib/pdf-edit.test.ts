@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  deserializeOverlays,
   displayDeltaToUserSpace,
   displayPctToUserSpace,
   displayRectToUserSpace,
@@ -93,7 +92,7 @@ describe("simplifyInk", () => {
   });
 });
 
-describe("serialize / deserialize", () => {
+describe("serializeOverlays", () => {
   it("round-trips overlays losslessly", () => {
     const overlays: EditOverlay[] = [
       { type: "text", page: 0, xPct: 10, yPct: 20, widthPct: 40, text: "Hello", fontSizePt: 14, color: "#111111", bold: true },
@@ -108,12 +107,8 @@ describe("serialize / deserialize", () => {
         color: "#000000", fontLabel: "SourceSansPro-Regular", originalText: "Original run", originalSizePt: 12,
       },
     ];
-    const restored = deserializeOverlays(serializeOverlays(overlays));
+    const restored = JSON.parse(serializeOverlays(overlays)) as EditOverlay[];
     expect(restored).toEqual(overlays);
-  });
-
-  it("rejects non-array data", () => {
-    expect(() => deserializeOverlays('{"nope":1}')).toThrow(/array/);
   });
 });
 

@@ -8,7 +8,7 @@ processing, no accounts and no tracking.
 **▸ Try it live: [omnitoolz.vercel.app](https://omnitoolz.vercel.app)**
 
 Built with Next.js 15, React 19, TypeScript and Tailwind CSS v4, in a
-16-bit pixel-art UI. 62 tools · 264 unit tests · 82 statically generated
+16-bit pixel-art UI. 62 tools · 263 unit tests · 82 statically generated
 pages · shared first-load JS ~104 kB.
 
 ## Quick start
@@ -23,7 +23,7 @@ Other scripts:
 ```bash
 npm run build      # production build (82 static pages)
 npm run start      # serve the production build
-npm test           # vitest unit tests (264)
+npm test           # vitest unit tests (263)
 npm run lint       # eslint (clean)
 ```
 
@@ -117,7 +117,7 @@ hook dependency rules.
 
 ## Testing
 
-`npm test` — 264 unit tests covering page-range parsing, split modes,
+`npm test` — 263 unit tests covering page-range parsing, split modes,
 password generation/auditing, case conversion, JSON tools, search ranking,
 byte formatting, invoice math, page pixel analysis, ICO packing, WAV
 encoding, base32/TOTP (cross-checked against node:crypto), line diff, color

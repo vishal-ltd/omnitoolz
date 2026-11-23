@@ -403,13 +403,7 @@ export function simplifyInk(
   return simplify(points);
 }
 
-/** JSON round-trip for undo stacks and (future) persistence. */
+/** JSON serialization for the undo/redo stacks. */
 export function serializeOverlays(overlays: EditOverlay[]): string {
   return JSON.stringify(overlays);
-}
-
-export function deserializeOverlays(json: string): EditOverlay[] {
-  const parsed: unknown = JSON.parse(json);
-  if (!Array.isArray(parsed)) throw new Error("Overlay data must be an array.");
-  return parsed as EditOverlay[];
 }
