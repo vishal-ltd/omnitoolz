@@ -14,7 +14,9 @@ function encode(text: string, urlSafe: boolean): string {
 }
 
 function decode(input: string): string {
-  const normalized = input.trim().replace(/-/g, "+").replace(/_/g, "/");
+  // Strip ALL whitespace before padding: atob tolerates inner spaces/newlines,
+  // but counting them toward the length would add the wrong number of "="s.
+  const normalized = input.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
   const binary = atob(padded);
   const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
@@ -42,7 +44,12 @@ export default function Base64Tool() {
     }, [input, mode, urlSafe]);
 
   async function copy() {
-    if (output) await navigator.clipboard.writeText(output);
+    if (!output) return;
+    try {
+      await navigator.clipboard.writeText(output);
+    } catch {
+      // Clipboard may be blocked — the result textarea remains selectable.
+    }
   }
 
   return (

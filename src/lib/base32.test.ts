@@ -26,5 +26,18 @@ describe("base32", () => {
 
   it("handles empty input", () => {
     expect(base32Decode("").length).toBe(0);
+    expect(base32Decode("  =- ").length).toBe(0);
+  });
+
+  it("rejects truncated secrets instead of silently dropping bits", () => {
+    // 1, 3 and 6 characters mod 8 cannot encode whole bytes.
+    expect(() => base32Decode("A")).toThrow(/truncated/i);
+    expect(() => base32Decode("ABC")).toThrow(/truncated/i);
+    expect(() => base32Decode("ABCDEF")).toThrow(/truncated/i);
+    // Valid remainders (2, 4, 5, 7) still decode.
+    expect(base32Decode("AB").length).toBe(1);
+    expect(base32Decode("ABCD").length).toBe(2);
+    expect(base32Decode("ABCDE").length).toBe(3);
+    expect(base32Decode("ABCDEFG").length).toBe(4);
   });
 });

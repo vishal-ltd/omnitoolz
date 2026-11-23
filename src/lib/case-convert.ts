@@ -8,10 +8,18 @@ const MINOR_WORDS = new Set([
 function words(text: string): string[] {
   // Split on non-alphanumerics, then on camelCase humps (PageTitle → Page Title,
   // HTTPServer → HTTP Server) so case-style conversions are word-aware.
+  // Unicode property escapes keep accents and non-Latin scripts intact —
+  // an ASCII-only class would turn "café" into "caf" and "Straße" into "stra_e".
   const spaced = text
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
-  return spaced.match(/[A-Za-z0-9']+/g) ?? [];
+    .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, "$1 $2")
+    .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, "$1 $2");
+  return spaced.match(/[\p{L}\p{N}'’]+/gu) ?? [];
+}
+
+/** Uppercase the first code point (charAt would split surrogate pairs). */
+function capitalize(word: string): string {
+  const chars = [...word];
+  return chars.length === 0 ? word : chars[0].toUpperCase() + chars.slice(1).join("");
 }
 
 export function toUpper(text: string): string {
@@ -39,7 +47,7 @@ export function toTitleCase(text: string): string {
     if (!isFirst && !isLast && MINOR_WORDS.has(lower.replace(/[^a-z']/g, ""))) {
       tokens[i] = lower;
     } else if (raw.length > 0) {
-      tokens[i] = lower.charAt(0).toUpperCase() + lower.slice(1);
+      tokens[i] = capitalize(lower);
     }
     w++;
   }
@@ -53,10 +61,10 @@ export function toSentenceCase(text: string): string {
     if (/[.!?]/.test(char)) {
       result += char;
       capitalize = true;
-    } else if (capitalize && /[a-z]/.test(char)) {
+    } else if (capitalize && /\p{Ll}/u.test(char)) {
       result += char.toUpperCase();
       capitalize = false;
-    } else if (/[A-Za-z]/.test(char)) {
+    } else if (/\p{L}/u.test(char)) {
       if (!capitalize) result += char.toLowerCase();
       else {
         result += char;
@@ -77,7 +85,7 @@ function joinCamel(text: string, pascal: boolean): string {
     .map((word, i) => {
       const lower = word.toLowerCase();
       if (i === 0 && !pascal) return lower;
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
+      return capitalize(lower);
     })
     .join("");
 }
@@ -102,7 +110,7 @@ export function toAlternatingCase(text: string): string {
   let i = 0;
   return [...text]
     .map((char) => {
-      if (!/[a-z]/i.test(char)) return char;
+      if (!/\p{L}/u.test(char)) return char;
       const out = i % 2 === 0 ? char.toLowerCase() : char.toUpperCase();
       i++;
       return out;

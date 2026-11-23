@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function AppError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    // Next docs: log the caught error so it reaches the console/monitoring.
+    console.error(error);
+  }, [error]);
+
   return (
     <div className="mx-auto mt-8 max-w-xl border-[3px] border-err bg-err-soft p-8 text-center shadow-[6px_6px_0_0_var(--color-shadow)]">
       <p className="font-display text-display-xs text-err uppercase">Something went wrong</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ChromeIcon } from "@/components/icons";
 import { liveTools } from "@/lib/tools/registry";
 
@@ -66,13 +67,13 @@ export function RecentTools() {
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {tools.map((tool) => (
-          <a
+          <Link
             key={tool.id}
             href={tool.route}
             className="border-[3px] border-edge bg-card px-4 py-2 font-body text-lg text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)]"
           >
             {tool.name}
-          </a>
+          </Link>
         ))}
       </div>
     </section>

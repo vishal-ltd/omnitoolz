@@ -1,14 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { OptionsPanel, ToolWidget } from "@/components/tools/job-ui";
 import { Checkbox, Field, TextArea, TextInput } from "@/components/ui/form";
+import { regexWorkerSource, type RegexMatchInfo } from "@/lib/utils";
 
-interface MatchInfo {
-  text: string;
-  index: number;
-  groups: string[];
+const SAFE_TEST_TEXT_MAX = 20_000;
+const MAX_MATCHES = 500;
+const WORKER_TIMEOUT_MS = 2_000;
+
+interface RunResult {
+  matches: RegexMatchInfo[];
+  error: string | null;
+  capped: boolean;
 }
+
+const IDLE_RESULT: RunResult = { matches: [], error: null, capped: false };
 
 export default function RegexTesterTool() {
   const [pattern, setPattern] = useState("");
@@ -25,53 +32,88 @@ export default function RegexTesterTool() {
     [caseInsensitive, multiline, dotAll, unicode],
   );
 
-  const SAFE_TEST_TEXT_MAX = 20_000;
+  const [result, setResult] = useState<RunResult>(IDLE_RESULT);
+  const workerUrlRef = useRef<string | null>(null);
 
-const { matches, error } = useMemo(() => {
-    if (!pattern || !testText) return { matches: [] as MatchInfo[], error: null as string | null };
-    const safeText = testText.length > SAFE_TEST_TEXT_MAX ? testText.slice(0, SAFE_TEST_TEXT_MAX) : testText;
-    try {
-      const regex = new RegExp(pattern, effectiveFlags);
-      const found: MatchInfo[] = [];
-      if (regex.global) {
-        for (const match of safeText.matchAll(regex)) {
-          found.push({
-            text: match[0],
-            index: match.index ?? 0,
-            groups: match.slice(1).map((group) => group ?? "—"),
-          });
-          if (found.length > 500) break;
-        }
-      } else {
-        const match = regex.exec(safeText);
-        if (match) {
-          found.push({
-            text: match[0],
-            index: match.index,
-            groups: match.slice(1).map((group) => group ?? "—"),
-          });
-        }
-      }
-      return { matches: found, error: null };
-    } catch (e) {
-      return { matches: [], error: e instanceof Error ? e.message : "Invalid pattern." };
+  // The old 20K text cap never bounded execution: (a+)+$ against 30 characters
+  // backtracks for minutes on the main thread. Every run now happens inside a
+  // worker that is terminated on a hard deadline — no pattern can freeze the
+  // tab, and a newer keystroke terminates the previous run.
+  useEffect(() => {
+    if (!pattern || !testText) {
+      setResult(IDLE_RESULT);
+      return;
     }
+    const safeText = testText.length > SAFE_TEST_TEXT_MAX ? testText.slice(0, SAFE_TEST_TEXT_MAX) : testText;
+    if (!workerUrlRef.current) {
+      workerUrlRef.current = URL.createObjectURL(new Blob([regexWorkerSource()], { type: "text/javascript" }));
+    }
+    const worker = new Worker(workerUrlRef.current);
+    let settled = false;
+    let timer = 0;
+    const finish = (next: RunResult) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      worker.terminate();
+      setResult(next);
+    };
+    timer = window.setTimeout(() => {
+      finish({
+        matches: [],
+        capped: false,
+        error:
+          "Stopped after 2 seconds — this pattern backtracks catastrophically on your text. Simplify nested quantifiers like (a+)+ or shorten the test text.",
+      });
+    }, WORKER_TIMEOUT_MS);
+    worker.onmessage = (
+      event: MessageEvent<{ ok: boolean; matches?: RegexMatchInfo[]; capped?: boolean; error?: string }>,
+    ) => {
+      const data = event.data;
+      finish(
+        data.ok
+          ? { matches: data.matches ?? [], capped: data.capped ?? false, error: null }
+          : { matches: [], capped: false, error: data.error ?? "Invalid pattern." },
+      );
+    };
+    worker.onerror = () => {
+      finish({ matches: [], capped: false, error: "The pattern runner couldn't start — reload the page and try again." });
+    };
+    worker.postMessage({ pattern, flags: effectiveFlags, text: safeText, maxMatches: MAX_MATCHES });
+    return () => {
+      settled = true;
+      window.clearTimeout(timer);
+      worker.terminate();
+    };
   }, [pattern, testText, effectiveFlags]);
 
-  // Build highlighted output pieces
+  // Revoke the shared worker-script URL on unmount; null the ref so a
+  // StrictMode remount builds a fresh one instead of reusing a revoked URL.
+  useEffect(
+    () => () => {
+      if (workerUrlRef.current) {
+        URL.revokeObjectURL(workerUrlRef.current);
+        workerUrlRef.current = null;
+      }
+    },
+    [],
+  );
+
+  // Build highlighted output pieces. Zero-width matches highlight nothing but
+  // must not swallow the character that follows them.
   const segments = useMemo(() => {
-    if (matches.length === 0) return [{ text: testText, hit: false }];
     const parts: Array<{ text: string; hit: boolean }> = [];
     let cursor = 0;
-    for (const match of matches) {
+    for (const match of result.matches) {
       if (match.index > cursor) parts.push({ text: testText.slice(cursor, match.index), hit: false });
-      parts.push({ text: match.text, hit: true });
-      cursor = match.index + match.text.length;
-      if (cursor === match.index) cursor++; // guard empty matches
+      if (match.text.length > 0) {
+        parts.push({ text: match.text, hit: true });
+        cursor = match.index + match.text.length;
+      }
     }
     if (cursor < testText.length) parts.push({ text: testText.slice(cursor), hit: false });
     return parts;
-  }, [matches, testText]);
+  }, [result.matches, testText]);
 
   return (
     <ToolWidget>
@@ -105,13 +147,19 @@ const { matches, error } = useMemo(() => {
           />
         </Field>
 
-        {error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</p>}
+        {result.error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{result.error}</p>}
 
         <div className="border-[3px] border-edge bg-card p-4 shadow-[4px_4px_0_0_var(--color-shadow)]">
           <p className="font-display text-display-xs text-ink-soft uppercase">
-            {matches.length} {matches.length === 1 ? "match" : "matches"}
-            {matches.length > 0 && ` · flags /${effectiveFlags}/`}
+            {result.matches.length} {result.matches.length === 1 ? "match" : "matches"}
+            {result.capped && ` · showing first ${MAX_MATCHES}`}
+            {result.matches.length > 0 && ` · flags /${effectiveFlags}/`}
           </p>
+          {testText.length > SAFE_TEST_TEXT_MAX && (
+            <p className="mt-1 text-sm text-ink-soft">
+              Only the first {SAFE_TEST_TEXT_MAX.toLocaleString()} characters are tested.
+            </p>
+          )}
           <p className="mt-2 whitespace-pre-wrap break-words font-body text-lg leading-snug text-ink">
             {segments.map((segment, index) =>
               segment.hit ? (
@@ -125,9 +173,9 @@ const { matches, error } = useMemo(() => {
           </p>
         </div>
 
-        {matches.some((match) => match.groups.length > 0) && (
+        {result.matches.some((match) => match.groups.length > 0) && (
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card">
-            {matches.slice(0, 20).map((match, index) => (
+            {result.matches.slice(0, 20).map((match, index) => (
               <li key={index} className="px-4 py-2 font-body text-lg text-ink">
                 <span className="text-ink-soft">#{index + 1} </span>
                 “{match.text.slice(0, 40)}”

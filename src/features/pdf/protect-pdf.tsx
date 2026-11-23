@@ -35,12 +35,17 @@ export default function ProtectPdfTool() {
     }
     setMismatch(false);
     const chosen = password;
+    // A distinct random owner key: with owner == user password, anyone who can
+    // open the file could also strip every permission restriction.
+    const ownerPassword = Array.from(crypto.getRandomValues(new Uint8Array(24)), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
     await start(async ({ report }) => {
       report("Encrypting with AES-256…", 0.6);
       const doc = await loadPdfForEncryption(source);
       const bytes = await encryptAndSave(doc, {
         userPassword: chosen,
-        ownerPassword: chosen,
+        ownerPassword,
         allowPrinting,
         allowCopying,
         allowModifying,
@@ -61,7 +66,7 @@ export default function ProtectPdfTool() {
         <Results
           results={state.results}
           elapsedMs={state.elapsedMs}
-          note="AES-256 — store the password safely; there is no recovery."
+          note="AES-256 — store the password safely; there is no recovery. Permissions are locked with a separate owner key."
           onReset={() => {
             queue.clear();
             setPassword("");
@@ -98,7 +103,7 @@ export default function ProtectPdfTool() {
                   autoComplete="new-password"
                 />
               </Field>
-              <Field label="Reader permissions" hint="What someone with the password may do" className="sm:col-span-2">
+              <Field label="Reader permissions" hint="Enforced with a separate random owner key — the open password can't lift them" className="sm:col-span-2">
                 <div className="space-y-1.5">
                   <Checkbox checked={allowPrinting} onChange={setAllowPrinting} label="Allow printing" />
                   <Checkbox checked={allowCopying} onChange={setAllowCopying} label="Allow copying text" />

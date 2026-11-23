@@ -8,8 +8,8 @@ processing, no accounts and no tracking.
 **▸ Try it live: [omnitoolz.vercel.app](https://omnitoolz.vercel.app)**
 
 Built with Next.js 15, React 19, TypeScript and Tailwind CSS v4, in a
-16-bit pixel-art UI. 63 tools · 180 unit tests · 82 statically generated
-pages · first-load JS ~104 kB.
+16-bit pixel-art UI. 62 tools · 264 unit tests · 82 statically generated
+pages · shared first-load JS ~104 kB.
 
 ## Quick start
 
@@ -23,8 +23,8 @@ Other scripts:
 ```bash
 npm run build      # production build (82 static pages)
 npm run start      # serve the production build
-npm test           # vitest unit tests (180)
-npm run lint       # eslint (0 errors; see the note on react-hooks below)
+npm test           # vitest unit tests (264)
+npm run lint       # eslint (clean)
 ```
 
 ## Deploying
@@ -41,7 +41,7 @@ override. There are no other environment variables, no database, no secrets.
 | Category | Tools |
 |---|---|
 | PDF (33) | Merge, Split, Rotate, Extract/Reorder/Delete/Organize Pages, PDF ⇄ JPG, JPG to PDF, Add Page Numbers, Protect (AES-256), Unlock, Watermark, Header & Footer, Extract Text, Document Info, Clean (metadata/comments), Flatten Forms, Repair, Crop, Remove Blank Pages, Compare, Extract Images, Read (viewer + hand-off), Invoice Generator, Sign, Camera Scan, Edit, Verify Signature, PowerPoint to PDF, Word to PDF, Excel to PDF, PDF to Word, Compress (qpdf) |
-| Images (10) | Compress (quality or target-size mode), Resize, Crop, JPG ⇄ PNG, WebP Converter, Watermark, Background Remover (on-device AI), HEIC to JPG, Favicon Generator |
+| Images (9) | Compress (quality or target-size mode), Resize, Crop, JPG ⇄ PNG, WebP Converter, Watermark, HEIC to JPG, Favicon Generator |
 | Text (4) | Word Counter, Case Converter, Diff Checker, Image to Text (OCR) |
 | Developer (10) | JSON Formatter, QR Generator, JWT Decoder, Base64, UUID, Hash, Timestamp, Color Toolkit, Regex Tester, QR Scanner |
 | Security (4) | Password Generator, TOTP Generator, Password Auditor, File Hash Verifier |
@@ -55,7 +55,7 @@ from the central registry.
 ```text
 src/
 ├── app/                     Next.js App Router
-│   ├── page.tsx             Homepage (hero, featured, categories, ticker)
+│   ├── page.tsx             Homepage (hero, ticker, recent tools, level-select)
 │   ├── [category]/          Category listing (SSG from the registry)
 │   │   └── [tool]/          Tool page → ToolShell + lazy tool widget
 │   ├── about|privacy|terms/ Content pages
@@ -68,7 +68,7 @@ src/
 ├── features/                One component per tool + engine cores
 │   ├── tool-loaders.ts      id → lazy component (code-split per tool)
 │   ├── pdf/                 pdf-lib / pdf.js / qpdf / conversion cores
-│   ├── images/              canvas core + AI/HEIC tools
+│   ├── images/              canvas core + HEIC tool
 │   └── media/               capture tools
 └── lib/
     ├── tools/registry.ts    THE registry — nav, search, cards, sitemap,
@@ -87,9 +87,9 @@ public/                      pdf.js worker, libheif + qpdf WASM engines,
 - **Registry-driven.** A tool exists publicly only when its registry entry is
   `status: "live"` AND a component is registered in `tool-loaders.ts`. A test
   enforces the pairing in both directions.
-- **Engines load lazily.** pdf-lib, pdf.js, qpdf, libheif, Tesseract, the
-  background-removal model, qrcode, fflate and the docx stack are dynamically
-  imported inside action handlers — first-load JS stays ~104 kB.
+- **Engines load lazily.** pdf-lib, pdf.js, qpdf, libheif, Tesseract,
+  qrcode, fflate and the docx stack are dynamically
+  imported inside action handlers — shared first-load JS stays ~104 kB.
 - **One job state machine.** `useJob` (idle → running → done/error) powers
   every tool: real progress only, friendly errors, elapsed timing, ZIP for
   batches.
@@ -110,15 +110,14 @@ unit tests.
 
 ### ESLint note
 
-`npm run lint` reports 0 errors and a couple dozen warnings from React 19's
-`react-hooks/set-state-in-effect` rule. These are intentional patterns —
-reading localStorage preferences on mount, resetting derived state when a
-picked file changes, and loading lazy engines — documented in
-`eslint.config.mjs`, where the rule is set to `warn`.
+`npm run lint` is clean (0 errors, 0 warnings). Effects that synchronize
+browser APIs — reading localStorage preferences on mount, resetting derived
+state when a picked file changes, loading lazy engines — follow the standard
+hook dependency rules.
 
 ## Testing
 
-`npm test` — 180 unit tests covering page-range parsing, split modes,
+`npm test` — 264 unit tests covering page-range parsing, split modes,
 password generation/auditing, case conversion, JSON tools, search ranking,
 byte formatting, invoice math, page pixel analysis, ICO packing, WAV
 encoding, base32/TOTP (cross-checked against node:crypto), line diff, color
@@ -127,8 +126,9 @@ content requirements).
 
 Manual verification against the production build covers every tool's happy
 path plus error paths (wrong passwords, camera/screen permission denials,
-undecodable files). Lighthouse on the production build: 97/100/100/100
-(homepage), 92/100/100/100 (tool page).
+undecodable files). Lighthouse scores measured on the production build during
+the UI pass: 97/100/100/100 (homepage), 92/100/100/100 (tool page) — re-run
+locally against `npm run build && npm run start` to reproduce.
 
 ## Adding a tool (checklist)
 
@@ -146,7 +146,9 @@ undecodable files). Lighthouse on the production build: 97/100/100/100
 [MIT](LICENSE). The third-party engines bundled or fetched by the tools keep
 their own licenses: Next.js (MIT), React (MIT), Tailwind (MIT), pdf-lib
 (MIT), @cantoo/pdf-lib (MIT), pdf.js (Apache-2.0), qpdf-wasm (Apache-2.0),
-libheif (LGPL-3.0), tesseract.js (Apache-2.0), @imgly/background-removal
-(see its package), qrcode (MIT), fflate (MIT), docx (MIT), mammoth (BSD-2),
-SheetJS Community (Apache-2.0), lucide-react (ISC). Review before commercial
+libheif (LGPL-3.0), tesseract.js (Apache-2.0), qrcode (MIT), fflate (MIT),
+docx (MIT), mammoth (BSD-2), lucide-react (ISC). License texts for the
+vendored engines ship alongside them: `public/LICENSE-pdfjs.txt`,
+`public/qpdf/LICENSE`, `public/libheif/LICENSE` (each directory's README
+records the exact upstream version and hash). Review before commercial
 deployment.

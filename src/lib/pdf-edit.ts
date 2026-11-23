@@ -119,25 +119,183 @@ export function ptToPct(x: number, y: number, page: PageSize): { xPct: number; y
   };
 }
 
+/** A page's CropBox in PDF user space (points, origin bottom-left, y up). */
+export interface CropBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** How the editor displays a page: its CropBox plus the /Rotate applied. */
+export interface PageView {
+  cropBox: CropBox;
+  rotate: number;
+}
+
+/** PDF /Rotate is a multiple of 90; normalize anything else defensively. */
+function normalizeRotate(rotate: number): number {
+  const r = ((Math.round(rotate) % 360) + 360) % 360;
+  return r === 90 || r === 180 || r === 270 ? r : 0;
+}
+
+/** Size of the displayed (rotated CropBox) view — what the canvas shows. */
+export function displaySize(cropBox: CropBox, rotate: number): PageSize {
+  return normalizeRotate(rotate) % 180 === 0
+    ? { width: cropBox.width, height: cropBox.height }
+    : { width: cropBox.height, height: cropBox.width };
+}
+
+/**
+ * Display-space % delta → user-space point delta. The per-rotation formulas
+ * were derived empirically from pdf.js PageViewport.convertToPdfPoint corner
+ * probes (asserted in pdf-edit.test.ts) so baking matches the rotated canvas.
+ */
+export function displayDeltaToUserSpace(
+  dxPct: number,
+  dyPct: number,
+  cropBox: CropBox,
+  rotate: number,
+): { dx: number; dy: number } {
+  const { width: w, height: h } = cropBox;
+  // Quarter turns swap which DISPLAY axis drives which user axis; each user
+  // axis still scales with its own CropBox dimension (probe-verified).
+  switch (normalizeRotate(rotate)) {
+    case 90:
+      return { dx: (dyPct / 100) * w, dy: (dxPct / 100) * h };
+    case 180:
+      return { dx: -(dxPct / 100) * w, dy: (dyPct / 100) * h };
+    case 270:
+      return { dx: -(dyPct / 100) * w, dy: -(dxPct / 100) * h };
+    default:
+      return { dx: (dxPct / 100) * w, dy: -(dyPct / 100) * h };
+  }
+}
+
+/**
+ * Display percentages (top-left origin on the ROTATED CropBox view) → PDF
+ * user space. Matches pdf.js viewport.convertToPdfPoint at all four corners
+ * for rotations 0/90/180/270, including offset CropBoxes. With an unrotated
+ * zero-origin CropBox this is exactly pctToPt.
+ */
+export function displayPctToUserSpace(
+  xPct: number,
+  yPct: number,
+  cropBox: CropBox,
+  rotate: number,
+): { x: number; y: number } {
+  const rot = normalizeRotate(rotate);
+  const { x, y, width, height } = cropBox;
+  // User-space point under the display top-left corner, per rotation.
+  const origin =
+    rot === 90
+      ? { x, y }
+      : rot === 180
+        ? { x: x + width, y }
+        : rot === 270
+          ? { x: x + width, y: y + height }
+          : { x, y: y + height };
+  const d = displayDeltaToUserSpace(xPct, yPct, cropBox, rot);
+  return { x: origin.x + d.dx, y: origin.y + d.dy };
+}
+
+/** Inverse of displayPctToUserSpace: user space → display percentages. */
+export function userSpaceToDisplayPct(
+  x: number,
+  y: number,
+  cropBox: CropBox,
+  rotate: number,
+): { xPct: number; yPct: number } {
+  const { x: cx, y: cy, width, height } = cropBox;
+  switch (normalizeRotate(rotate)) {
+    case 90:
+      return { xPct: ((y - cy) / height) * 100, yPct: ((x - cx) / width) * 100 };
+    case 180:
+      return { xPct: ((cx + width - x) / width) * 100, yPct: ((y - cy) / height) * 100 };
+    case 270:
+      return { xPct: ((cy + height - y) / height) * 100, yPct: ((cx + width - x) / width) * 100 };
+    default:
+      return { xPct: ((x - cx) / width) * 100, yPct: ((cy + height - y) / height) * 100 };
+  }
+}
+
+/**
+ * A display-space rectangle → the axis-aligned user-space rectangle pdf-lib
+ * draws. Quarter turns swap the axes; the anchor corner flips accordingly.
+ * Unrotated zero-origin CropBox reproduces the legacy pctToPt rect exactly.
+ */
+export function displayRectToUserSpace(
+  xPct: number,
+  yPct: number,
+  widthPct: number,
+  heightPct: number,
+  cropBox: CropBox,
+  rotate: number,
+): { x: number; y: number; width: number; height: number } {
+  const rot = normalizeRotate(rotate);
+  const display = displaySize(cropBox, rot);
+  const swap = rot % 180 !== 0;
+  // Display extents first, then swap axes on quarter turns.
+  const displayWidth = (widthPct / 100) * display.width;
+  const displayHeight = (heightPct / 100) * display.height;
+  const width = swap ? displayHeight : displayWidth;
+  const height = swap ? displayWidth : displayHeight;
+  const corner = displayPctToUserSpace(xPct, yPct, cropBox, rot);
+  return {
+    x: rot === 180 || rot === 270 ? corner.x - width : corner.x,
+    y: rot === 0 || rot === 270 ? corner.y - height : corner.y,
+    width,
+    height,
+  };
+}
+
+/**
+ * Aspect-preserving image stamp size in display percentages. `imageAspect`
+ * is the image's natural height/width; the display aspect (dw/dh) converts
+ * it so the stamp is never force-stretched. Scaled to fit ≤90% of the page,
+ * then floored at 1% per axis for pathological aspects.
+ */
+export function imageStampSize(
+  imageAspect: number,
+  display: PageSize,
+  widthPct = 25,
+): { widthPct: number; heightPct: number } {
+  const aspect = Number.isFinite(imageAspect) && imageAspect > 0 ? imageAspect : 1;
+  const ratio = aspect * (display.width / display.height);
+  let w = widthPct;
+  let h = w * ratio;
+  const fit = Math.min(1, 90 / w, 90 / h);
+  w *= fit;
+  h *= fit;
+  return { widthPct: Math.max(1, w), heightPct: Math.max(1, h) };
+}
+
 /**
  * Build an existing-text edit overlay from a detected run (see
- * pdf-text-items.ts). The display box wraps the run's ascent→descent band.
+ * pdf-text-items.ts). The display box wraps the run's ascent→descent band,
+ * mapped through the page's display transform so the DOM preview lands on
+ * the glyphs even on rotated / offset-CropBox pages. User-space fields stay
+ * exact — baking draws against them directly.
  */
 export function editTextOverlayFromItem(
   item: Pick<PdfTextItem, "str" | "x" | "y" | "width" | "fontSize" | "ascent" | "descent" | "fontLabel">,
   pageIndex: number,
-  pageSize: PageSize,
+  view: PageView,
 ): EditTextOverlay {
+  const { cropBox, rotate } = view;
   const topPt = item.y + item.ascent * item.fontSize;
   const bottomPt = item.y + item.descent * item.fontSize;
+  const topCorner = userSpaceToDisplayPct(item.x, topPt, cropBox, rotate);
+  const bottomCorner = userSpaceToDisplayPct(item.x + item.width, bottomPt, cropBox, rotate);
+  const baseline = userSpaceToDisplayPct(item.x, item.y, cropBox, rotate);
   return {
     type: "edit",
     page: pageIndex,
-    xPct: (item.x / pageSize.width) * 100,
-    yPct: ptToPct(item.x, topPt, pageSize).yPct,
-    widthPct: (item.width / pageSize.width) * 100,
-    heightPct: ((topPt - bottomPt) / pageSize.height) * 100,
-    baselinePct: ptToPct(item.x, item.y, pageSize).yPct,
+    xPct: Math.min(topCorner.xPct, bottomCorner.xPct),
+    yPct: Math.min(topCorner.yPct, bottomCorner.yPct),
+    widthPct: Math.abs(bottomCorner.xPct - topCorner.xPct),
+    heightPct: Math.abs(bottomCorner.yPct - topCorner.yPct),
+    baselinePct: baseline.yPct,
     userX: item.x,
     userY: item.y,
     userWidth: item.width,

@@ -14,6 +14,7 @@ import type { ToolWithRoute } from "@/lib/tools/types";
 const FILE_OUTCOME: Record<Intent, { icon: ChromeName; label: string }> = {
   convert: { icon: "download", label: "Writes a new file — original untouched" },
   edit: { icon: "download", label: "Writes a new file — original untouched" },
+  extract: { icon: "download", label: "Writes extracted files — original untouched" },
   inspect: { icon: "eye", label: "Reads only — nothing is written" },
   create: { icon: "sparkles", label: "Generates a new file from what you type" },
 };

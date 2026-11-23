@@ -10,7 +10,7 @@ import { Results } from "@/components/tools/results";
 import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
 import { Field, SegmentedControl, TextInput } from "@/components/ui/form";
-import { PageRangeError, computeSplitGroups, type SplitMode } from "@/lib/page-ranges";
+import { PageRangeError, computeSplitGroups, parsePageRanges, type SplitMode } from "@/lib/page-ranges";
 import { baseName } from "@/lib/utils";
 import { loadPdf, outputBaseName, savePdf } from "./pdf-core";
 
@@ -29,11 +29,15 @@ export default function SplitPdfTool() {
     if (mode === "single") return { ok: true };
     if (!file) return { ok: true };
     try {
+      // Syntax only before load — the real page count isn't known yet, and
+      // range-checking against a dummy count produced misleading errors.
       if (mode === "chunks") {
-        if (!/^\d+$/.test(spec.trim())) throw new PageRangeError("Enter a chunk size, e.g. 4.");
-        computeSplitGroups("chunks", spec, 1000);
+        const size = Number(spec.trim());
+        if (!/^\d+$/.test(spec.trim()) || size < 1) {
+          throw new PageRangeError("Enter a chunk size, e.g. 4.");
+        }
       } else {
-        computeSplitGroups("ranges", spec, 1000);
+        parsePageRanges(spec, Number.MAX_SAFE_INTEGER);
       }
       return { ok: true };
     } catch (error) {

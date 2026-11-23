@@ -63,7 +63,7 @@ function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: 
 
       <div className="space-y-2 font-body text-lg leading-snug text-ink">
         {integrity === true && (
-          <p className="text-ok">✓ Document integrity — the covered bytes match the signed digest. The file has NOT been modified since it was signed.</p>
+          <p className="text-ok">✓ Document integrity — the covered bytes match the signed digest.</p>
         )}
         {integrity === false && (
           <p className="text-err">✗ MODIFIED after signing — the covered bytes don&apos;t match the signed digest. Distrust this document.</p>
@@ -75,6 +75,7 @@ function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: 
         {crypto === null && <p>Signature bytes present but not cryptographically verified here.</p>}
 
         {report.signingTime && <p className="text-ink-soft">Claimed signing time: {report.signingTime}</p>}
+        {report.detail && <p className="text-warn">{report.detail}</p>}
         {report.digestAlgorithmOid && (
           <p className="text-ink-soft">Digest: {digestName(report.digestAlgorithmOid) ?? report.digestAlgorithmOid}</p>
         )}

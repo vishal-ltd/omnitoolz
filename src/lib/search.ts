@@ -42,8 +42,6 @@ const SYNONYMS: Record<string, string[]> = {
   scan: ["scanner", "ocr"],
   count: ["counter"],
   compare: ["diff"],
-  make: ["generate", "generator"],
-  create: ["generate", "generator"],
   change: ["case", "convert"],
   check: ["verify", "auditor"],
   verify: ["check", "auditor"],

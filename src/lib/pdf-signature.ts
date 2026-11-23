@@ -27,13 +27,20 @@ export function readDerNode(bytes: Uint8Array, offset: number): DerNode {
   pos += 1;
   if (len & 0x80) {
     const numBytes = len & 0x7f;
+    // Indefinite lengths are not DER; oversized lengths would read past the
+    // buffer or produce NaN comparisons that silently pass bounds checks.
+    if (numBytes === 0) throw new Error("DER: indefinite lengths are not supported.");
+    if (numBytes > 4) throw new Error("DER: length field too large.");
+    if (pos + numBytes > bytes.length) throw new Error("DER: truncated length.");
     len = 0;
     for (let i = 0; i < numBytes; i++) {
       len = len * 256 + bytes[pos];
       pos += 1;
     }
   }
-  if (pos + len > bytes.length) throw new Error("DER: content exceeds buffer.");
+  if (!Number.isSafeInteger(len) || pos + len > bytes.length) {
+    throw new Error("DER: content exceeds buffer.");
+  }
   return {
     tag,
     headerStart: offset,
@@ -84,6 +91,21 @@ function contentMatches(bytes: Uint8Array, node: DerNode, expected: Uint8Array):
   return true;
 }
 
+function toHex(bytes: Uint8Array): string {
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += bytes[i].toString(16).padStart(2, "0");
+  return out;
+}
+
+/** latin1 view without Buffer, so the module stays bundler-agnostic. */
+function latin1(bytes: Uint8Array): string {
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 8192) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 8192)));
+  }
+  return chunks.join("");
+}
+
 // ── Signature discovery ────────────────────────────────────────────
 
 export interface SignatureSpan {
@@ -94,33 +116,64 @@ export interface SignatureSpan {
   contentsEnd: number;
 }
 
+/**
+ * The dictionary that encloses `index`, found by walking back to its opening
+ * `<<` and forward to the matching `>>`. Scoping ByteRange/Contents to a real
+ * /Type /Sig dictionary keeps byte sequences inside content streams from
+ * fabricating signatures, and pairs the two keys by dictionary, not proximity.
+ */
+function enclosingDict(latin: string, index: number): { start: number; text: string } | null {
+  let depth = 0;
+  let start = -1;
+  for (let i = index; i >= 1; i--) {
+    if (latin[i] === ">" && latin[i - 1] === ">") {
+      depth++;
+      i--;
+    } else if (latin[i] === "<" && latin[i - 1] === "<") {
+      if (depth === 0) {
+        start = i - 1;
+        break;
+      }
+      depth--;
+      i--;
+    }
+  }
+  if (start < 0) return null;
+  let d = 0;
+  for (let i = start; i < latin.length - 1; i++) {
+    if (latin[i] === "<" && latin[i + 1] === "<") {
+      d++;
+      i++;
+    } else if (latin[i] === ">" && latin[i + 1] === ">") {
+      d--;
+      i++;
+      if (d === 0) return { start, text: latin.slice(start, i + 1) };
+    }
+  }
+  return null;
+}
+
 export function findSignatureSpans(bytes: Uint8Array): SignatureSpan[] {
-  const latin = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString("latin1");
+  const latin = latin1(bytes);
   const spans: SignatureSpan[] = [];
-  const rangeRegex = /\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g;
-  const contentsRegex = /\/Contents\s*<([0-9A-Fa-f]+)>/g;
-  const ranges: Array<{ match: RegExpExecArray; index: number }> = [];
+  const sigRegex = /\/Type\s*\/Sig\b/g;
   let m: RegExpExecArray | null;
-  while ((m = rangeRegex.exec(latin)) !== null) {
-    ranges.push({ match: m, index: m.index });
-  }
-  const contents: Array<{ match: RegExpExecArray; index: number }> = [];
-  while ((m = contentsRegex.exec(latin)) !== null) {
-    contents.push({ match: m, index: m.index });
-  }
-  for (const range of ranges) {
-    // Pair with the nearest /Contents that follows it.
-    const paired = contents.find((c) => c.index > range.index);
-    if (!paired) continue;
+  while ((m = sigRegex.exec(latin)) !== null) {
+    const dict = enclosingDict(latin, m.index);
+    if (!dict) continue;
+    const rangeMatch = /\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/.exec(dict.text);
+    // Spec-legal hex strings may contain whitespace.
+    const contentsMatch = /\/Contents\s*<([0-9A-Fa-f\s]+)>/.exec(dict.text);
+    if (!rangeMatch || !contentsMatch) continue;
     spans.push({
       byteRange: [
-        Number(range.match[1]),
-        Number(range.match[2]),
-        Number(range.match[3]),
-        Number(range.match[4]),
+        Number(rangeMatch[1]),
+        Number(rangeMatch[2]),
+        Number(rangeMatch[3]),
+        Number(rangeMatch[4]),
       ],
-      contentsStart: paired.index + paired.match[0].indexOf("<") + 1,
-      contentsEnd: paired.index + paired.match[0].indexOf(">"),
+      contentsStart: dict.start + contentsMatch.index + contentsMatch[0].indexOf("<") + 1,
+      contentsEnd: dict.start + contentsMatch.index + contentsMatch[0].lastIndexOf(">"),
     });
   }
   return spans;
@@ -150,66 +203,126 @@ export interface CmsInfo {
   signature: Uint8Array;
   /** Digest algorithm OID, e.g. 2.16.840.1.101.3.4.2.1 (SHA-256). */
   digestAlgorithmOid: string | null;
-  /** DER of the first certificate. */
+  /** DER of the certificate matching this signer (issuer + serial). */
   certificate: Uint8Array | null;
 }
 
-export function parseCms(cms: Uint8Array): CmsInfo {
+/** Issuer DER + serial number of a certificate, for signer matching. */
+function certificateIssuerAndSerial(certDer: Uint8Array): { issuer: Uint8Array; serial: Uint8Array } | null {
+  try {
+    const cert = readDerNode(certDer, 0);
+    const tbs = derChildren(certDer, cert)[0];
+    const children = derChildren(certDer, tbs);
+    let i = 0;
+    if (children[0]?.tag === 0xa0) i = 1; // explicit [0] version
+    const serial = children[i];
+    const issuer = children[i + 2]; // serial, signature alg, issuer
+    if (!serial || !issuer || serial.tag !== 0x02 || issuer.tag !== 0x30) return null;
+    return {
+      issuer: certDer.slice(issuer.headerStart, issuer.next),
+      serial: derContentBytes(certDer, serial),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/** Parse every signerInfo in a CMS SignedData (certificate matched per signer). */
+export function parseCmsSigners(cms: Uint8Array): CmsInfo[] {
   const root = readDerNode(cms, 0); // ContentInfo SEQ
   const rootChildren = derChildren(cms, root);
   if (rootChildren.length < 2) throw new Error("CMS: ContentInfo needs two children.");
-  const signedData = readDerNode(cms, rootChildren[1].headerStart); // SEQ
+  // ContentInfo.content is [0] EXPLICIT ANY — real signers (Adobe, OpenSSL,
+  // forge) wrap SignedData in it; unwrap before reading its children.
+  let signedData = rootChildren[1];
+  if (signedData.tag === 0xa0) signedData = derChildren(cms, signedData)[0];
   const sdChildren = derChildren(cms, signedData);
 
   // children: [version, digestAlgorithms, encapContentInfo, [0] certificates?, [1] crls?, signerInfos]
-  let certificate: Uint8Array | null = null;
+  let certificates: Uint8Array[] = [];
   let signerInfos: DerNode | null = null;
   for (const child of sdChildren) {
-    if (child.tag === 0xa0 && !certificate) certificate = derContentBytes(cms, child);
+    if (child.tag === 0xa0 && certificates.length === 0) {
+      certificates = derChildren(cms, child).map((cert) => cms.slice(cert.headerStart, cert.next));
+    }
     if (child.tag === 0x31) signerInfos = child;
   }
   if (!signerInfos) throw new Error("CMS: no signerInfos.");
-  const signerInfo = readDerNode(cms, signerInfos.contentStart);
-  const siChildren = derChildren(cms, signerInfo);
-  
-  let digestAlgorithmOid: string | null = null;
-  let signedAttrsSet: Uint8Array | null = null;
-  let signature = new Uint8Array(0);
-  let signingTime: string | null = null;
-  let messageDigestHex: string | null = null;
 
-  for (const child of siChildren) {
-    if (child.tag === 0x30 && digestAlgorithmOid === null) {
-      const alg = derChildren(cms, child);
-      if (alg.length > 0 && alg[0].tag === 0x06) {
-        const oidContent = derContentBytes(cms, alg[0]);
-        digestAlgorithmOid = decodeOid(oidContent);
+  const signers: CmsInfo[] = [];
+  for (const signerInfo of derChildren(cms, signerInfos)) {
+    const siChildren = derChildren(cms, signerInfo);
+    let digestAlgorithmOid: string | null = null;
+    let signedAttrsSet: Uint8Array | null = null;
+    let signature = new Uint8Array(0);
+    let signingTime: string | null = null;
+    let messageDigestHex: string | null = null;
+
+    // signerInfo: [version, issuerAndSerial, digestAlgorithm, [0] signedAttrs,
+    //              signatureAlgorithm, signature, [1] unsignedAttrs?]
+    const sid = siChildren[1];
+    let certificate: Uint8Array | null = certificates[0] ?? null;
+    if (sid && sid.tag === 0x30) {
+      const sidParts = derChildren(cms, sid);
+      if (sidParts.length >= 2) {
+        const issuer = cms.slice(sidParts[0].headerStart, sidParts[0].next);
+        const serial = derContentBytes(cms, sidParts[1]);
+        // Certificate order in the set is not guaranteed — match by issuer
+        // and serial, or we'd verify against the wrong key.
+        const matched = certificates.find((cert) => {
+          const id = certificateIssuerAndSerial(cert);
+          return id !== null && bytesEqual(id.issuer, issuer) && bytesEqual(id.serial, serial);
+        });
+        if (matched) certificate = matched;
       }
-    } else if ((child.tag === 0xa0 || child.tag === 0x80) && !signedAttrsSet) {
-      // [0] IMPLICIT SET OF Attribute — rebuild the SET for verification.
-      const content = new Uint8Array(derContentBytes(cms, child));
-      signedAttrsSet = Uint8Array.of(0x31, ...derLenOf(content.length), ...content);
-      // Extract attributes
-      const attrs = derChildren(cms, child);
-      for (const attr of attrs) {
-        const parts = derChildren(cms, attr);
-        if (parts.length < 2) continue;
-        const type = derContentBytes(cms, parts[0]);
-        if (contentMatches(cms, parts[0], oidContent("1.2.840.113549.1.9.4"))) {
-          messageDigestHex = [...derContentBytes(cms, parts[1])]
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-        } else if (contentMatches(cms, parts[0], oidContent("1.2.840.113549.1.9.5"))) {
-          signingTime = new TextDecoder().decode(derContentBytes(cms, parts[1]));
-        }
-        void type;
-      }
-    } else if (child.tag === 0x04 && signature.length === 0) {
-      signature = new Uint8Array(derContentBytes(cms, child));
     }
-  }
 
-  return { messageDigestHex, signingTime, signedAttrsSet, signature, digestAlgorithmOid, certificate };
+    for (const child of siChildren) {
+      if (child.tag === 0x30 && digestAlgorithmOid === null) {
+        const alg = derChildren(cms, child);
+        if (alg.length > 0 && alg[0].tag === 0x06) {
+          digestAlgorithmOid = decodeOid(derContentBytes(cms, alg[0]));
+        }
+      } else if ((child.tag === 0xa0 || child.tag === 0x80) && !signedAttrsSet) {
+        // [0] IMPLICIT SET OF Attribute — rebuild the SET for verification.
+        const content = new Uint8Array(derContentBytes(cms, child));
+        signedAttrsSet = Uint8Array.of(0x31, ...derLenOf(content.length), ...content);
+        for (const attr of derChildren(cms, child)) {
+          const parts = derChildren(cms, attr);
+          if (parts.length < 2) continue;
+          // Attribute ::= SEQUENCE { type OID, values SET OF AttributeValue }.
+          // The value lives INSIDE the SET — reading the SET's content directly
+          // yields the inner TLV, not the value (the old tamper-check bug).
+          const values = derChildren(cms, parts[1]);
+          const value = values[0];
+          if (!value) continue;
+          if (contentMatches(cms, parts[0], oidContent("1.2.840.113549.1.9.4"))) {
+            messageDigestHex = toHex(derContentBytes(cms, value));
+          } else if (contentMatches(cms, parts[0], oidContent("1.2.840.113549.1.9.5"))) {
+            signingTime = new TextDecoder().decode(derContentBytes(cms, value));
+          }
+        }
+      } else if (child.tag === 0x04 && signature.length === 0) {
+        signature = new Uint8Array(derContentBytes(cms, child));
+      }
+    }
+
+    signers.push({ messageDigestHex, signingTime, signedAttrsSet, signature, digestAlgorithmOid, certificate });
+  }
+  return signers;
+}
+
+/** First signer — kept for callers that only display one report. */
+export function parseCms(cms: Uint8Array): CmsInfo {
+  const signers = parseCmsSigners(cms);
+  if (signers.length === 0) throw new Error("CMS: no signerInfos.");
+  return signers[0];
 }
 
 function derLenOf(len: number): Uint8Array {
@@ -316,52 +429,74 @@ export async function inspectSignatures(
   const spans = findSignatureSpans(bytes);
   const reports: SignatureReport[] = [];
   for (const span of spans) {
-    const report: SignatureReport = {
-      signer: null,
-      signingTime: null,
-      integrityOk: null,
-      signatureValid: null,
-      digestAlgorithmOid: null,
-      detail: "",
-    };
+    let cmsSigners: CmsInfo[];
     try {
-      const contentsHex = new TextDecoder("latin1").decode(
-        bytes.slice(span.contentsStart, span.contentsEnd),
-      ).replace(/\s+/g, "");
-      const cmsBytes = hexToBytes(contentsHex);
-      const cms = parseCms(cmsBytes);
-      report.signingTime = cms.signingTime;
-      report.digestAlgorithmOid = cms.digestAlgorithmOid;
-      if (cms.certificate) report.signer = certificateCommonName(cms.certificate);
-
-      const covered = coveredRangesBytes(bytes, span.byteRange);
-      const digestAlgorithm = digestAlgorithmName(cms.digestAlgorithmOid);
-      if (!digestAlgorithm) {
-        report.detail = `Unsupported digest algorithm${cms.digestAlgorithmOid ? ` (${cms.digestAlgorithmOid})` : ""}.`;
-      } else {
-        const computedHex = [...await digestFn(covered, digestAlgorithm)]
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-        report.integrityOk = cms.messageDigestHex === null ? null : computedHex === cms.messageDigestHex;
-      }
-
-      if (cms.certificate && cms.signedAttrsSet) {
-        const spki = certificateSpki(cms.certificate);
-        if (spki) {
-          report.signatureValid = await verifyFn(
-            spki,
-            cms.digestAlgorithmOid ?? "2.16.840.1.101.3.4.2.1",
-            cms.signature,
-            cms.signedAttrsSet,
-          );
-        }
-      } else if (!cms.signedAttrsSet) {
-        report.detail = "Direct signature (no authenticated attributes) — integrity check skipped.";
-      }
+      const contentsHex = latin1(bytes.slice(span.contentsStart, span.contentsEnd)).replace(/\s+/g, "");
+      cmsSigners = parseCmsSigners(hexToBytes(contentsHex));
     } catch (error) {
-      report.detail = error instanceof Error ? error.message : String(error);
+      reports.push({
+        signer: null,
+        signingTime: null,
+        integrityOk: null,
+        signatureValid: null,
+        digestAlgorithmOid: null,
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      continue;
     }
-    reports.push(report);
+    for (const cms of cmsSigners) {
+      const report: SignatureReport = {
+        signer: null,
+        signingTime: null,
+        integrityOk: null,
+        signatureValid: null,
+        digestAlgorithmOid: null,
+        detail: "",
+      };
+      try {
+        report.signingTime = cms.signingTime;
+        report.digestAlgorithmOid = cms.digestAlgorithmOid;
+        if (cms.certificate) report.signer = certificateCommonName(cms.certificate);
+
+        // ByteRange must span the whole file minus the Contents gap, or
+        // appended content outside the covered ranges goes unchecked.
+        const [b1, l1, b2, l2] = span.byteRange;
+        if (!(b1 === 0 && b2 + l2 === bytes.length && b1 + l1 <= span.contentsStart && b2 >= span.contentsEnd)) {
+          report.detail =
+            "ByteRange doesn't span the whole file — content outside the covered ranges isn't checked.";
+        }
+
+        const covered = coveredRangesBytes(bytes, span.byteRange);
+        const digestAlgorithm = digestAlgorithmName(cms.digestAlgorithmOid);
+        if (!digestAlgorithm) {
+          report.detail = `Unsupported digest algorithm${cms.digestAlgorithmOid ? ` (${cms.digestAlgorithmOid})` : ""}.`;
+        } else {
+          const computedHex = toHex(await digestFn(covered, digestAlgorithm));
+          report.integrityOk = cms.messageDigestHex === null ? null : computedHex === cms.messageDigestHex;
+        }
+
+        if (cms.certificate && cms.signedAttrsSet) {
+          const spki = certificateSpki(cms.certificate);
+          if (spki) {
+            report.signatureValid = await verifyFn(
+              spki,
+              cms.digestAlgorithmOid ?? "2.16.840.1.101.3.4.2.1",
+              cms.signature,
+              cms.signedAttrsSet,
+            );
+          } else {
+            report.detail =
+              (report.detail ? `${report.detail} ` : "") +
+              "Signer key isn't RSA (e.g. ECDSA) — cryptographic verification isn't supported here; the integrity check still applies.";
+          }
+        } else if (!cms.signedAttrsSet) {
+          report.detail = "Direct signature (no authenticated attributes) — integrity check skipped.";
+        }
+      } catch (error) {
+        report.detail = error instanceof Error ? error.message : String(error);
+      }
+      reports.push(report);
+    }
   }
   return reports;
 }

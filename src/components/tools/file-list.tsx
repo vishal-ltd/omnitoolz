@@ -1,8 +1,20 @@
 "use client";
 
 import { ChromeIcon, ToolIcon } from "@/components/icons";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { formatBytes } from "@/lib/utils";
+
+/** Stable identity per File so reordering never remounts a row (focus survives). */
+const fileKeys = new WeakMap<File, string>();
+let nextKey = 0;
+function keyFor(file: File): string {
+  let key = fileKeys.get(file);
+  if (!key) {
+    key = `file-${nextKey++}`;
+    fileKeys.set(file, key);
+  }
+  return key;
+}
 
 export interface FileListProps {
   files: File[];
@@ -26,20 +38,23 @@ export function FileList({
   undoLabel = null,
   onUndo,
 }: FileListProps) {
-  const previewUrls = useMemo(() => {
-    if (!thumbnails) return new Map<File, string>();
+  // Object URLs are created in an effect (not during render) so discarded
+  // renders and StrictMode double-invokes can't leak unrevokeable blobs.
+  const [previewUrls, setPreviewUrls] = useState<Map<File, string>>(() => new Map());
+  useEffect(() => {
+    if (!thumbnails) {
+      setPreviewUrls(new Map());
+      return;
+    }
     const map = new Map<File, string>();
     for (const file of files) {
       if (file.type.startsWith("image/")) map.set(file, URL.createObjectURL(file));
     }
-    return map;
-  }, [files, thumbnails]);
-
-  useEffect(() => {
+    setPreviewUrls(map);
     return () => {
-      for (const url of previewUrls.values()) URL.revokeObjectURL(url);
+      for (const url of map.values()) URL.revokeObjectURL(url);
     };
-  }, [previewUrls]);
+  }, [files, thumbnails]);
 
   if (files.length === 0 && !(undoLabel && onUndo)) return null;
 
@@ -51,7 +66,7 @@ export function FileList({
         const preview = previewUrls.get(file);
         return (
           <li
-            key={`${file.name}-${index}`}
+            key={keyFor(file)}
             className="flex items-center gap-3 px-4 py-3"
           >
             <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden border-[3px] border-edge bg-canvas">
@@ -70,7 +85,7 @@ export function FileList({
               <p className="font-body text-sm text-ink-soft">{formatBytes(file.size)}</p>
             </div>
             {!disabled && onMove && (
-              <div className="flex flex-col" aria-label={`Reorder ${file.name}`}>
+              <div className="flex flex-col" role="group" aria-label={`Reorder ${file.name}`}>
                 <button
                   type="button"
                   aria-label={`Move ${file.name} up`}

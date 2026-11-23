@@ -21,7 +21,20 @@ export default function ImageToTextTool() {
     await start(async ({ report }) => {
       report("Loading the OCR engine (first run downloads it once)…", 0.1);
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("eng");
+      // tesseract.js never settles createWorker when the language download
+      // fails (only core-load failures reject), so bound the wait ourselves.
+      // errorHandler stops the library rethrowing inside its own message
+      // handler; failures already surface through the rejected promise.
+      let loadTimer = 0;
+      const worker = await Promise.race([
+        createWorker("eng", undefined, { errorHandler: () => {} }),
+        new Promise<never>((_, reject) => {
+          loadTimer = window.setTimeout(
+            () => reject(new Error("The OCR engine took too long to download — check your connection and try again.")),
+            90_000,
+          );
+        }),
+      ]).finally(() => window.clearTimeout(loadTimer));
       const results: ResultFile[] = [];
       let allText = "";
       try {
@@ -41,7 +54,10 @@ export default function ImageToTextTool() {
       if (!allText.trim()) {
         throw new Error("No readable text found in these images — try higher resolution or stronger contrast.");
       }
-      setPreview(allText.slice(0, 1200));
+      // Cut on a code-point boundary so the preview never ends in half an emoji.
+      let previewText = allText.slice(0, 1200);
+      if (/[\uD800-\uDBFF]$/.test(previewText)) previewText = previewText.slice(0, -1);
+      setPreview(previewText);
       return results;
     }, "Starting OCR…");
   }
@@ -55,7 +71,7 @@ export default function ImageToTextTool() {
               <p className="font-display text-display-xs text-ink-soft uppercase">Preview</p>
               <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap font-body text-lg leading-snug text-ink">
                 {preview}
-                {preview.length >= 1200 ? "…" : ""}
+                {preview.length >= 1199 ? "…" : ""}
               </pre>
             </div>
           )}

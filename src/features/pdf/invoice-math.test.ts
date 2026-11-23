@@ -4,6 +4,7 @@ import {
   invoiceTotals,
   lineTotal,
   moneyLocale,
+  roundMoney,
   toWinAnsi,
 } from "./invoice-math";
 
@@ -54,5 +55,19 @@ describe("invoice-math", () => {
     expect(toWinAnsi("Naïve café — “quoted”")).toBe("Naïve café — “quoted”");
     expect(toWinAnsi("日本語")).toBe("???");
     expect(toWinAnsi("line\nbreak")).toBe("line\nbreak");
+  });
+
+  it("rounds half cents above the Number.EPSILON blind spot", () => {
+    expect(roundMoney(8.005)).toBe(8.01);
+    expect(roundMoney(1.005)).toBe(1.01);
+    expect(roundMoney(2.675)).toBe(2.68);
+    expect(roundMoney(0.145)).toBe(0.15);
+    expect(roundMoney(-8.005)).toBe(-8.01);
+    expect(roundMoney(5.005)).toBe(5.01);
+  });
+
+  it("marks non-WinAnsi scripts and emoji instead of throwing", () => {
+    expect(toWinAnsi("你好 🙂")).toBe("?? ??");
+    expect(toWinAnsi("€ ‘quoted’ – — ™")).toBe("€ ‘quoted’ – — ™");
   });
 });

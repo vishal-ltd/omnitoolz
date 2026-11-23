@@ -46,7 +46,6 @@ export const toolLoaders: Record<string, () => Promise<{ default: ComponentType 
   "text-case-converter": () => import("./text/case-converter"),
   "diff-checker": () => import("./text/diff-checker"),
   "image-to-text": () => import("./developer/image-to-text"),
-  "background-remover": () => import("./images/background-remover"),
   "heic-to-jpg": () => import("./images/heic-to-jpg"),
   "favicon-generator": () => import("./images/favicon-generator"),
   "camera-scan-pdf": () => import("./pdf/camera-scan-pdf"),

@@ -49,7 +49,7 @@ export default function ExcelToPdfTool() {
           if (rows.length === 0) continue;
 
           report(`Laying out “${sheetName}”…`, (fileIndex + (sheetIndex + 1) / sheets.length * 0.85) / sources.length);
-          const columnCount = Math.max(...rows.map((row) => row.length), 1);
+          const columnCount = rows.reduce((max, row) => Math.max(max, row.length), 1);
           // Fixed-mono layout: every column equal width, scaled to fit.
           const columnWidth = contentWidth / columnCount;
           const font = (boldFlag: boolean) => (boldFlag ? bold : regular);

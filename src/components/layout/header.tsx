@@ -20,7 +20,10 @@ export function Header() {
   const [isMac, setIsMac] = useState(false);
 
   useEffect(() => {
-    setIsMac(navigator.platform.toLowerCase().includes("mac"));
+    // userAgentData is the modern source; navigator.platform is the fallback
+    // for browsers (Firefox/Safari) that don't ship it yet.
+    const uaData = (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData;
+    setIsMac((uaData?.platform ?? navigator.platform).toLowerCase().includes("mac"));
   }, []);
 
   return (

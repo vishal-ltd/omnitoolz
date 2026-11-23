@@ -103,6 +103,9 @@ async function decodeSamples(
   if (predictor !== 1 && predictor < 10) return null;
   if (parm("Colors", channels) !== channels) return null;
   const columns = parm("Columns", width);
+  // Predictor rows are strided by Columns but toPng reads contiguously by
+  // Width — a mismatch would shear the image. Refuse instead of corrupting.
+  if (columns !== width) return null;
 
   let data: Uint8Array = stream.contents;
   if (filters.includes("/FlateDecode")) {
@@ -172,7 +175,7 @@ export async function exportEmbeddedImage(
   index: number,
 ): Promise<ExportedImage | null> {
   const lib = await import("pdf-lib");
-  const { PDFArray, PDFName } = lib;
+  const { PDFArray, PDFName, PDFStream } = lib;
   const filterValue = doc.context.lookup(stream.dict.get(PDFName.of("Filter"))!);
   const filters =
     filterValue instanceof PDFArray
@@ -180,6 +183,35 @@ export async function exportEmbeddedImage(
       : [filterValue?.toString() ?? ""];
 
   if (filters.length === 1 && filters[0] === "/DCTDecode") {
+    // JPEG can't carry the attached SMask (alpha). Merge it into a PNG when
+    // possible; otherwise skip honestly rather than silently dropping alpha.
+    const maskRef = stream.dict.get(PDFName.of("SMask"));
+    const mask = maskRef ? doc.context.lookupMaybe(maskRef, PDFStream) : undefined;
+    if (mask instanceof lib.PDFRawStream) {
+      const alpha = await decodeSamples(lib, doc, mask, false);
+      const jpeg = new Blob([stream.contents.slice().buffer], { type: "image/jpeg" });
+      const bitmap = await createImageBitmap(jpeg).catch(() => null);
+      if (alpha && alpha.channels === 1 && bitmap && alpha.width === bitmap.width && alpha.height === bitmap.height) {
+        const canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.drawImage(bitmap, 0, 0);
+          const image = context.getImageData(0, 0, canvas.width, canvas.height);
+          for (let i = 0; i < alpha.data.length; i++) image.data[i * 4 + 3] = alpha.data[i];
+          context.putImageData(image, 0, 0);
+          const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+          bitmap.close();
+          if (blob) return { name: `image-${index}.png`, blob };
+        } else {
+          bitmap.close();
+        }
+      } else {
+        bitmap?.close();
+      }
+      return null;
+    }
     return { name: `image-${index}.jpg`, blob: bytesToBlob(stream.contents, "image/jpeg") };
   }
 

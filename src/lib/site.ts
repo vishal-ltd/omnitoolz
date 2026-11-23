@@ -11,12 +11,17 @@
  * Deploying to Vercel with no environment variables configured just works.
  */
 function resolveSiteUrl(): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  }
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
+  const raw = process.env.NEXT_PUBLIC_SITE_URL
+    ? process.env.NEXT_PUBLIC_SITE_URL
+    : process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000";
+  // Tolerate scheme-less or trailing-slash overrides: canonical links, the
+  // sitemap and JSON-LD must never double slashes, and new URL() must not throw.
+  const withScheme = /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
+  return withScheme.replace(/\/+$/, "");
 }
 
 export const site = {

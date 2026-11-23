@@ -37,6 +37,15 @@ export function ToolRenderer({ toolId }: { toolId: string }) {
   }, [toolId]);
 
   const Component = components[toolId];
-  if (!Component) return <WidgetSkeleton />;
+  if (!Component) {
+    return (
+      <div className="border-[3px] border-err bg-err-soft p-6 text-center">
+        <p className="font-display text-display-xs text-err uppercase">Unknown tool</p>
+        <p className="mt-2 text-base text-ink-soft">
+          This tool isn&apos;t available in the current catalogue.
+        </p>
+      </div>
+    );
+  }
   return <Component />;
 }

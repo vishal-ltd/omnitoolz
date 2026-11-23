@@ -79,6 +79,16 @@ export function SearchDialog() {
     previousFocusRef.current = null;
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    // Lock body scroll while the modal is up; restore on close/unmount.
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   function go(route: string) {
     close();
     router.push(route);
@@ -143,6 +153,9 @@ export function SearchDialog() {
             placeholder="Search tools — try “merge”, “compress”, “qr”…"
             className="h-14 w-full bg-transparent font-body text-xl text-ink outline-none placeholder:text-ink-soft"
             aria-label="Search tools"
+            role="combobox"
+            aria-expanded={query.trim().length >= 2 && hits.length > 0}
+            aria-autocomplete="list"
             aria-controls="search-results"
             aria-activedescendant={hits[activeIndex] ? `search-result-${hits[activeIndex].id}` : undefined}
             autoComplete="off"
@@ -164,7 +177,7 @@ export function SearchDialog() {
           ) : (
             <ul id="search-results" role="listbox" aria-label="Tool search results">
               {hits.map((hit, index) => (
-                <li key={hit.id}>
+                <li key={hit.id} role="presentation">
                   <button
                     type="button"
                     role="option"

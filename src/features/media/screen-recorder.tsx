@@ -23,6 +23,7 @@ function formatClock(totalSeconds: number): string {
 export default function ScreenRecorderTool() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [recording, setRecording] = useState(false);
+  const [pending, setPending] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [withMic, setWithMic] = useState(false);
@@ -31,11 +32,24 @@ export default function ScreenRecorderTool() {
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
   const startedAt = useRef(0);
+  const startingRef = useRef(false);
+  const recordingsRef = useRef<Recording[]>([]);
+
+  useEffect(() => {
+    recordingsRef.current = recordings;
+  }, [recordings]);
 
   useEffect(() => {
     return () => {
+      // Detach onstop so a late stop can't create object URLs after unmount.
+      const recorder = recorderRef.current;
+      if (recorder) {
+        recorder.onstop = null;
+        if (recorder.state !== "inactive") recorder.stop();
+      }
       streamRef.current?.getTracks().forEach((track) => track.stop());
       if (timerRef.current) window.clearInterval(timerRef.current);
+      recordingsRef.current.forEach((item) => URL.revokeObjectURL(item.url));
     };
   }, []);
 
@@ -49,10 +63,15 @@ export default function ScreenRecorderTool() {
   }
 
   async function start() {
+    // The permission prompt is async — a second click must not open a second stream.
+    if (startingRef.current || recorderRef.current) return;
+    startingRef.current = true;
+    setPending(true);
     setError(null);
+    let stream: MediaStream | null = null;
     try {
-      const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      const stream = display;
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const display = stream;
       if (withMic) {
         try {
           const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -65,7 +84,10 @@ export default function ScreenRecorderTool() {
       chunksRef.current = [];
       const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
         ? "video/webm;codecs=vp9,opus"
-        : "video/webm";
+        : MediaRecorder.isTypeSupported("video/webm")
+          ? "video/webm"
+          : null;
+      if (!mimeType) throw new Error("This browser can't record WebM video — try Chrome, Edge or Firefox.");
       const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6_000_000 });
       recorderRef.current = recorder;
       recorder.ondataavailable = (event) => {
@@ -83,7 +105,7 @@ export default function ScreenRecorderTool() {
         cleanup();
       };
       // If the user clicks the browser's own "stop sharing", stop gracefully.
-      stream.getVideoTracks()[0].addEventListener("ended", () => {
+      stream.getVideoTracks()[0]?.addEventListener("ended", () => {
         if (recorder.state === "recording") recorder.stop();
       });
       recorder.start(1000);
@@ -93,13 +115,28 @@ export default function ScreenRecorderTool() {
       timerRef.current = window.setInterval(() => {
         setElapsed(Math.round((Date.now() - startedAt.current) / 1000));
       }, 500);
-    } catch {
-      setError("Screen capture was cancelled or isn't available in this browser.");
+    } catch (error) {
+      // Any failure after capture must release the screen/mic — indicators stay on otherwise.
+      stream?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      recorderRef.current = null;
+      setError(
+        !stream
+          ? "Screen capture was cancelled or isn't available in this browser."
+          : error instanceof Error && error.name === "Error"
+            ? error.message // our own user-facing wording
+            : "Recording couldn't start in this browser — try Chrome, Edge or Firefox.",
+      );
+    } finally {
+      startingRef.current = false;
+      setPending(false);
     }
   }
 
   function stop() {
-    recorderRef.current?.stop(); // onstop does the cleanup
+    const recorder = recorderRef.current;
+    // A second click before onstop fires would throw InvalidStateError.
+    if (recorder && recorder.state !== "inactive") recorder.stop(); // onstop does the cleanup
   }
 
   return (
@@ -108,7 +145,7 @@ export default function ScreenRecorderTool() {
         {!recording && (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-4">
-              <Button size="lg" onClick={start}>
+              <Button size="lg" onClick={start} disabled={pending}>
                 <Monitor className="size-4" aria-hidden />
                 Start screen recording
               </Button>
@@ -141,7 +178,7 @@ export default function ScreenRecorderTool() {
         {recordings.length > 0 && (
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">
             {recordings.map((recordingItem, index) => (
-              <li key={index} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <li key={recordingItem.url} className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <span className="font-display text-display-xs text-ink-soft uppercase">
                   #{recordings.length - index} · {formatClock(recordingItem.durationSec)} · {formatBytes(recordingItem.blob.size)} · {recordingItem.createdAt}
                 </span>
@@ -155,7 +192,8 @@ export default function ScreenRecorderTool() {
                     size="sm"
                     onClick={() => {
                       URL.revokeObjectURL(recordingItem.url);
-                      setRecordings((current) => current.filter((_, i) => i !== index));
+                      // Match by identity, not index — a new recording prepends and shifts indices.
+                      setRecordings((current) => current.filter((item) => item.url !== recordingItem.url));
                     }}
                   >
                     Delete

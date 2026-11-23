@@ -55,8 +55,6 @@ describe("search vocabulary", () => {
     ["make an image smaller", "compress-image"],
     ["combine pdfs", "merge-pdf"],
     ["join two pdfs", "merge-pdf"],
-    ["erase background", "background-remover"],
-    ["remove background", "background-remover"],
     ["make a qr code", "qr-code-generator"],
     ["secure a pdf", "protect-pdf"],
     ["check a password", "password-auditor"],

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { FileDropZone } from "@/components/tools/file-dropzone";
 import { FileList } from "@/components/tools/file-list";
 import { useFileQueue } from "@/components/tools/file-queue";
@@ -14,26 +15,35 @@ import { readFileBytes, savePdf, yieldToUi } from "./pdf-core";
 export default function RepairPdfTool() {
   const queue = useFileQueue({ accept: ["pdf"], multiple: true, maxFiles: 20, maxSizeMb: 100 });
   const { state, start, reset, retry } = useJob();
+  const [repairNote, setRepairNote] = useState<string | null>(null);
 
   useHandoffFile(queue.addFiles, queue.files.length > 0);
 
   async function repair() {
     const sources = queue.files;
+    setRepairNote(null);
     await start(async ({ report }) => {
       const { PDFDocument } = await import("pdf-lib");
       const results: ResultFile[] = [];
       const failures: string[] = [];
+      const encrypted: string[] = [];
       for (const [index, source] of sources.entries()) {
         report(`Rebuilding “${source.name}”…`, (index + 0.5) / sources.length);
         try {
           const bytes = await readFileBytes(source);
           const doc = await PDFDocument.load(bytes, {
-            // Tolerate broken objects and encrypted stubs — re-save heals the
-            // structure when the content itself is still present.
+            // Tolerate broken objects — re-save heals the structure when the
+            // content itself is still present.
             ignoreEncryption: true,
             throwOnInvalidObject: false,
             updateMetadata: false,
           });
+          // Encrypted strings repacked into object streams come out garbage
+          // (object streams are never encrypted) — refuse instead of corrupting.
+          if (doc.isEncrypted) {
+            encrypted.push(source.name);
+            continue;
+          }
           await yieldToUi();
           results.push(await savePdf(doc, suffixedName(source.name, "-repaired")));
         } catch {
@@ -42,9 +52,16 @@ export default function RepairPdfTool() {
       }
       if (results.length === 0) {
         throw new Error(
-          `None of the ${failures.length} ${failures.length === 1 ? "file" : "files"} could be recovered — the damage goes beyond the document structure.`,
+          encrypted.length > 0
+            ? `These files are password-protected — unlock them first, then repair: ${encrypted.join(", ")}.`
+            : `None of the ${failures.length} ${failures.length === 1 ? "file" : "files"} could be recovered — the damage goes beyond the document structure.`,
         );
       }
+      setRepairNote(
+        "Structure rebuilt — open the copy to confirm it reads correctly." +
+          (failures.length > 0 ? ` Not repaired: ${failures.join(", ")}.` : "") +
+          (encrypted.length > 0 ? ` Password-protected, unlock first: ${encrypted.join(", ")}.` : ""),
+      );
       return results;
     }, "Repairing documents…");
   }
@@ -56,7 +73,7 @@ export default function RepairPdfTool() {
           results={state.results}
           elapsedMs={state.elapsedMs}
           zipBaseName={baseName(queue.files[0]?.name ?? "pdfs")}
-          note="Structure rebuilt — open the copy to confirm it reads correctly."
+          note={repairNote ?? "Structure rebuilt — open the copy to confirm it reads correctly."}
           onReset={() => {
             queue.clear();
             reset();

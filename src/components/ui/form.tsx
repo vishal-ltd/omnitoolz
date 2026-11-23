@@ -155,7 +155,28 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(option.value)}
+            onKeyDown={(event) => {
+              // APG radio group: arrows move and select, roving tabindex.
+              const index = options.findIndex((entry) => entry.value === option.value);
+              const next =
+                event.key === "ArrowRight" || event.key === "ArrowDown"
+                  ? (index + 1) % options.length
+                  : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                    ? (index - 1 + options.length) % options.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? options.length - 1
+                        : -1;
+              if (next < 0) return;
+              event.preventDefault();
+              onChange(options[next].value);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]
+                ?.focus();
+            }}
             className={cn(
               "px-3 py-1.5 font-display text-display-xs uppercase transition-colors",
               active

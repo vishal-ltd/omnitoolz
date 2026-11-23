@@ -11,20 +11,32 @@ export default function UuidGeneratorTool() {
   const [hyphens, setHyphens] = useState(true);
   const [braces, setBraces] = useState(false);
   const [uuids, setUuids] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   function generate() {
-    const values = Array.from({ length: count }, () => {
-      let uuid = crypto.randomUUID();
-      if (!hyphens) uuid = uuid.replace(/-/g, "");
-      if (uppercase) uuid = uuid.toUpperCase();
-      if (braces) uuid = `{${uuid}}`;
-      return uuid;
-    });
-    setUuids(values);
+    try {
+      const values = Array.from({ length: count }, () => {
+        let uuid = crypto.randomUUID();
+        if (!hyphens) uuid = uuid.replace(/-/g, "");
+        if (uppercase) uuid = uuid.toUpperCase();
+        if (braces) uuid = `{${uuid}}`;
+        return uuid;
+      });
+      setUuids(values);
+      setError(null);
+    } catch {
+      // randomUUID needs a secure context (https or localhost).
+      setUuids([]);
+      setError("Your browser's cryptographic source isn't available here — open this tool over HTTPS (or localhost) and try again.");
+    }
   }
 
   async function copyAll() {
-    await navigator.clipboard.writeText(uuids.join("\n"));
+    try {
+      await navigator.clipboard.writeText(uuids.join("\n"));
+    } catch {
+      // Clipboard may be blocked — the list stays selectable as text.
+    }
   }
 
   return (
@@ -44,6 +56,8 @@ export default function UuidGeneratorTool() {
         <Button size="lg" onClick={generate}>
           Generate UUIDs
         </Button>
+
+        {error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</p>}
 
         {uuids.length > 0 && (
           <>

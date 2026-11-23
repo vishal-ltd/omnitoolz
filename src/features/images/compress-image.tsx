@@ -56,10 +56,13 @@ export default function CompressImageTool() {
         report(`Compressing ${file.name} (${index + 1}/${files.length})…`, (index + 0.5) / files.length);
         const format: ImageFormat =
           formatMode === "smart" ? (sameFamilyFormat(file.name) === "png" ? "webp" : "jpg") : (formatMode as ImageFormat);
+        // JPG has no alpha — composite transparency on white, never on black.
+        const background = format === "jpg" ? "#ffffff" : undefined;
 
         if (!searching) {
           const { canvas } = await decodeToCanvas(file, {
             maxLongEdge: maxEdge === "none" ? undefined : Number(maxEdge),
+            background,
           });
           const blob = await canvasToBlob(canvas, format, quality / 100);
           results.push(imageResult(file, blob, format));
@@ -69,6 +72,7 @@ export default function CompressImageTool() {
         // Target-size mode: binary-search quality, then dimensions if needed.
         const base = await decodeToCanvas(file, {
           maxLongEdge: maxEdge === "none" ? undefined : Number(maxEdge),
+          background,
         });
         const encodeAt = async (q: number, scale = 1): Promise<number> => {
           let canvas = base.canvas;
@@ -223,8 +227,8 @@ export default function CompressImageTool() {
                     ))}
                   </div>
                   <p className="text-sm text-ink-soft sm:col-span-2">
-                    Output is JPG (WebP for transparent PNGs). If the target is impossible even at
-                    minimum quality, you get the closest possible file — clearly labeled.
+                    Output is JPG (WebP for PNG sources, which keeps transparency). If the target is
+                    impossible even at minimum quality, you get the closest possible file — clearly labeled.
                   </p>
                 </>
               )}

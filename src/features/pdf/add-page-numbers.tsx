@@ -39,7 +39,6 @@ export default function AddPageNumbersTool() {
 
       const first = Math.min(Math.max(1, Math.round(firstPage)), pageCount);
       const numberedPages = pageCount - first + 1;
-      if (numberedPages < 1) throw new Error("The first numbered page is beyond the end of the document.");
 
       report(`Numbering ${numberedPages} ${numberedPages === 1 ? "page" : "pages"}…`, 0.7);
       for (let index = first - 1; index < pageCount; index++) {
@@ -106,7 +105,7 @@ export default function AddPageNumbersTool() {
                   <option value="page-n-of-total">Page 1 of 12</option>
                 </Select>
               </Field>
-              <Field label="First numbered page" hint="Use 2 to skip the cover page">
+              <Field label="First numbered page" hint="Use 2 to skip the cover; values past the end clamp to the last page">
                 <TextInput
                   type="number"
                   min={1}

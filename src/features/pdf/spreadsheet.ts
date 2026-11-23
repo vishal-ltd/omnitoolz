@@ -8,6 +8,11 @@ export interface SheetData {
 }
 
 const MAX_CELLS = 500_000;
+/** Excel's column limit (XFD); a crafted reference beyond it must not pad. */
+const MAX_COLUMNS = 16_384;
+/** Row cap including gaps from sparse `r` attributes. */
+const MAX_ROWS = 100_000;
+const TOO_LARGE = "This spreadsheet is too large to render safely in the browser.";
 
 function parseXml(source: string, label: string): XMLDocument {
   const document = new DOMParser().parseFromString(source, "application/xml");
@@ -53,13 +58,15 @@ function parseCsv(source: string): Cell[][] {
   const pushValue = () => {
     row.push(value);
     value = "";
+    // One row with millions of commas must fail here, not after growing.
+    if (row.length > MAX_CELLS) throw new Error(TOO_LARGE);
   };
   const pushRow = () => {
     pushValue();
     rows.push(row);
     row = [];
     if (rows.length * Math.max(1, rows[rows.length - 1].length) > MAX_CELLS) {
-      throw new Error("This spreadsheet is too large to render safely in the browser.");
+      throw new Error(TOO_LARGE);
     }
   };
 
@@ -121,10 +128,21 @@ async function parseXlsx(bytes: Uint8Array): Promise<SheetData[]> {
     const document = parseXml(read(zipPath(target)), target);
     const rows: Cell[][] = [];
     for (const rowElement of elements(document, "row")) {
+      // Honor the row's `r` attribute: sparse sheets (data in rows 1 and 100)
+      // must keep their gaps, not collapse adjacent.
+      const declared = Number(rowElement.getAttribute("r") ?? rows.length + 1);
+      const rowNumber = Number.isFinite(declared) && declared > 0 ? declared : rows.length + 1;
+      if (rowNumber > MAX_ROWS) throw new Error(TOO_LARGE);
+      while (rows.length < rowNumber - 1) rows.push([]);
       const row: Cell[] = [];
       for (const cellElement of Array.from(rowElement.children).filter((child) => child.localName === "c")) {
         const reference = cellElement.getAttribute("r") ?? "A1";
         const index = columnIndex(reference);
+        if (index >= MAX_COLUMNS) throw new Error(TOO_LARGE);
+        // Padding counts against the cell budget too — a crafted sparse row
+        // must not allocate millions of empties under the cap.
+        cellCount += index + 1 - row.length;
+        if (cellCount > MAX_CELLS) throw new Error(TOO_LARGE);
         while (row.length <= index) row.push("");
         const type = cellElement.getAttribute("t");
         const valueElement = Array.from(cellElement.children).find((child) => child.localName === "v");
@@ -136,7 +154,7 @@ async function parseXlsx(bytes: Uint8Array): Promise<SheetData[]> {
         else if (!type && raw !== "" && Number.isFinite(Number(raw))) value = Number(raw);
         row[index] = value;
         cellCount++;
-        if (cellCount > MAX_CELLS) throw new Error("This spreadsheet is too large to render safely in the browser.");
+        if (cellCount > MAX_CELLS) throw new Error(TOO_LARGE);
       }
       rows.push(row);
     }
@@ -151,7 +169,9 @@ export async function readSpreadsheet(file: File): Promise<SheetData[]> {
     return [{ name: "Sheet 1", rows: parseCsv(new TextDecoder().decode(await file.arrayBuffer())) }];
   }
   if (extension !== "xlsx") {
-    throw new Error("Legacy .xls files are not supported. Save the workbook as .xlsx or .csv and try again.");
+    throw new Error(
+      `.${extension} workbooks aren't supported — that includes macro-enabled (.xlsm) and binary (.xlsb) formats, and legacy .xls. Save as .xlsx or .csv and try again.`,
+    );
   }
   return parseXlsx(new Uint8Array(await file.arrayBuffer()));
 }

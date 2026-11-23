@@ -52,4 +52,25 @@ describe("totp", () => {
     expect(secondsRemaining(29_999)).toBe(1);
     expect(secondsRemaining(30_000)).toBe(30);
   });
+
+  it("reproduces the RFC 6238 SHA-1 test vectors (8 digits)", async () => {
+    // Appendix B: secret "12345678901234567890", SHA-1, T0=0, step=30.
+    const vectors: Array<[number, string]> = [
+      [59, "94287082"],
+      [1_111_111_109, "07081804"],
+      [1_111_111_111, "14050471"],
+      [1_234_567_890, "89005924"],
+      [2_000_000_000, "69279037"],
+      [20_000_000_000, "65353130"],
+    ];
+    const secretBytes = base32Decode(RFC_SECRET);
+    for (const [seconds, expected] of vectors) {
+      expect(await totpAt(secretBytes, seconds * 1000, 8)).toBe(expected);
+    }
+  });
+
+  it("accepts secrets with spaces, lowercase and padding", async () => {
+    const messy = "gezd gnbv gy3t qojq gezd gnbv gy3t qojq=";
+    expect(await totpFromBase32(messy, 59_000)).toBe(await totpFromBase32(RFC_SECRET, 59_000));
+  });
 });

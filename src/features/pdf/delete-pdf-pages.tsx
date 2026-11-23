@@ -68,7 +68,7 @@ export default function DeletePdfPagesTool() {
             <OptionsPanel title="Pages to delete">
               <Field
                 label="Page numbers"
-                hint={`This document has ${file ? "some" : ""} pages — e.g. 2, 5-7`}
+                hint="Commas and ranges welcome — e.g. 2, 5-7"
                 className="sm:col-span-2"
               >
                 <TextInput

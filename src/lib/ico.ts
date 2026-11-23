@@ -26,7 +26,10 @@ export function buildIco(entries: IcoEntry[]): Uint8Array {
 
   let offset = directorySize;
   entries.forEach((entry, index) => {
-    if (entry.size < 1 || entry.size > 256) throw new Error(`ICO size ${entry.size} is out of range 1–256.`);
+    // Non-integers would silently truncate in the directory byte — reject them.
+    if (!Number.isInteger(entry.size) || entry.size < 1 || entry.size > 256) {
+      throw new Error(`ICO size ${entry.size} is out of range 1–256.`);
+    }
     const base = headerSize + index * entrySize;
     const byte = entry.size === 256 ? 0 : entry.size;
     out[base] = byte; // width

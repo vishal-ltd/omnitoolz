@@ -26,14 +26,23 @@ export default function ExtractPdfImagesTool() {
     const source = file!;
     setStats(null);
     await start(async ({ report }) => {
-      const { PDFName, PDFRawStream } = await import("pdf-lib");
+      const { PDFName, PDFRawStream, PDFRef } = await import("pdf-lib");
       const doc = await loadPdf(source);
 
       report("Scanning embedded objects…", 0.5);
-      const results: ResultFile[] = [];
-      let skipped = 0;
+      // SMask streams are alpha channels of their parent image, not pictures
+      // of their own — exporting them produced duplicate grey "images".
+      const smaskRefs = new Set<import("pdf-lib").PDFRef>();
       for (const [, object] of doc.context.enumerateIndirectObjects()) {
         if (!(object instanceof PDFRawStream)) continue;
+        const mask = object.dict.get(PDFName.of("SMask"));
+        if (mask instanceof PDFRef) smaskRefs.add(mask);
+      }
+      const results: ResultFile[] = [];
+      let skipped = 0;
+      for (const [ref, object] of doc.context.enumerateIndirectObjects()) {
+        if (!(object instanceof PDFRawStream)) continue;
+        if (smaskRefs.has(ref)) continue;
         const subtype = object.dict.get(PDFName.of("Subtype"));
         if (!subtype || subtype.toString() !== "/Image") continue;
         const exported = await exportEmbeddedImage(doc, object, results.length + 1);

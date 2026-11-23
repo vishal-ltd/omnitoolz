@@ -5,6 +5,7 @@ import {
   toCamelCase,
   toInverseCase,
   toKebabCase,
+  toLower,
   toPascalCase,
   toSentenceCase,
   toSnakeCase,
@@ -51,5 +52,35 @@ describe("basic conversions", () => {
 
   it("preserves line breaks", () => {
     expect(toUpper("a\nb")).toBe("A\nB");
+  });
+});
+
+describe("unicode handling", () => {
+  it("keeps accented letters in word-aware styles", () => {
+    expect(toCamelCase("café au lait")).toBe("caféAuLait");
+    expect(toSnakeCase("Über Straße")).toBe("über_straße");
+    expect(toKebabCase("déjà vu")).toBe("déjà-vu");
+    expect(toPascalCase("naïve résumé")).toBe("NaïveRésumé");
+  });
+
+  it("splits camel humps with non-ASCII letters", () => {
+    expect(toSnakeCase("caféCrème")).toBe("café_crème");
+  });
+
+  it("sentence case capitalizes accented sentence starters", () => {
+    expect(toSentenceCase("élan. über alles! ok?")).toBe("Élan. Über alles! Ok?");
+  });
+
+  it("alternating case includes non-ASCII letters", () => {
+    expect(toAlternatingCase("àbçd")).toBe("àBçD");
+  });
+
+  it("upper/lower use standard unicode mappings (ß → SS)", () => {
+    expect(toUpper("Straße")).toBe("STRASSE");
+    expect(toLower("STRASSE")).toBe("strasse");
+  });
+
+  it("title case capitalizes whole code points", () => {
+    expect(toTitleCase("élan vital")).toBe("Élan Vital");
   });
 });

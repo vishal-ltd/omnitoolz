@@ -31,7 +31,10 @@ export interface AuditResult {
 }
 
 export function auditPassword(password: string): AuditResult {
-  const length = password.length;
+  // Count code points, not UTF-16 units: an emoji is one character, and mixing
+  // the two makes the Shannon probabilities below sum to more than 1.
+  const chars = [...password];
+  const length = chars.length;
   const classes = [
     /[a-z]/.test(password),
     /[A-Z]/.test(password),
@@ -47,7 +50,7 @@ export function auditPassword(password: string): AuditResult {
 
   // Shannon entropy over the characters actually used (fights padding tricks).
   const counts = new Map<string, number>();
-  for (const char of password) counts.set(char, (counts.get(char) ?? 0) + 1);
+  for (const char of chars) counts.set(char, (counts.get(char) ?? 0) + 1);
   let shannon = 0;
   for (const count of counts.values()) {
     const p = count / length;
@@ -59,16 +62,21 @@ export function auditPassword(password: string): AuditResult {
   const isCommon = COMMON.has(lowered) || COMMON.has(lowered.replace(/[0-9!@#$]+$/, "")) && length <= 12;
 
   const sequences = ["abcdefghijklmnopqrstuvwxyz", "0123456789", "qwertyuiop", "asdfghjkl", "zxcvbnm"];
+  // Scan every 4-char window, not just the prefix — "zzqwertyzz" is a keyboard
+  // run too. The length gate keeps the advice off long, otherwise-random passwords.
   const hasSequence =
+    length >= 4 &&
+    length <= 12 &&
     sequences.some((seq) => {
       const forward = seq + seq;
       const backward = seq.split("").reverse().join("") + seq;
-      return (
-        forward.includes(lowered.slice(0, 4)) && length >= 4 ||
-        backward.includes(lowered.slice(0, 4)) && length >= 4
-      );
-    }) && length <= 12;
-  const hasRepeated = length >= 4 && /^(.)\1+$/.test(password.slice(0, 4)) && length <= 12;
+      for (let i = 0; i + 4 <= lowered.length; i++) {
+        const window = lowered.slice(i, i + 4);
+        if (forward.includes(window) || backward.includes(window)) return true;
+      }
+      return false;
+    });
+  const hasRepeated = length >= 4 && length <= 12 && /(.)\1{3,}/u.test(password);
 
   const advice: string[] = [];
   if (length < 12) advice.push("Use at least 12 characters — length beats cleverness.");

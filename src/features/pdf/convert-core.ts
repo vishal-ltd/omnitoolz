@@ -25,12 +25,20 @@ export const FONT_SIZES = {
   lineGap: 5,
 };
 
-/** Escape WinAnsi-unfriendly characters; standard fonts can't draw them. */
+/**
+ * Make text safe for the standard PDF fonts (WinAnsi / CP-1252): map what we
+ * can, mark the rest "?" — never let pdf-lib throw mid-batch on CJK or emoji.
+ */
 export function sanitize(text: string): string {
-  return text
+  const mapped = text
     .replace(/₹/g, "Rs.")
     .replace(/\u00A0/g, " ")
     .replace(/[\u2010\u2011\u2012\u2015]/g, "-");
+  // WinAnsi covers Latin-1 plus the CP-1252 punctuation block.
+  return mapped.replace(
+    /[^ -~\u00A0-ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ\n]/g,
+    "?",
+  );
 }
 
 export function wrapLine(

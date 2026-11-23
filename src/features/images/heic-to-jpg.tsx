@@ -10,15 +10,18 @@ import { useJob } from "@/components/tools/use-job";
 import { Button } from "@/components/ui/button";
 import { Field, RangeInput } from "@/components/ui/form";
 import { baseName, downloadBlob, type ResultFile } from "@/lib/utils";
+import { checkCanvasSize } from "./image-core";
+
+interface HeifImage {
+  get_width(): number;
+  get_height(): number;
+  display(target: { width: number; height: number }, done: (result: unknown) => void): void;
+  free(): void;
+}
 
 type LibheifModule = {
   HeifDecoder: new () => {
-    decode(buffer: ArrayBuffer): Array<{
-      get_width(): number;
-      get_height(): number;
-      display(target: { width: number; height: number }, done: (result: unknown) => void): void;
-      free(): void;
-    }>;
+    decode(buffer: ArrayBuffer): HeifImage[];
   };
 };
 
@@ -44,7 +47,11 @@ async function loadLibheif(): Promise<LibheifModule> {
     }
     if (!window.libheif) throw new Error("The HEIC engine didn't initialise.");
     return window.libheif();
-  })();
+  })().catch((error: unknown) => {
+    // Never cache a failure — the retry button must be able to load again.
+    gluePromise = null;
+    throw error;
+  });
   return gluePromise;
 }
 
@@ -56,26 +63,46 @@ async function decodeHeicToBlobs(
   const libheif = await loadLibheif();
   const buffer = await file.arrayBuffer();
   const decoder = new libheif.HeifDecoder();
-  const images = decoder.decode(buffer);
+  let images: HeifImage[];
+  try {
+    images = decoder.decode(buffer);
+  } catch {
+    throw new Error(`“${file.name}” couldn't be decoded as HEIC — it may be corrupt or use an unsupported profile.`);
+  }
   if (images.length === 0) throw new Error(`“${file.name}” has no decodable HEIC image inside.`);
 
   const results: ResultFile[] = [];
-  for (const [index, image] of images.entries()) {
-    onImage(index, images.length);
-    const width = image.get_width();
-    const height = image.get_height();
-    const imageData = new ImageData(width, height);
-    await new Promise<void>((resolve, reject) => {
-      image.display(imageData, (result) => (result ? resolve() : reject(new Error("HEIC decoding failed — the file may use an unsupported profile."))));
-    });
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    canvas.getContext("2d")!.putImageData(imageData, 0, 0);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality / 100));
-    if (!blob) throw new Error("Converting to JPG failed.");
-    results.push({ name: `${baseName(file.name)}${images.length > 1 ? `-${index + 1}` : ""}.jpg`, blob });
-    image.free();
+  let failedIndex = -1;
+  try {
+    for (const [index, image] of images.entries()) {
+      failedIndex = index;
+      try {
+        onImage(index, images.length);
+        const width = image.get_width();
+        const height = image.get_height();
+        if (width < 1 || height < 1) throw new Error(`“${file.name}” contains an image with invalid dimensions.`);
+        checkCanvasSize(width, height);
+        const imageData = new ImageData(width, height);
+        await new Promise<void>((resolve, reject) => {
+          image.display(imageData, (result) => (result ? resolve() : reject(new Error("HEIC decoding failed — the file may use an unsupported profile."))));
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Your browser blocked canvas rendering — try another browser.");
+        ctx.putImageData(imageData, 0, 0);
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality / 100));
+        if (!blob) throw new Error("Converting to JPG failed.");
+        results.push({ name: `${baseName(file.name)}${images.length > 1 ? `-${index + 1}` : ""}.jpg`, blob });
+      } finally {
+        image.free();
+      }
+    }
+  } catch (error) {
+    // Free the WASM memory of images we never reached before rethrowing.
+    for (let j = failedIndex + 1; j < images.length; j++) images[j].free();
+    throw error;
   }
   return results;
 }

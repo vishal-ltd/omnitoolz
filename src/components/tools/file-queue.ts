@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { extensionOf, formatBytes } from "@/lib/utils";
 
 export interface FileQueueOptions {
@@ -107,62 +107,114 @@ export function insertAt(files: File[], file: File, index: number, maxFiles: num
   return next;
 }
 
+/** Same name + size + mtime = the same dropped file; queue it once. */
+function isDuplicate(file: File, existing: File[]): boolean {
+  return existing.some(
+    (other) =>
+      other.name === file.name &&
+      other.size === file.size &&
+      other.lastModified === file.lastModified,
+  );
+}
+
+interface QueueState {
+  files: File[];
+  errors: string[];
+  removed: { file: File; index: number } | null;
+}
+
+type QueueAction =
+  | { type: "add"; incoming: File[]; options: FileQueueOptions }
+  | { type: "remove"; index: number }
+  | { type: "move"; index: number; direction: -1 | 1 }
+  | { type: "clear" }
+  | { type: "undo"; maxFiles: number };
+
+/**
+ * Reducer so two adds in one tick validate against the latest queue, not a
+ * stale render closure — capacity and dedupe can't be raced past.
+ */
+function queueReducer(state: QueueState, action: QueueAction): QueueState {
+  switch (action.type) {
+    case "add": {
+      const fresh: File[] = [];
+      for (const file of action.incoming) {
+        if (!isDuplicate(file, state.files) && !isDuplicate(file, fresh)) fresh.push(file);
+      }
+      const existingSizeBytes = state.files.reduce((sum, file) => sum + file.size, 0);
+      const { accepted, errors } = validateFiles(
+        fresh,
+        state.files.length,
+        action.options,
+        existingSizeBytes,
+      );
+      return {
+        files:
+          accepted.length > 0
+            ? action.options.multiple
+              ? [...state.files, ...accepted]
+              : accepted.slice(0, 1)
+            : state.files,
+        errors,
+        removed: null,
+      };
+    }
+    case "remove": {
+      const file = state.files[action.index];
+      return {
+        files: state.files.filter((_, i) => i !== action.index),
+        errors: [],
+        removed: file ? { file, index: action.index } : null,
+      };
+    }
+    case "move": {
+      const target = action.index + action.direction;
+      if (target < 0 || target >= state.files.length) return state;
+      const next = [...state.files];
+      [next[action.index], next[target]] = [next[target], next[action.index]];
+      return { ...state, files: next };
+    }
+    case "clear":
+      return { files: [], errors: [], removed: null };
+    case "undo":
+      if (!state.removed) return state;
+      return {
+        ...state,
+        files: insertAt(state.files, state.removed.file, state.removed.index, action.maxFiles),
+        removed: null,
+      };
+  }
+}
+
 export function useFileQueue(options: FileQueueOptions): FileQueue {
-  const [files, setFiles] = useState<File[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [removed, setRemoved] = useState<{ file: File; index: number } | null>(null);
+  const [state, dispatch] = useReducer(queueReducer, {
+    files: [],
+    errors: [],
+    removed: null,
+  });
+  const { files, errors, removed } = state;
 
   const addFiles = useCallback(
     (incoming: File[] | FileList) => {
-      const list = Array.from(incoming);
-      const existingSizeBytes = files.reduce((sum, file) => sum + file.size, 0);
-      const { accepted, errors: validationErrors } = validateFiles(
-        list,
-        files.length,
-        options,
-        existingSizeBytes,
-      );
-      setErrors(validationErrors);
-      setRemoved(null);
-      if (accepted.length > 0) {
-        setFiles((prev) => (options.multiple ? [...prev, ...accepted] : accepted.slice(0, 1)));
-      }
+      dispatch({ type: "add", incoming: Array.from(incoming), options });
     },
-    [files, options],
+    [options],
   );
 
-  const removeAt = useCallback(
-    (index: number) => {
-      const file = files[index];
-      if (file) setRemoved({ file, index });
-      setFiles((prev) => prev.filter((_, i) => i !== index));
-      setErrors([]);
-    },
-    [files],
-  );
+  const removeAt = useCallback((index: number) => dispatch({ type: "remove", index }), []);
 
   /** Puts the last removed file back where it was, unless the queue filled up. */
-  const undoRemove = useCallback(() => {
-    if (!removed) return;
-    setFiles((prev) => insertAt(prev, removed.file, removed.index, options.maxFiles));
-    setRemoved(null);
-  }, [removed, options.maxFiles]);
+  const undoRemove = useCallback(
+    () => dispatch({ type: "undo", maxFiles: options.maxFiles }),
+    [options.maxFiles],
+  );
 
-  const move = useCallback((index: number, direction: -1 | 1) => {
-    setFiles((prev) => {
-      const target = index + direction;
-      if (target < 0 || target >= prev.length) return prev;
-      const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  }, []);
+  const move = useCallback(
+    (index: number, direction: -1 | 1) => dispatch({ type: "move", index, direction }),
+    [],
+  );
 
-  const clear = useCallback(() => {
-    setFiles([]);
-    setErrors([]);
-    setRemoved(null);
-  }, []);
+  const clear = useCallback(() => dispatch({ type: "clear" }), []);
 
   const canAddMore = options.multiple ? files.length < options.maxFiles : files.length === 0;
   const lastRemoved = removed?.file.name ?? null;

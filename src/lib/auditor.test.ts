@@ -42,4 +42,26 @@ describe("auditPassword", () => {
     expect(audit.entropyBits).toBe(0);
     expect(audit.verdict).toBe("weak");
   });
+
+  it("counts unicode code points, not UTF-16 units", () => {
+    const audit = auditPassword("😀😀😀😀");
+    expect(audit.length).toBe(4);
+    // Four identical characters carry no Shannon entropy — the old UTF-16
+    // length made the probabilities sum to 2 and reported phantom bits.
+    expect(audit.entropyBits).toBe(0);
+    expect(audit.verdict).toBe("weak");
+    expect(auditPassword("😀a😀b").length).toBe(4);
+  });
+
+  it("spots keyboard runs and repeats anywhere, not just the prefix", () => {
+    expect(auditPassword("zzqwertyzz").hasSequence).toBe(true);
+    expect(auditPassword("abbbbb1").hasRepeated).toBe(true);
+    expect(auditPassword("9876zzzz").hasSequence).toBe(true); // descending digits
+  });
+
+  it("does not nag about small patterns inside long passwords", () => {
+    const audit = auditPassword("xqwertyxqwertyxqwerty9");
+    expect(audit.hasSequence).toBe(false);
+    expect(audit.hasRepeated).toBe(false);
+  });
 });

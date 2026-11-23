@@ -15,30 +15,39 @@ const PNG_SIZES = [16, 32, 48, 64, 128, 180, 192, 256, 512] as const;
 const ICO_SIZES = [16, 32, 48] as const;
 
 async function renderSquare(source: File | Blob, size: number): Promise<Blob> {
-  const bitmap = await createImageBitmap(source);
-  // Center-crop to a square, then scale — favicons must be square.
-  const edge = Math.min(bitmap.width, bitmap.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext("2d")!;
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(
-    bitmap,
-    (bitmap.width - edge) / 2,
-    (bitmap.height - edge) / 2,
-    edge,
-    edge,
-    0,
-    0,
-    size,
-    size,
-  );
-  bitmap.close();
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-  if (!blob) throw new Error(`Rendering the ${size}px favicon failed.`);
-  return blob;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(source);
+  } catch {
+    throw new Error("That file couldn't be decoded as an image — try a PNG, JPG or WebP.");
+  }
+  try {
+    // Center-crop to a square, then scale — favicons must be square.
+    const edge = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Your browser blocked canvas rendering — try another browser.");
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(
+      bitmap,
+      (bitmap.width - edge) / 2,
+      (bitmap.height - edge) / 2,
+      edge,
+      edge,
+      0,
+      0,
+      size,
+      size,
+    );
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error(`Rendering the ${size}px favicon failed.`);
+    return blob;
+  } finally {
+    bitmap.close();
+  }
 }
 
 async function blobBytes(blob: Blob): Promise<Uint8Array> {

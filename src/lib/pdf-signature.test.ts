@@ -59,11 +59,11 @@ describe("inspectSignatures", () => {
     );
     expect(reports).toHaveLength(1);
     const report = reports[0];
-    console.log("TEST REPORT:", JSON.stringify(report));
     expect(report.integrityOk).toBe(true);
     expect(report.signatureValid).toBe(true);
     expect(report.signer).toBe("Test Signer");
-    expect(report.signingTime).toContain("261025120000Z");
+    // Exact UTCTime — the old SET-unwrapping bug prefixed DER garbage here.
+    expect(report.signingTime).toBe("261025120000Z");
   });
 
   it("detects tampering — a flipped byte breaks the integrity check", async () => {

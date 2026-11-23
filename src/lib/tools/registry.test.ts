@@ -59,6 +59,16 @@ describe("registry integrity", () => {
     }
   });
 
+  it("raw relatedToolIds never point at dead ids (backfill must not hide typos)", () => {
+    const ids = new Set(liveIds);
+    const dead = tools.flatMap((tool) =>
+      (tool.relatedToolIds ?? [])
+        .filter((id) => !ids.has(id))
+        .map((id) => `${tool.id} → ${id}`),
+    );
+    expect(dead).toEqual([]);
+  });
+
   it("active categories all have live tools and valid slugs", () => {
     for (const category of activeCategories()) {
       expect(category.toolCount).toBeGreaterThan(0);

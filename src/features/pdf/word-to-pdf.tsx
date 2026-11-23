@@ -59,22 +59,9 @@ function htmlToBlocks(html: string): Block[] {
     }
   };
   walk(doc.body, { text: "" });
-  // Merge consecutive paragraphs of a single run each into flowing text blocks.
-  const merged: Block[] = [];
-  for (const block of blocks) {
-    const last = merged[merged.length - 1];
-    if (
-      block.type === "paragraph" &&
-      last?.type === "paragraph" &&
-      !last.runs[0].bold &&
-      !block.runs[0].bold
-    ) {
-      last.runs[0].text += ` ${block.runs[0].text}`;
-    } else {
-      merged.push(block);
-    }
-  }
-  return merged;
+  // Keep paragraph boundaries: each <p> stays its own block. Merging
+  // consecutive paragraphs turned ten paragraphs into one flowing wall.
+  return blocks;
 }
 
 export default function WordToPdfTool() {

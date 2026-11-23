@@ -47,9 +47,20 @@ const ENGINE_ERRORS = [TypeError, RangeError, ReferenceError, SyntaxError, URIEr
 const ENGINE_FALLBACK =
   "This file could not be processed. It may be corrupt, empty, or not the kind of file this tool expects.";
 
+/** pdf.js throws plain Error subclasses with engine wording; translate centrally. */
+const PDFJS_FRIENDLY: Record<string, string> = {
+  PasswordException:
+    "This PDF is password-protected. Unlock it first (Tools → Unlock PDF) or supply the right password, then try again.",
+  InvalidPDFException:
+    "This file isn't a readable PDF — it may be corrupt, or not a PDF at all.",
+};
+
 function describeError(error: unknown): Pick<JobState, "error" | "errorDetail" | "errorKind"> {
   const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   if (!raw) return { error: ENGINE_FALLBACK, errorDetail: null, errorKind: null };
+  if (error instanceof Error && PDFJS_FRIENDLY[error.name]) {
+    return { error: PDFJS_FRIENDLY[error.name], errorDetail: raw, errorKind: error.name };
+  }
   const isEngine = error instanceof Error && ENGINE_ERRORS.some((type) => error instanceof type);
   if (isEngine) {
     return { error: ENGINE_FALLBACK, errorDetail: raw, errorKind: error instanceof Error ? error.name : null };
@@ -65,8 +76,12 @@ function describeError(error: unknown): Pick<JobState, "error" | "errorDetail" |
 export function useJob() {
   const [state, setState] = useState<JobState>(IDLE);
   const lastRun = useRef<{ fn: JobFn; busyMessage: string } | null>(null);
+  // Run token: a superseded run (reset, unmount, newer start) must never
+  // commit its final state over the current one.
+  const runId = useRef(0);
 
   const start = useCallback(async (fn: JobFn, busyMessage = "Processing…") => {
+    const id = ++runId.current;
     lastRun.current = { fn, busyMessage };
     setState({ ...IDLE, phase: "running", statusMessage: busyMessage });
     const startedAt = performance.now();
@@ -74,7 +89,7 @@ export function useJob() {
       const results = await fn({
         report: (message, progress) =>
           setState((prev) =>
-            prev.phase === "running"
+            prev.phase === "running" && runId.current === id
               ? {
                   ...prev,
                   statusMessage: message,
@@ -86,6 +101,7 @@ export function useJob() {
               : prev,
           ),
       });
+      if (runId.current !== id) return;
       setState({
         ...IDLE,
         phase: "done",
@@ -94,6 +110,7 @@ export function useJob() {
         elapsedMs: performance.now() - startedAt,
       });
     } catch (error) {
+      if (runId.current !== id) return;
       setState({
         ...IDLE,
         phase: "error",
@@ -103,7 +120,10 @@ export function useJob() {
     }
   }, []);
 
-  const reset = useCallback(() => setState(IDLE), []);
+  const reset = useCallback(() => {
+    runId.current++;
+    setState(IDLE);
+  }, []);
 
   /** Re-runs the last job — the retry the error panel offers. */
   const retry = useCallback(() => {

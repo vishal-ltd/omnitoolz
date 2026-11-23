@@ -37,6 +37,8 @@ export default function QrGeneratorTool() {
       }
       try {
         const QRCode = await import("qrcode");
+        // A newer render may have superseded this one while the module loaded.
+        if (cancelled) return;
         await QRCode.toCanvas(canvas, text, {
           width: size,
           margin,

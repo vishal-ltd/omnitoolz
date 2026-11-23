@@ -39,6 +39,15 @@ export function FileDropZone({
     setDragging(false);
     if (disabled) return;
     const dropped = Array.from(event.dataTransfer.files);
+    if (dropped.length === 0) {
+      const hasFolder = Array.from(event.dataTransfer.items).some(
+        (item) => item.webkitGetAsEntry?.()?.isDirectory,
+      );
+      if (hasFolder) {
+        setErrors(["Folders aren't supported — drop individual files instead."]);
+        return;
+      }
+    }
     ingest(dropped);
   }
 
@@ -63,6 +72,7 @@ export function FileDropZone({
       <div
         role="button"
         tabIndex={0}
+        data-dropzone
         aria-label={compact ? "Add more files" : `Drop ${multiple ? "files" : "your file"} here or click to browse`}
         aria-describedby={describeId}
         aria-disabled={disabled}
@@ -77,7 +87,12 @@ export function FileDropZone({
           event.preventDefault();
           if (!disabled) setDragging(true);
         }}
-        onDragLeave={() => setDragging(false)}
+        onDragLeave={(event) => {
+          // Crossing into a child fires dragleave too; only un-highlight when
+          // the pointer actually leaves the zone.
+          if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+          setDragging(false);
+        }}
         onDrop={handleDrop}
         className={cn(
           "cursor-pointer border-[3px] border-dashed",

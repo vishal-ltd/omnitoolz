@@ -35,11 +35,16 @@ function djb2Hash(text: string): string {
   return hash.toString(36);
 }
 
-async function pageTextHashes(file: File): Promise<string[]> {
+interface PageText {
+  hash: string;
+  text: string;
+}
+
+async function pageTextHashes(file: File): Promise<PageText[]> {
   const pdfjs = await loadPdfjs();
   const bytes = new Uint8Array(await file.arrayBuffer());
   const doc = await pdfjs.getDocument({ data: bytes }).promise;
-  const hashes: string[] = [];
+  const pages: PageText[] = [];
   for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
     const page = await doc.getPage(pageNumber);
     const content = await page.getTextContent();
@@ -49,10 +54,10 @@ async function pageTextHashes(file: File): Promise<string[]> {
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
-    hashes.push(djb2Hash(text));
+    pages.push({ hash: djb2Hash(text), text });
   }
   await doc.destroy();
-  return hashes;
+  return pages;
 }
 
 function Row({ label, a, b }: { label: string; a: string; b: string }) {
@@ -93,7 +98,11 @@ export default function ComparePdfTool() {
       const length = Math.max(aHashes.length, bHashes.length);
       const differingPages: number[] = [];
       for (let i = 0; i < length; i++) {
-        if (aHashes[i] !== bHashes[i]) differingPages.push(i + 1);
+        const pa = aHashes[i];
+        const pb = bHashes[i];
+        // djb2 is 32-bit: on a hash match, confirm with the actual text so a
+        // collision can never report two different pages as identical.
+        if (!pa || !pb || pa.hash !== pb.hash || pa.text !== pb.text) differingPages.push(i + 1);
       }
 
       const result: CompareReport = {

@@ -1007,14 +1007,14 @@ export const tools: ToolDefinition[] = [
       },
       {
         q: "Does it enhance the scan?",
-        a: "The full-frame capture is honest but plain — edge detection and deskewing are on the roadmap. Good lighting helps more than any filter.",
+        a: "Yes — document enhance (grayscale + contrast) and auto-trim to the page's ink bounds are built in and toggleable per scan. Deskewing is still on the roadmap; good lighting helps more than any filter.",
       },
       {
         q: "Where do the shots go?",
         a: "Nowhere. They live in the tab's memory until you build the PDF or close the page.",
       },
     ],
-    relatedToolIds: ["jpg-to-pdf", "ocr", "rotate-pdf", "merge-pdf"],
+    relatedToolIds: ["jpg-to-pdf", "image-to-text", "rotate-pdf", "merge-pdf"],
   },
   {
     id: "edit-pdf",
@@ -1035,20 +1035,20 @@ export const tools: ToolDefinition[] = [
     howTo: [
       "Drop a PDF — the pages render right here for editing.",
       "Pick a tool: add text, draw, highlight, white-out or stamp an image.",
-      "Click Apply and download the edited PDF — edits become permanent page content.",
+      "Click Save and download the edited PDF — edits become permanent page content.",
     ],
     faqs: [
       {
         q: "Can I edit the existing text?",
-        a: "Not by retyping yet — use the White-out tool to cover the old text, then add a text box with your replacement. True font-matched retype is on the roadmap.",
+        a: "Yes — tap a text run to retype it in place with font detection (Helvetica, Times or Courier, regular/bold/italic), or cover it with White-out and add a fresh text box. Covered text stays machine-readable, so white-out is visual, not true redaction.",
       },
       {
         q: "Are the edits really permanent?",
-        a: "Yes — Apply bakes every addition into the page content itself, like the sign tool. Keep the original if you may need to undo later.",
+        a: "Yes — Save bakes every addition into the page content itself, like the sign tool. Keep the original if you may need to undo later.",
       },
       {
         q: "Which fonts can text use?",
-        a: "Helvetica (regular and bold) — the standard PDF font, readable everywhere. Non-Latin characters map to their closest safe form.",
+        a: "Helvetica, Times and Courier — the standard PDF fonts — in regular, bold, italic and bold-italic, matched to the detected original where possible. Non-Latin characters map to their closest safe form.",
       },
     ],
     relatedToolIds: ["sign-pdf", "organize-pdf", "protect-pdf", "watermark-pdf"],
@@ -1532,43 +1532,6 @@ export const tools: ToolDefinition[] = [
   },
 
   {
-    id: "background-remover",
-    name: "Background Remover",
-    description:
-      "Erase photo backgrounds with an on-device AI model — transparent PNG cutouts, no upload, no account.",
-    category: "image",
-    processingMode: "browser",
-    status: "live",
-    keywords: ["remove background", "background eraser", "transparent png", "cutout image", "ai background removal"],
-    icon: "wand-2",
-    acceptedFormats: ["PNG", "JPG", "WebP"],
-    maxFiles: 5,
-    maxFileSizeMb: 20,
-    supportsBatch: true,
-    privacyNote: BROWSER_PRIVACY,
-    howTo: [
-      "Drop photos of people, products or objects (up to 5).",
-      "Click “Remove Background” — the AI model downloads once on first use.",
-      "Download transparent PNG cutouts, subject intact.",
-    ],
-    faqs: [
-      {
-        q: "How good is the cutout?",
-        a: "People, products and clear subjects come out very clean; hair, fur and glass are the hard cases. High-resolution inputs help.",
-      },
-      {
-        q: "Where does the model come from?",
-        a: "The ≈40 MB segmentation model downloads once from a CDN, then runs locally in WebAssembly — your images are never uploaded.",
-      },
-      {
-        q: "Can I erase or restore parts afterwards?",
-        a: "Not yet — for fine-tuning, take the PNG into “Crop Image” or an editor. Manual touch-up brushes are on the roadmap.",
-      },
-    ],
-    relatedToolIds: ["resize-image", "compress-image", "watermark-image", "favicon-generator"],
-  },
-
-  {
     id: "heic-to-jpg",
     name: "HEIC to JPG",
     description:
@@ -1639,7 +1602,7 @@ export const tools: ToolDefinition[] = [
         a: "They're center-cropped to a square before resizing, so nothing gets stretched.",
       },
     ],
-    relatedToolIds: ["resize-image", "compress-image", "background-remover", "crop-image"],
+    relatedToolIds: ["resize-image", "compress-image", "watermark-image", "crop-image"],
   },
 
   // --------------------------------------------------------------- Text
@@ -2362,8 +2325,8 @@ export const tools: ToolDefinition[] = [
     processingMode: "browser",
     status: "live",
     keywords: ["audio trimmer", "cut audio", "trim mp3", "wav cutter", "voice recorder", "audio cutter"],
-    icon: "video",
-    acceptedFormats: ["WAV", "MP3", "OGG", "WEBM", "M4A", "FLAC"],
+    icon: "scissors",
+    acceptedFormats: ["WAV", "MP3", "OGG", "WEBM", "M4A", "FLAC", "AAC"],
     maxFiles: 1,
     maxFileSizeMb: 200,
     supportsBatch: false,

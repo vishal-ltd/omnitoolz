@@ -77,7 +77,8 @@ export function hslToRgb({ h, s, l }: Hsl): Rgb {
 function relativeLuminance({ r, g, b }: Rgb): number {
   const channel = (v: number) => {
     const vn = v / 255;
-    return vn <= 0.03928 ? vn / 12.92 : ((vn + 0.055) / 1.055) ** 2.4;
+    // sRGB EOTF per WCAG 2.2 (0.04045; older drafts used 0.03928).
+    return vn <= 0.04045 ? vn / 12.92 : ((vn + 0.055) / 1.055) ** 2.4;
   };
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 }

@@ -52,8 +52,10 @@ export default function TimestampConverterTool() {
     const raw = unixInput.trim();
     if (!raw || !/^-?\d+$/.test(raw)) return null;
     const value = Number(raw);
-    // 10-digit = seconds, 13-digit = milliseconds; guess sensibly.
-    const ms = raw.length >= 13 ? value : value * 1000;
+    // Classify by magnitude, not string length: a leading "-" or zeros must
+    // not shift a millisecond value into the seconds bucket. ≥1e12 reads as
+    // ms (Sep 2001 onward); smaller magnitudes read as seconds.
+    const ms = Math.abs(value) >= 1e12 ? value : value * 1000;
     const date = new Date(ms);
     return Number.isNaN(date.getTime()) ? null : date;
   })();

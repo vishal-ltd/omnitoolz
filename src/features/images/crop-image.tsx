@@ -37,6 +37,7 @@ export default function CropImageTool() {
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
+  const [decodeError, setDecodeError] = useState<string | null>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
 
   const file = queue.files[0];
@@ -49,6 +50,7 @@ export default function CropImageTool() {
     if (!file) {
       setImageSize(null);
       setCrop(null);
+      setDecodeError(null);
       setBitmap((previous) => {
         previous?.close();
         return null;
@@ -56,6 +58,7 @@ export default function CropImageTool() {
       return;
     }
     let cancelled = false;
+    setDecodeError(null);
     createImageBitmap(file)
       .then((decoded) => {
         if (cancelled) {
@@ -69,7 +72,17 @@ export default function CropImageTool() {
           return decoded;
         });
       })
-      .catch(() => setImageSize(null));
+      .catch(() => {
+        if (cancelled) return;
+        // Drop the previous file's preview so a corrupt file can't leave it behind.
+        setImageSize(null);
+        setCrop(null);
+        setBitmap((previous) => {
+          previous?.close();
+          return null;
+        });
+        setDecodeError(`“${file.name}” couldn't be decoded as an image in this browser.`);
+      });
     return () => {
       cancelled = true;
     };
@@ -135,7 +148,9 @@ export default function CropImageTool() {
 
   function updateCrop(key: keyof CropRect, value: number) {
     if (!imageSize || !crop) return;
-    const next = { ...crop, [key]: Math.max(1, Math.round(value) || 0) };
+    // Offsets may be 0 (crop from the edge); only width/height need a floor of 1.
+    const floor = key === "x" || key === "y" ? 0 : 1;
+    const next = { ...crop, [key]: Math.max(floor, Math.round(value) || 0) };
     next.x = clamp(next.x, 0, imageSize.width - 1);
     next.y = clamp(next.y, 0, imageSize.height - 1);
     next.w = clamp(next.w, 1, imageSize.width - next.x);
@@ -227,7 +242,7 @@ export default function CropImageTool() {
               {file
                 ? imageSize
                   ? `Image is ${imageSize.width} × ${imageSize.height}px — crop is ${crop?.w} × ${crop?.h}px`
-                  : "Decoding the image…"
+                  : (decodeError ?? "Decoding the image…")
                 : "Add an image to crop"}
             </p>
             <Button size="lg" disabled={!cropValid} onClick={cropAndDownload}>

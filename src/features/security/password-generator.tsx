@@ -21,6 +21,7 @@ export default function PasswordGeneratorTool() {
   const [count, setCount] = useState(3);
   const [passwords, setPasswords] = useState<string[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const pool = buildPool(options);
   const bits = entropyBits(Math.round(options.length), pool.length || 1);
@@ -31,8 +32,14 @@ export default function PasswordGeneratorTool() {
     try {
       setPasswords(Array.from({ length: count }, () => generatePassword(options)));
       setCopiedIndex(null);
-    } catch {
+      setError(null);
+    } catch (err) {
       setPasswords([]);
+      setError(
+        err instanceof Error && /character set|at least 4/i.test(err.message)
+          ? err.message
+          : "Couldn't generate passwords — your browser's cryptographic random source is unavailable here. Try HTTPS (or localhost).",
+      );
     }
   }, [count, options]);
 
@@ -98,6 +105,12 @@ export default function PasswordGeneratorTool() {
             </p>
           )}
 
+          {error && (
+            <p className="rounded-xl border border-err/40 bg-err-soft px-4 py-2.5 text-sm text-err" role="alert">
+              {error}
+            </p>
+          )}
+
           <Button size="lg" onClick={generate} disabled={!canGenerate} className="w-full">
             <RefreshCw className="size-4" aria-hidden />
             Generate
@@ -128,7 +141,13 @@ export default function PasswordGeneratorTool() {
               />
             </div>
             <p className="mt-2 font-body text-base text-ink-soft">
-              ≈ {Math.round(bits)} bits of entropy — {strength === "weak" ? "raise the length" : "resistant to offline cracking attempts"}.
+              ≈ {Math.round(bits)} bits of entropy —{" "}
+              {strength === "weak"
+                ? "raise the length"
+                : strength === "fair"
+                  ? "fine for low-value accounts; longer is safer"
+                  : "resistant to offline cracking attempts"}
+              .
             </p>
           </div>
 

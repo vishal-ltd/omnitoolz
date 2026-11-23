@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { SearchDialog } from "@/components/layout/search-dialog";
 import { ServiceWorkerCleanup } from "@/components/layout/sw-cleanup";
+import { DropGuard } from "@/components/layout/drop-guard";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <SearchDialog />
         <ServiceWorkerCleanup />
+        <DropGuard />
       </body>
     </html>
   );

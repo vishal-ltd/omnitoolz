@@ -87,6 +87,7 @@ export default function PptxToPdfTool() {
         const regular = await doc.embedFont(StandardFonts.Helvetica);
         const contentWidth = SLIDE_PAGE.width - SLIDE_PAGE.margin * 2;
 
+        let clipped = false;
         for (const [slideIndex, entry] of slideEntries.entries()) {
           report(`Laying out slide ${slideIndex + 1} of ${slideEntries.length}…`, (fileIndex + (slideIndex + 1) / slideEntries.length * 0.85) / sources.length);
           const xml = new TextDecoder().decode(zip[entry]);
@@ -109,7 +110,16 @@ export default function PptxToPdfTool() {
           for (const word of title.split(/\s+/)) {
             const candidate = titleLine ? `${titleLine} ${word}` : word;
             if (bold.widthOfTextAtSize(candidate, titleSize) <= contentWidth) titleLine = candidate;
-            else { if (titleLine) titleLines.push(titleLine); titleLine = word; }
+            else {
+              if (titleLine) titleLines.push(titleLine);
+              titleLine = word;
+              while (bold.widthOfTextAtSize(titleLine, titleSize) > contentWidth && titleLine.length > 1) {
+                let cut = titleLine.length - 1;
+                while (cut > 1 && bold.widthOfTextAtSize(titleLine.slice(0, cut), titleSize) > contentWidth) cut--;
+                titleLines.push(titleLine.slice(0, cut));
+                titleLine = titleLine.slice(cut);
+              }
+            }
           }
           if (titleLine) titleLines.push(titleLine);
           for (const line of titleLines.slice(0, 2)) {
@@ -120,17 +130,26 @@ export default function PptxToPdfTool() {
 
           const bodySize = 13;
           for (const para of slide.paragraphs) {
-            if (y < SLIDE_PAGE.margin + bodySize * 2) break; // page overflow — honest clip
+            if (y < SLIDE_PAGE.margin + bodySize * 2) { clipped = true; break; } // page overflow — honest clip
             let line = "";
             const lines: string[] = [];
             for (const word of sanitize(para).split(/\s+/)) {
               const candidate = line ? `${line} ${word}` : word;
               if (regular.widthOfTextAtSize(candidate, bodySize) <= contentWidth) line = candidate;
-              else { if (line) lines.push(line); line = word; }
+              else {
+                if (line) lines.push(line);
+                line = word;
+                while (regular.widthOfTextAtSize(line, bodySize) > contentWidth && line.length > 1) {
+                  let cut = line.length - 1;
+                  while (cut > 1 && regular.widthOfTextAtSize(line.slice(0, cut), bodySize) > contentWidth) cut--;
+                  lines.push(line.slice(0, cut));
+                  line = line.slice(cut);
+                }
+              }
             }
             if (line) lines.push(line);
             for (const l of lines) {
-              if (y < SLIDE_PAGE.margin + bodySize) break;
+              if (y < SLIDE_PAGE.margin + bodySize) { clipped = true; break; }
               page.drawText(l, { x: SLIDE_PAGE.margin + 6, y: y - bodySize, size: bodySize, font: regular, color: rgb(0.25, 0.26, 0.32) });
               y -= bodySize * 1.4;
             }
@@ -140,7 +159,10 @@ export default function PptxToPdfTool() {
 
         const bytes = await doc.save();
         results.push({ name: `${baseName(source.name)}.pdf`, blob: bytesToBlob(bytes, "application/pdf") });
-        setSlideSummary(`${slideEntries.length} slide(s) per deck`);
+        setSlideSummary(
+          `${slideEntries.length} slide(s) per deck` +
+            (clipped ? " — text past the slide edge is clipped, not shrunk" : ""),
+        );
       }
       return results;
     }, "Unpacking the deck…");

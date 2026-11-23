@@ -2,14 +2,24 @@
  * Bakes EditOverlays into a PDF with pdf-lib. Coordinate math comes from
  * lib/pdf-edit.ts; every overlay type maps to one draw primitive.
  */
-import { hexToRgb, pctToPt, simplifyInk, type EditOverlay, type EditTextOverlay } from "@/lib/pdf-edit";
+import {
+  displayPctToUserSpace,
+  displayRectToUserSpace,
+  displaySize,
+  hexToRgb,
+  simplifyInk,
+  type CropBox,
+  type EditOverlay,
+  type EditTextOverlay,
+} from "@/lib/pdf-edit";
 import { readFileBytes } from "./pdf-core";
+import { sanitize } from "./convert-core";
 import { bytesToBlob, suffixedName, type ResultFile } from "@/lib/utils";
 import type { PDFFont, PDFPage } from "pdf-lib";
 
-interface PageBox {
-  width: number;
-  height: number;
+interface PageViewInfo {
+  cropBox: CropBox;
+  rotate: number;
 }
 
 /** Standard 14 variants an existing-text replacement can draw with. */
@@ -66,7 +76,8 @@ function drawTextSafe(page: PDFPage, text: string, options: Parameters<PDFPage["
   try {
     page.drawText(text, options);
   } catch {
-    page.drawText(text.replace(/[^\u0000-\u00ff]/g, "?"), options);
+    // WinAnsi-safe fallback, not Latin-1: € ‘ ’ “ ” – — survive intact.
+    page.drawText(sanitize(text), options);
   }
 }
 
@@ -90,6 +101,13 @@ function wrapWithFont(
       else {
         if (current) lines.push(current);
         current = word;
+        // Over-long word: hard-break instead of overflowing the box.
+        while (measure(current) > maxWidth && current.length > 1) {
+          let cut = current.length - 1;
+          while (cut > 1 && measure(current.slice(0, cut)) > maxWidth) cut--;
+          lines.push(current.slice(0, cut));
+          current = current.slice(cut);
+        }
       }
     }
     if (current) lines.push(current);
@@ -113,19 +131,28 @@ export async function bakeOverlays(
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const fontCache = new Map<string, PDFFont>();
   const imageCache = new Map<string, Awaited<ReturnType<typeof doc.embedPng>>>();
-  const pageBoxes: PageBox[] = doc.getPages().map((page) => {
-    const { width, height } = page.getSize();
-    return { width, height };
+  // Overlays are stored against the DISPLAYED view (rotated CropBox), not
+  // getSize()'s unrotated MediaBox — map through the same transform pdf.js
+  // renders with, or every overlay shifts on rotated / offset-CropBox pages.
+  const pageViews: PageViewInfo[] = doc.getPages().map((page) => {
+    const cb = page.getCropBox();
+    return {
+      cropBox: { x: cb.x, y: cb.y, width: cb.width, height: cb.height },
+      rotate: page.getRotation().angle,
+    };
   });
 
   for (const overlay of overlays) {
-    const box = pageBoxes[overlay.page] ?? { width: 595.28, height: 841.89 };
+    const view = pageViews[overlay.page] ?? {
+      cropBox: { x: 0, y: 0, width: 595.28, height: 841.89 },
+      rotate: 0,
+    };
     const page = doc.getPage(overlay.page);
 
     if (overlay.type === "text") {
       const font = overlay.bold ? bold : regular;
-      const { x, y } = pctToPt(overlay.xPct, overlay.yPct, box);
-      const maxWidth = (overlay.widthPct / 100) * box.width;
+      const { x, y } = displayPctToUserSpace(overlay.xPct, overlay.yPct, view.cropBox, view.rotate);
+      const maxWidth = (overlay.widthPct / 100) * displaySize(view.cropBox, view.rotate).width;
       const lines = wrapWithFont(overlay.text, maxWidth, (line) =>
         font.widthOfTextAtSize(line, overlay.fontSizePt),
       );
@@ -145,6 +172,8 @@ export async function bakeOverlays(
     } else if (overlay.type === "edit") {
       // Replace existing text: cover the captured run, then draw the
       // replacement on the original baseline in the chosen typography.
+      // userX/userY are already user-space (captured via the display
+      // transform at detection time), so no % mapping is needed here.
       page.drawRectangle({
         x: overlay.userX - 1,
         y: overlay.userY - overlay.userDescent - 1,
@@ -162,31 +191,35 @@ export async function bakeOverlays(
         color: rgb(color.r, color.g, color.b),
       });
     } else if (overlay.type === "highlight") {
-      const start = pctToPt(overlay.xPct, overlay.yPct, box);
+      const rect = displayRectToUserSpace(
+        overlay.xPct, overlay.yPct, overlay.widthPct, overlay.heightPct, view.cropBox, view.rotate,
+      );
       page.drawRectangle({
-        x: start.x,
-        y: start.y - (overlay.heightPct / 100) * box.height,
-        width: (overlay.widthPct / 100) * box.width,
-        height: (overlay.heightPct / 100) * box.height,
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
         color: rgb(1, 0.92, 0.45),
         opacity: 0.45,
       });
     } else if (overlay.type === "whiteout") {
-      const start = pctToPt(overlay.xPct, overlay.yPct, box);
+      const rect = displayRectToUserSpace(
+        overlay.xPct, overlay.yPct, overlay.widthPct, overlay.heightPct, view.cropBox, view.rotate,
+      );
       const fill = overlay.fill ? hexToRgb(overlay.fill) : { r: 1, g: 1, b: 1 };
       page.drawRectangle({
-        x: start.x,
-        y: start.y - (overlay.heightPct / 100) * box.height,
-        width: (overlay.widthPct / 100) * box.width,
-        height: (overlay.heightPct / 100) * box.height,
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
         color: rgb(fill.r, fill.g, fill.b),
       });
     } else if (overlay.type === "ink") {
       const points = simplifyInk(overlay.points, 0.2);
       const color = hexToRgb(overlay.color);
       for (let i = 1; i < points.length; i++) {
-        const from = pctToPt(points[i - 1].xPct, points[i - 1].yPct, box);
-        const to = pctToPt(points[i].xPct, points[i].yPct, box);
+        const from = displayPctToUserSpace(points[i - 1].xPct, points[i - 1].yPct, view.cropBox, view.rotate);
+        const to = displayPctToUserSpace(points[i].xPct, points[i].yPct, view.cropBox, view.rotate);
         page.drawLine({
           start: from,
           end: to,
@@ -201,12 +234,14 @@ export async function bakeOverlays(
         embedded = await doc.embedPng(bytes);
         imageCache.set(overlay.dataUrl, embedded);
       }
-      const start = pctToPt(overlay.xPct, overlay.yPct, box);
+      const rect = displayRectToUserSpace(
+        overlay.xPct, overlay.yPct, overlay.widthPct, overlay.heightPct, view.cropBox, view.rotate,
+      );
       page.drawImage(embedded, {
-        x: start.x,
-        y: start.y - (overlay.heightPct / 100) * box.height,
-        width: (overlay.widthPct / 100) * box.width,
-        height: (overlay.heightPct / 100) * box.height,
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
       });
     }
   }

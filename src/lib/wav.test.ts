@@ -61,6 +61,31 @@ describe("wavSampleRate", () => {
     expect(wavSampleRate(withJunk)).toBe(22050);
   });
 
+  it("walks past odd-sized chunks using the RIFF pad byte", () => {
+    const wav = encodeWav([new Float32Array([0])], 16000);
+    const junk = new Uint8Array(8 + 3 + 1); // header + 3 data bytes + 1 pad byte
+    junk.set([0x4a, 0x55, 0x4e, 0x4b], 0); // "JUNK"
+    new DataView(junk.buffer).setUint32(4, 3, true);
+    const withOdd = new Uint8Array(12 + junk.length + wav.length - 12);
+    withOdd.set(wav.subarray(0, 12), 0);
+    withOdd.set(junk, 12);
+    withOdd.set(wav.subarray(12), 12 + junk.length);
+    expect(wavSampleRate(withOdd)).toBe(16000);
+  });
+
+  it("returns null instead of throwing on a truncated fmt chunk", () => {
+    // ≥44 bytes overall, but the fmt chunk header claims data the file doesn't contain.
+    const bytes = new Uint8Array(48);
+    const view = new DataView(bytes.buffer);
+    bytes.set([0x52, 0x49, 0x46, 0x46], 0); // "RIFF"
+    bytes.set([0x57, 0x41, 0x56, 0x45], 8); // "WAVE"
+    bytes.set([0x4a, 0x55, 0x4e, 0x4b], 12); // "JUNK"
+    view.setUint32(16, 16, true); // 16 bytes of junk data → fmt starts at 36
+    bytes.set([0x66, 0x6d, 0x74, 0x20], 36); // "fmt "
+    view.setUint32(40, 16, true); // claims 16 bytes, only 4 remain
+    expect(wavSampleRate(bytes)).toBeNull();
+  });
+
   it("returns null for anything that isn't a WAV", () => {
     expect(wavSampleRate(new Uint8Array([0xff, 0xfb, 0x90, 0x00]))).toBeNull();
     expect(wavSampleRate(new Uint8Array(0))).toBeNull();

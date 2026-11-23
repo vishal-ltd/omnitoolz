@@ -10,13 +10,23 @@ export default function DiffCheckerTool() {
   const [left, setLeft] = useState("");
   const [right, setRight] = useState("");
 
-  const ops = useMemo(() => diffLines(left, right), [left, right]);
+  // The LCS table is O(a·b): two 10K-line pastes would allocate ~800 MB and
+  // crash the tab. Cap the live diff and say so instead of dying silently.
+  const MAX_DIFF_LINES = 2000;
+  const tooLarge =
+    left.split("\n").length > MAX_DIFF_LINES || right.split("\n").length > MAX_DIFF_LINES;
+
+  const ops = useMemo(() => (tooLarge ? [] : diffLines(left, right)), [left, right, tooLarge]);
   const stats = useMemo(() => diffStats(ops), [ops]);
-  const hasDiff = left !== right && (left || right);
+  const hasDiff = !tooLarge && left !== right && (left || right);
 
   async function copyMerged() {
     // Right side wins: the "after" version.
-    await navigator.clipboard.writeText(right);
+    try {
+      await navigator.clipboard.writeText(right);
+    } catch {
+      // Clipboard may be blocked — the text areas remain selectable.
+    }
   }
 
   return (
@@ -72,9 +82,15 @@ export default function DiffCheckerTool() {
           </div>
         )}
 
-        {!hasDiff && <p className="text-sm text-ink-soft">Paste text on both sides — the comparison runs live, line by line.</p>}
+        {tooLarge && (
+          <p className="border-[3px] border-warn bg-warn-soft p-3 font-body text-lg text-ink">
+            These texts are over {MAX_DIFF_LINES.toLocaleString()} lines — too large for the live diff. Trim them to compare.
+          </p>
+        )}
 
-        {hasDiff && (
+        {!hasDiff && !tooLarge && <p className="text-sm text-ink-soft">Paste text on both sides — the comparison runs live, line by line.</p>}
+
+        {(hasDiff || tooLarge) && (
           <div className="flex gap-3">
             <Button onClick={copyMerged}>Copy changed version</Button>
             <Button

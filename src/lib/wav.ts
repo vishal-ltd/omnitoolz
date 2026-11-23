@@ -13,7 +13,10 @@ export function wavSampleRate(bytes: Uint8Array): number | null {
   let offset = 12;
   while (offset + 8 <= bytes.length) {
     const size = view.getUint32(offset + 4, true);
-    if (tag(offset) === "fmt ") return size >= 16 ? view.getUint32(offset + 12, true) : null;
+    if (tag(offset) === "fmt ") {
+      // A truncated file can claim a full fmt chunk it doesn't contain — bail, don't throw.
+      return size >= 16 && offset + 24 <= bytes.length ? view.getUint32(offset + 12, true) : null;
+    }
     offset += 8 + size + (size % 2);
   }
   return null;

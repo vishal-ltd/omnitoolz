@@ -1,6 +1,20 @@
 import { spawn } from "node:child_process";
+import net from "node:net";
 
-const port = 3100;
+// Ask the OS for a free port so a busy 3100 (another dev server) can't fail
+// the run or, worse, make it test the wrong app.
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
+const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 // Spawn Next directly: going through `npm` leaves a shell wrapper whose kill()
 // does not reach the server child, so the port stayed occupied after the run.
@@ -81,6 +95,11 @@ try {
     ["referrer-policy", "strict-origin-when-cross-origin"],
   ]) {
     if (headers.headers.get(name) !== expected) {
+      failures.push(`Missing expected ${name} security header.`);
+    }
+  }
+  for (const name of ["content-security-policy", "permissions-policy"]) {
+    if (!headers.headers.get(name)) {
       failures.push(`Missing expected ${name} security header.`);
     }
   }

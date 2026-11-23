@@ -54,4 +54,19 @@ describe("buildIco", () => {
     expect(() => buildIco([{ size: 300, png: fakePng(10) }])).toThrow();
     expect(() => buildIco([{ size: 0, png: fakePng(10) }])).toThrow();
   });
+
+  it("rejects non-integer sizes that would truncate in the directory byte", () => {
+    expect(() => buildIco([{ size: 16.5, png: fakePng(10) }])).toThrow(/out of range/);
+  });
+
+  it("accepts the 1 and 255 boundary sizes", () => {
+    const ico = buildIco([
+      { size: 1, png: fakePng(10) },
+      { size: 255, png: fakePng(10) },
+    ]);
+    expect(parseIcoDirectory(ico)).toEqual([
+      { width: 1, height: 1, byteSize: 10 },
+      { width: 255, height: 255, byteSize: 10 },
+    ]);
+  });
 });

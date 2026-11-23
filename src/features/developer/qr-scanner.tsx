@@ -20,9 +20,20 @@ export default function QrScannerTool() {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // getUserMedia can resolve after unmount (permission prompt left open) —
+  // without this flag the late stream would never be stopped and the camera
+  // indicator would stay on.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
@@ -51,10 +62,10 @@ export default function QrScannerTool() {
     setError(null);
     setScanning(true);
     (async () => {
+      let bitmap: ImageBitmap | null = null;
       try {
-        const bitmap = await createImageBitmap(file);
+        bitmap = await createImageBitmap(file);
         const text = await decode(bitmap, bitmap.width, bitmap.height);
-        bitmap.close();
         if (cancelled) return;
         if (text) {
           setResults((current) => [{ text, source: file.name, at: new Date().toLocaleTimeString() }, ...current]);
@@ -64,6 +75,7 @@ export default function QrScannerTool() {
       } catch {
         if (!cancelled) setError("That image couldn't be decoded.");
       } finally {
+        bitmap?.close();
         if (!cancelled) setScanning(false);
       }
     })();
@@ -74,13 +86,27 @@ export default function QrScannerTool() {
 
   // Camera loop
   async function startCamera() {
+    if (cameraStarting || streamRef.current) return; // one stream at a time
     setError(null);
+    setCameraStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      if (!mountedRef.current) {
+        // Unmounted while the permission prompt was open — never leave the
+        // camera running with no UI to stop it.
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      if (streamRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       setCameraOn(true);
     } catch {
-      setError("Camera access was blocked — allow it in the browser or scan an image instead.");
+      if (mountedRef.current) setError("Camera access was blocked — allow it in the browser or scan an image instead.");
+    } finally {
+      if (mountedRef.current) setCameraStarting(false);
     }
   }
 
@@ -91,12 +117,14 @@ export default function QrScannerTool() {
     const video = videoRef.current;
     if (!video || !streamRef.current) return;
     let cancelled = false;
+    let timer = 0;
     video.srcObject = streamRef.current;
     const tick = async () => {
       if (cancelled || !streamRef.current) return;
       if (video.readyState >= 2) {
         try {
           const text = await decode(video, video.videoWidth, video.videoHeight);
+          if (cancelled || !streamRef.current) return;
           if (text) {
             setResults((current) => [{ text, source: "camera", at: new Date().toLocaleTimeString() }, ...current]);
             stopCamera();
@@ -106,13 +134,14 @@ export default function QrScannerTool() {
           // keep scanning
         }
       }
-      window.setTimeout(tick, 250);
+      if (!cancelled) timer = window.setTimeout(tick, 250);
     };
     video.play().then(tick).catch(() => {
-      setError("The camera preview couldn't start — stop the camera and try again.");
+      if (!cancelled) setError("The camera preview couldn't start — stop the camera and try again.");
     });
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [cameraOn, decode, stopCamera]);
 
@@ -122,9 +151,9 @@ export default function QrScannerTool() {
         {!cameraOn && (
           <>
             <div className="flex flex-wrap gap-3">
-              <Button onClick={startCamera}>
+              <Button onClick={startCamera} disabled={cameraStarting}>
                 <Camera className="size-4" aria-hidden />
-                Scan with camera
+                {cameraStarting ? "Starting camera…" : "Scan with camera"}
               </Button>
             </div>
             <FileDropZone

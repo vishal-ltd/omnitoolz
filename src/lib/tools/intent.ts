@@ -5,11 +5,12 @@ import type { ToolDefinition } from "./types";
  * group by this so 33 cards stop reading as one wall. Every live tool must be
  * mapped — intent.test.ts fails the build if a new tool ships unmapped.
  */
-export type Intent = "convert" | "edit" | "inspect" | "create";
+export type Intent = "convert" | "edit" | "inspect" | "create" | "extract";
 
 export const INTENTS: Array<{ id: Intent; label: string; blurb: string }> = [
   { id: "convert", label: "Convert", blurb: "Format in, format out" },
   { id: "edit", label: "Edit", blurb: "Change what the file says" },
+  { id: "extract", label: "Extract", blurb: "Pull parts out into new files" },
   { id: "inspect", label: "Inspect", blurb: "Read, compare and verify" },
   { id: "create", label: "Create", blurb: "Make something new" },
 ];
@@ -29,7 +30,7 @@ const INTENT_BY_TOOL: Record<string, Intent> = {
   "delete-pdf-pages": "edit",
   "watermark-pdf": "edit",
   "header-footer-pdf": "edit",
-  "extract-pdf-text": "inspect",
+  "extract-pdf-text": "extract",
   "pdf-information": "inspect",
   "clean-pdf": "edit",
   "flatten-pdf": "edit",
@@ -37,7 +38,7 @@ const INTENT_BY_TOOL: Record<string, Intent> = {
   "crop-pdf": "edit",
   "remove-blank-pages": "edit",
   "compare-pdf": "inspect",
-  "extract-pdf-images": "inspect",
+  "extract-pdf-images": "extract",
   "read-pdf": "inspect",
   "invoice-generator": "create",
   "sign-pdf": "edit",
@@ -57,13 +58,12 @@ const INTENT_BY_TOOL: Record<string, Intent> = {
   "png-to-jpg": "convert",
   "webp-converter": "convert",
   "watermark-image": "edit",
-  "background-remover": "edit",
   "heic-to-jpg": "convert",
   "favicon-generator": "create",
   // text
   "word-counter": "inspect",
   "text-case-converter": "convert",
-  "image-to-text": "inspect",
+  "image-to-text": "extract",
   "diff-checker": "inspect",
   // developer
   "json-formatter": "convert",
@@ -105,10 +105,8 @@ const DROPS_CONTENT = new Set([
   "extract-pdf-pages",
   "split-pdf",
   "organize-pdf",
-  "compress-pdf",
   "compress-image",
   "crop-image",
-  "background-remover",
   "edit-pdf",
   "repair-pdf",
 ]);

@@ -89,6 +89,8 @@ export async function findScaleForTarget(
   const startScale = options.startScale ?? 1;
   const minScale = options.minScale ?? 0.15;
   const step = options.scaleStep ?? 0.2;
+  // A non-positive step would never shrink the scale — the loop would spin forever.
+  if (!(step > 0) || !(minScale > 0)) throw new Error("Scale step and minimum scale must be positive.");
 
   let scale = startScale;
   let closest: { search: QualitySearchResult; scale: number } | null = null;
@@ -114,5 +116,7 @@ export function parseTargetSize(input: string): number | null {
   const value = Number(match[1]);
   if (!Number.isFinite(value) || value <= 0) return null;
   const unit = (match[2] ?? "kb").toLowerCase();
-  return Math.round(value * (unit === "mb" ? 1024 * 1024 : 1024));
+  const bytes = Math.round(value * (unit === "mb" ? 1024 * 1024 : 1024));
+  // Tiny inputs like "0.0001kb" round to 0 bytes — not a usable target.
+  return bytes > 0 ? bytes : null;
 }

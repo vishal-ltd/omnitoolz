@@ -31,15 +31,19 @@ import { Button } from "@/components/ui/button";
 import { Field, RangeInput, Select } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
+  displayDeltaToUserSpace,
+  displayPctToUserSpace,
+  displaySize,
   editOverlayChanged,
   editTextOverlayFromItem,
-  pctToPt,
+  imageStampSize,
   serializeOverlays,
   simplifyInk,
   type EditOverlay,
   type EditTextOverlay,
   type EditTool,
   type FontChoice,
+  type PageView,
 } from "@/lib/pdf-edit";
 import { hitTestTextItem, mergeLineItems, type PdfTextItem } from "@/lib/pdf-text-items";
 import { detectFontLabel, loadPdfjs } from "./pdfjs";
@@ -109,10 +113,14 @@ export default function EditPdfTool() {
   const [inkColor, setInkColor] = useState(INK_COLORS[0]);
   const [rectFill, setRectFill] = useState("#ffffff");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  /** Natural height/width of the stamp image — keeps placed stamps unstretched. */
+  const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [thumbs, setThumbs] = useState<Array<{ pageNumber: number; dataUrl: string }>>([]);
   const [editorError, setEditorError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  /** CSS width of the painted page — DOM previews must scale like the canvas. */
+  const [cssWidth, setCssWidth] = useState(760);
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [stackSizes, setStackSizes] = useState({ undo: 0, redo: 0 });
   const [editingText, setEditingText] = useState<{
@@ -136,11 +144,18 @@ export default function EditPdfTool() {
   const moveState = useRef<{ index: number; grabDX: number; grabDY: number; moved: boolean } | null>(null);
   /** Mirror of overlays for event handlers that need the latest value. */
   const overlaysRef = useRef<EditOverlay[]>([]);
-  /** Per-page detected text lines + page sizes, keyed by page index. */
+  /** Per-page detected text lines, keyed by page index. */
   const textItemsRef = useRef<Record<number, PdfTextItem[]>>({});
+  /** Per-page DISPLAY size (rotated CropBox view) — matches the canvas. */
   const pageSizesRef = useRef<Record<number, { width: number; height: number }>>({});
+  /** Per-page CropBox + /Rotate, for display↔user-space mapping. */
+  const pageViewsRef = useRef<Record<number, PageView>>({});
+  /** The exact pdf.js viewport paintPage rendered with — pointer mapping uses it. */
+  const viewportsRef = useRef<Record<number, import("pdfjs-dist").PageViewport>>({});
   const undoStack = useRef<string[]>([]);
   const redoStack = useRef<string[]>([]);
+  /** Whether the current live property gesture already pushed an undo step. */
+  const liveEditPushed = useRef(false);
 
   useEffect(() => {
     overlaysRef.current = overlays;
@@ -214,6 +229,7 @@ export default function EditPdfTool() {
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
     setPhase("loading");
     setOverlays([]);
     setThumbs([]);
@@ -226,17 +242,25 @@ export default function EditPdfTool() {
     clearHistory();
     textItemsRef.current = {};
     pageSizesRef.current = {};
+    pageViewsRef.current = {};
+    viewportsRef.current = {};
     (async () => {
       try {
         const pdfjs = await loadPdfjs();
         const bytes = new Uint8Array(await file.arrayBuffer());
         const doc = await pdfjs.getDocument({ data: bytes }).promise;
-        if (cancelled) return;
+        if (cancelled) {
+          // Superseded load: the shared page-lifetime worker would otherwise
+          // keep this document's data alive until reload.
+          await doc.destroy();
+          return;
+        }
         pdfDocRef.current = doc;
         setPageCount(doc.numPages);
         setPhase("editing");
         renderPageThumbnails(file, {
           targetWidth: 120,
+          signal: controller.signal,
           onPage: (page) => {
             if (!cancelled) {
               setThumbs((currentThumbs) =>
@@ -258,6 +282,10 @@ export default function EditPdfTool() {
     })();
     return () => {
       cancelled = true;
+      controller.abort();
+      const dying = pdfDocRef.current;
+      pdfDocRef.current = null;
+      if (dying) void dying.destroy().catch(() => {});
     };
   }, [file]);
 
@@ -270,17 +298,26 @@ export default function EditPdfTool() {
       const canvas = pageCanvasRef.current;
       if (!doc || !canvas) return;
       const cssWidth = Math.max(420, Math.min(860, (wrapRef.current?.clientWidth ?? 900) - 150));
+      setCssWidth(cssWidth);
       try {
-        // Page box in unrotated PDF units, matching the user-space geometry
-        // pdf-lib will bake against.
         const page = await doc.getPage(current + 1);
+        // pdf.js page.view is the CropBox (unrotated); the canvas shows it
+        // ROTATED. Store both the display view and the exact render viewport
+        // so pointer mapping and baking agree with what the user sees.
         const view = page.view ?? [0, 0, 595.28, 841.89];
         const pw = view[2] - view[0];
         const ph = view[3] - view[1];
-        pageSizesRef.current[current] = {
-          width: pw > 0 ? pw : 595.28,
-          height: ph > 0 ? ph : 841.89,
-        };
+        const cropBox =
+          pw > 0 && ph > 0
+            ? { x: view[0], y: view[1], width: pw, height: ph }
+            : { x: 0, y: 0, width: 595.28, height: 841.89 };
+        const pageView: PageView = { cropBox, rotate: page.rotate };
+        pageViewsRef.current[current] = pageView;
+        pageSizesRef.current[current] = displaySize(cropBox, page.rotate);
+        // Same viewport formula as paintPage — device pixels match canvas.width.
+        const base = page.getViewport({ scale: 1 });
+        const scale = (cssWidth * (window.devicePixelRatio || 1)) / base.width;
+        viewportsRef.current[current] = page.getViewport({ scale });
         await paintPage(doc, current + 1, canvas, cssWidth);
         if (cancelled) return;
         // Text targets are detected AFTER the render: fonts resolve into
@@ -526,18 +563,21 @@ export default function EditPdfTool() {
       currentOverlays.map((o, i) => {
         if (i !== move.index) return o;
         if (o.type !== "edit") return { ...o, xPct: nx, yPct: ny };
-        // User-space geometry must follow the % drag so baking lands
-        // exactly where the preview shows it.
-        const pageSize = pageSizesRef.current[o.page] ?? { width: 595.28, height: 841.89 };
-        const dx = nx - o.xPct;
+        // User-space geometry must follow the % drag through the DISPLAY
+        // transform (rotation + CropBox) so baking lands where the preview shows.
+        const view = pageViewsRef.current[o.page] ?? {
+          cropBox: { x: 0, y: 0, width: 595.28, height: 841.89 },
+          rotate: 0,
+        };
         const dy = ny - o.yPct;
+        const delta = displayDeltaToUserSpace(nx - o.xPct, dy, view.cropBox, view.rotate);
         return {
           ...o,
           xPct: nx,
           yPct: ny,
           baselinePct: o.baselinePct + dy,
-          userX: o.userX + (dx / 100) * pageSize.width,
-          userY: o.userY - (dy / 100) * pageSize.height,
+          userX: o.userX + delta.dx,
+          userY: o.userY + delta.dy,
         };
       }),
     );
@@ -605,6 +645,7 @@ export default function EditPdfTool() {
     const overlay = overlays[index];
     if (overlay?.type !== "text") return;
     setSelected(index);
+    liveEditPushed.current = false;
     setEditingText({
       index,
       xPct: overlay.xPct,
@@ -619,6 +660,8 @@ export default function EditPdfTool() {
 
   function commitTextEdit(text: string) {
     if (!editingText) return;
+    historyPush(overlaysRef.current);
+    liveEditPushed.current = false;
     setOverlays((current) =>
       current
         .map((o, i) =>
@@ -634,6 +677,11 @@ export default function EditPdfTool() {
   /** Live-update the selected text element's properties. */
   function updateSelectedText(patch: { fontSizePt?: number; color?: string }) {
     if (selected === null) return;
+    // One undo step per live gesture, not per slider tick.
+    if (!liveEditPushed.current) {
+      historyPush(overlaysRef.current);
+      liveEditPushed.current = true;
+    }
     setOverlays((current) =>
       current.map((o, i) => (i === selected && o.type === "text" ? { ...o, ...patch } : o)),
     );
@@ -645,19 +693,31 @@ export default function EditPdfTool() {
   // ── Existing-text editing (the sheet) ─────────────────────────────
   function findTextTargetAt(xPct: number, yPct: number, pageIndex: number): PdfTextItem | null {
     const items = textItemsRef.current[pageIndex];
-    const size = pageSizesRef.current[pageIndex];
-    if (!items || items.length === 0 || !size) return null;
-    const { x, y } = pctToPt(xPct, yPct, size);
+    if (!items || items.length === 0) return null;
+    const viewport = viewportsRef.current[pageIndex];
+    const canvas = pageCanvasRef.current;
+    if (viewport && canvas && pageIndex === current) {
+      // The canvas shows the ROTATED CropBox viewport — convert through it
+      // (device pixels) so taps hit the right run; page.view alone is unrotated.
+      const [x, y] = viewport.convertToPdfPoint(
+        (xPct / 100) * canvas.width,
+        (yPct / 100) * canvas.height,
+      ) as [number, number];
+      return hitTestTextItem(items, x, y, 3);
+    }
+    const view = pageViewsRef.current[pageIndex];
+    if (!view) return null;
+    const { x, y } = displayPctToUserSpace(xPct, yPct, view.cropBox, view.rotate);
     return hitTestTextItem(items, x, y, 3);
   }
 
   function openSheetFromItem(item: PdfTextItem, pageIndex: number) {
-    const size = pageSizesRef.current[pageIndex];
-    if (!size) return;
+    const view = pageViewsRef.current[pageIndex];
+    if (!view) return;
     setSelected(null);
     setEditingText(null);
     setSheet({
-      template: editTextOverlayFromItem(item, pageIndex, size),
+      template: editTextOverlayFromItem(item, pageIndex, view),
       overlayIndex: null,
       text: item.str,
       sizePt: item.fontSize,
@@ -727,8 +787,10 @@ export default function EditPdfTool() {
     const yPct = ((event.clientY - rect.top) / rect.height) * 100;
     if (tool === "image") {
       if (!imageDataUrl) return;
-      const widthPct = 25;
-      const heightPct = 20;
+      // Preserve the image's natural aspect on the DISPLAY page — a fixed
+      // 25×20 stamp force-stretched every image.
+      const display = pageSizesRef.current[current] ?? { width: 595.28, height: 841.89 };
+      const { widthPct, heightPct } = imageStampSize(imageAspect ?? 1, display);
       const next = [
         ...overlays,
         {
@@ -778,6 +840,7 @@ export default function EditPdfTool() {
   }
 
   const hasEdits = overlays.length > 0;
+  const coversText = overlays.some((o) => o.type === "whiteout" || o.type === "edit");
   const selectedIsText = selected !== null && overlays[selected]?.type === "text";
   const activeText = selectedIsText
     ? {
@@ -805,7 +868,11 @@ export default function EditPdfTool() {
         <Results
           results={state.results}
           elapsedMs={state.elapsedMs}
-          note={`${overlays.length} edit${overlays.length === 1 ? "" : "s"} baked in — they're permanent page content now.`}
+          note={`${overlays.length} edit${overlays.length === 1 ? "" : "s"} baked in — they're permanent page content now.${
+            coversText
+              ? " Covered text is only visually hidden — it remains machine-readable, not truly redacted."
+              : ""
+          }`}
           onReset={startOver}
         />
       ) : state.phase === "running" ? (
@@ -986,6 +1053,10 @@ export default function EditPdfTool() {
                 Drawn with {sheet.template.fontLabel ?? "an unidentified font"} —{" "}
                 {sheetChanged ? "your replacement draws over the original." : "no changes yet."}
               </p>
+              <p className="text-sm text-ink-soft">
+                The original text is only covered, not removed — it stays machine-readable.
+                This is a visual edit, not true redaction.
+              </p>
             </div>
           ) : (
             <div className="flex flex-wrap items-end gap-4 border-[3px] border-edge bg-canvas p-3">
@@ -1069,6 +1140,18 @@ export default function EditPdfTool() {
                       const reader = new FileReader();
                       reader.onload = () => setImageDataUrl(String(reader.result));
                       reader.readAsDataURL(imageFile);
+                      // Probe natural dimensions via an object URL (revoked after).
+                      const url = URL.createObjectURL(imageFile);
+                      const probe = new Image();
+                      probe.onload = () => {
+                        setImageAspect(probe.naturalHeight / probe.naturalWidth);
+                        URL.revokeObjectURL(url);
+                      };
+                      probe.onerror = () => {
+                        setImageAspect(null);
+                        URL.revokeObjectURL(url);
+                      };
+                      probe.src = url;
                     }}
                   />
                 </Field>
@@ -1076,11 +1159,17 @@ export default function EditPdfTool() {
               {tool === "select" && (
                 <p className="text-sm text-ink-soft">
                   Tap existing text to rewrite it. Click your own elements to select — drag to move,
-                  double-click text to edit, Delete key removes.
+                  double-click text to edit, Delete key removes. Rewrites only cover the original —
+                  covered text stays machine-readable.
                 </p>
               )}
               {tool === "highlight" && <p className="text-sm text-ink-soft">Drag a rectangle over the text to highlight.</p>}
-              {tool === "whiteout" && <p className="text-sm text-ink-soft">Drag a rectangle to cover content.</p>}
+              {tool === "whiteout" && (
+                <p className="text-sm text-ink-soft">
+                  Drag a rectangle to cover content. Covered text stays machine-readable — a visual
+                  cover, not true redaction.
+                </p>
+              )}
             </div>
           )}
 
@@ -1211,7 +1300,7 @@ export default function EditPdfTool() {
                             left: `${overlay.xPct}%`,
                             top: `${overlay.yPct}%`,
                             width: `${overlay.widthPct}%`,
-                            fontSize: `${overlay.fontSizePt * 1.33}px`,
+                            fontSize: `${overlay.fontSizePt * (cssWidth / (pageSizesRef.current[current]?.width ?? 595.28))}px`,
                             color: overlay.color,
                             fontWeight: overlay.bold ? 700 : 400,
                           }}
@@ -1318,7 +1407,7 @@ export default function EditPdfTool() {
                         left: `${editingText.xPct}%`,
                         top: `${editingText.yPct}%`,
                         width: `${editingText.widthPct}%`,
-                        fontSize: `${editingText.fontSizePt * 1.33}px`,
+                        fontSize: `${editingText.fontSizePt * (cssWidth / (pageSizesRef.current[current]?.width ?? 595.28))}px`,
                         color: editingText.color,
                         fontWeight: editingText.bold ? 700 : 400,
                       }}

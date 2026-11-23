@@ -2,7 +2,7 @@
   "name": "omnitoolz",
   "version": "0.1.0",
   "private": true,
-  "description": "Every Tool. One Place. — 63 free browser tools for PDFs, images, text, developers, security and media. No uploads, no accounts, no tracking.",
+  "description": "Every Tool. One Place. — free browser tools for PDFs, images, text, developers, security and media. No uploads, no accounts, no tracking.",
   "license": "MIT",
   "engines": {
     "node": ">=22"
@@ -14,22 +14,20 @@
     "test": "vitest run",
     "test:smoke": "node scripts/smoke.mjs",
     "test:render": "node scripts/render-check.mjs",
+    "render:og": "node scripts/render-og.mjs",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "postinstall": "node scripts/patch-eslint-minimatch.mjs"
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@cantoo/pdf-lib": "^2.11.1",
-    "@imgly/background-removal": "1.1.5",
     "@jspawn/qpdf-wasm": "^0.0.2",
     "docx": "^9.14.0",
     "fflate": "^0.8.3",
     "jsqr": "^1.4.0",
     "lucide-react": "^1.61.0",
     "mammoth": "^1.13.0",
-    "next": "^15.5.28",
-    "onnxruntime-web": "1.16.0",
+    "next": "^15.5.29",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38",
     "qrcode": "^1.5.4",
@@ -45,15 +43,18 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^15.5.28",
-    "postcss": "^8.5.31",
+    "eslint-config-next": "^15.5.29",
+    "node-forge": "^1.4.4",
+    "postcss": "^8.5.32",
     "puppeteer": "^25.17.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vitest": "^5.1.0"
   },
   "overrides": {
-    "minimatch": "11.0.1",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.1"
+    },
     "next": {
       "postcss": "8.5.32"
     }

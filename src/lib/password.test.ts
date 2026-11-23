@@ -18,6 +18,16 @@ describe("secureRandomInt", () => {
 
   it("throws on invalid max", () => {
     expect(() => secureRandomInt(0)).toThrow(RangeError);
+    expect(() => secureRandomInt(1.5)).toThrow(RangeError);
+    // Beyond the 32-bit draw range the rejection loop could never accept.
+    expect(() => secureRandomInt(0x100000000)).toThrow(RangeError);
+  });
+
+  it("handles the full 32-bit range and max=1", () => {
+    expect(secureRandomInt(1)).toBe(0);
+    const value = secureRandomInt(0xffffffff);
+    expect(value).toBeGreaterThanOrEqual(0);
+    expect(value).toBeLessThan(0xffffffff);
   });
 });
 

@@ -30,6 +30,7 @@ export default function SignPdfTool() {
   const { state, start, reset, retry } = useJob();
   const [pages, setPages] = useState<RenderedPage[]>([]);
   const [loadingPages, setLoadingPages] = useState(false);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [sigMode, setSigMode] = useState<SigMode>("draw");
   const [typedName, setTypedName] = useState("");
   const [hasInk, setHasInk] = useState(false);
@@ -63,19 +64,32 @@ export default function SignPdfTool() {
     if (!file) {
       setPages([]);
       setPlacement(null);
+      setPageError(null);
       return;
     }
     const controller = new AbortController();
     setLoadingPages(true);
     setPages([]);
     setPlacement(null);
+    setPageError(null);
     renderPageThumbnails(file, {
       signal: controller.signal,
       targetWidth: 420,
       onPage: (page) => setPages((current) => [...current, page]),
     })
-      .catch(() => controller.signal.aborted || void 0)
-      .finally(() => setLoadingPages(false));
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        const err = error instanceof Error ? error : new Error(String(error));
+        setPageError(
+          err.name === "PasswordException"
+            ? `“${file.name}” is password-protected. Unlock it first — protected PDFs can't be signed here.`
+            : err.message,
+        );
+      })
+      .finally(() => {
+        // A superseded load must not clear the new load's spinner.
+        if (!controller.signal.aborted) setLoadingPages(false);
+      });
     return () => controller.abort();
   }, [file]);
 
@@ -277,6 +291,7 @@ export default function SignPdfTool() {
                 {loadingPages && (
                   <p className="mt-2 font-body text-lg text-ink-soft">Drawing page previews…</p>
                 )}
+                {pageError && <div className="mt-2"><JobError error={pageError} /></div>}
                 <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {pages.map((page) => (
                     <div key={page.pageNumber} className="relative">
@@ -297,7 +312,9 @@ export default function SignPdfTool() {
                           className="pointer-events-none absolute border-2 border-dashed border-brand/70"
                           style={{
                             left: `calc(${placement.xPct * 100}% - ${sizePct / 2}%)`,
-                            top: `calc(${placement.yPct * 100}% - ${sizePct / 3 / 2}%)`,
+                            // Half the signature height as a % of the PAGE height:
+                            // sig height = width*sizePct/100/3, img height = width*aspect.
+                            top: `calc(${placement.yPct * 100}% - ${sizePct / 6 / page.aspect}%)`,
                             width: `${sizePct}%`,
                           }}
                         />

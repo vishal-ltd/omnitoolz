@@ -49,7 +49,11 @@ async function loadQpdf(): Promise<QpdfFactory> {
     }
     if (!window.Module) throw new Error("The compression engine didn't initialise.");
     return window.Module;
-  })();
+  })().catch((error: unknown) => {
+    // Never cache a rejection: "Try again" must be able to reload the engine.
+    gluePromise = null;
+    throw error;
+  });
   return gluePromise;
 }
 
@@ -68,7 +72,10 @@ async function compressBytes(bytes: Uint8Array, linearize: boolean): Promise<Uin
     "/in.pdf",
     "/out.pdf",
   ];
-  qpdf.callMain(args);
+  // With noExitRuntime the glue RETURNS the exit code instead of throwing;
+  // a non-zero exit means /out.pdf is absent or truncated — never ship it.
+  const code = qpdf.callMain(args);
+  if (code !== 0) throw new Error(`The compression engine failed on this file (exit ${code}).`);
   const out = qpdf.FS.readFile("/out.pdf");
   const copy = new Uint8Array(out.length);
   copy.set(out);
@@ -90,37 +97,50 @@ export default function CompressPdfTool() {
       report("Loading the compression engine (≈1.3 MB, once)…", 0.05);
       const results: ResultFile[] = [];
       const skipped: string[] = [];
-      let beforeTotal = 0;
-      let afterTotal = 0;
+      const failed: string[] = [];
+      let saved = 0;
+      let compressedCount = 0;
 
       for (const [index, source] of sources.entries()) {
         report(`Compressing “${source.name}”…`, (index + 0.4) / sources.length);
         const original = new Uint8Array(await source.arrayBuffer());
-        let compressed: Uint8Array;
+        let compressed: Uint8Array | null = null;
         try {
           compressed = await compressBytes(original, linearize);
         } catch {
-          // qpdf exits hard on odd structures — fall back to the original.
-          compressed = original;
+          // Engine failure (odd structure, corrupt input) — keep the original
+          // and say so, rather than pretending it was "already optimal".
+          failed.push(source.name);
         }
-        beforeTotal += original.length;
-        if (compressed.length < original.length) {
-          afterTotal += compressed.length;
+        if (compressed && compressed.length < original.length) {
+          saved += original.length - compressed.length;
+          compressedCount++;
           results.push({ name: suffixed(source.name), blob: bytesToBlob(compressed, "application/pdf") });
         } else {
-          skipped.push(source.name);
+          // No savings (or engine failure, already tracked in `failed`).
+          if (compressed) skipped.push(source.name);
           results.push({ name: source.name, blob: bytesToBlob(original, "application/pdf") });
         }
       }
 
-      if (afterTotal > 0) {
-        const saved = beforeTotal - afterTotal;
+      const failureNote =
+        failed.length > 0
+          ? ` ${failed.length} file(s) the engine couldn't process were returned unchanged.`
+          : "";
+      if (compressedCount > 0) {
         setSavingsNote(
-          `Saved ${formatBytes(saved)} across ${results.length - skipped.length} of ${results.length} file(s)` +
-            (skipped.length > 0 ? ` — ${skipped.length} already optimal and passed through unchanged.` : "."),
+          `Saved ${formatBytes(saved)} across ${compressedCount} of ${results.length} file(s)` +
+            (skipped.length > 0 ? ` — ${skipped.length} already optimal and passed through unchanged.` : ".") +
+            failureNote,
+        );
+      } else if (failed.length === results.length) {
+        setSavingsNote(
+          "The compression engine couldn't process these files — they were returned unchanged.",
         );
       } else {
-        setSavingsNote("These PDFs were already optimally packed — nothing to squeeze, files returned unchanged.");
+        setSavingsNote(
+          "These PDFs were already optimally packed — nothing to squeeze, files returned unchanged." + failureNote,
+        );
       }
       return results;
     }, "Starting compression…");

@@ -6,6 +6,11 @@ export function base32Decode(input: string): Uint8Array {
   const clean = input.toUpperCase().replace(/[\s=-]/g, "");
   if (clean.length === 0) return new Uint8Array(0);
   if (/[^A-Z2-7]/.test(clean)) throw new Error("Invalid base32 character — use A-Z and 2-7.");
+  // 1, 3 or 6 leftover characters can't encode whole bytes — the secret was
+  // truncated or mistyped. Fail loudly instead of silently hashing a short key.
+  if ([1, 3, 6].includes(clean.length % 8)) {
+    throw new Error("That base32 secret looks truncated — check for missing characters.");
+  }
 
   let bits = 0;
   let value = 0;

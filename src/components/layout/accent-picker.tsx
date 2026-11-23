@@ -42,9 +42,30 @@ export function AccentPicker() {
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             aria-label={`${option.label} accent`}
             title={`${option.label} accent`}
             onClick={() => select(option.id)}
+            onKeyDown={(event) => {
+              // APG radio group: arrows move and select, roving tabindex.
+              const index = ACCENTS.findIndex((entry) => entry.id === option.id);
+              const next =
+                event.key === "ArrowRight" || event.key === "ArrowDown"
+                  ? (index + 1) % ACCENTS.length
+                  : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                    ? (index - 1 + ACCENTS.length) % ACCENTS.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? ACCENTS.length - 1
+                        : -1;
+              if (next < 0) return;
+              event.preventDefault();
+              select(ACCENTS[next].id);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]
+                ?.focus();
+            }}
             className={cn(
               // 44px swatches: reachable with a thumb and still small enough to read as chips.
               "size-11 border-[3px] transition-transform hover:-translate-y-0.5",

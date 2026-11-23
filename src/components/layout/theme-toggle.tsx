@@ -57,9 +57,30 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             aria-label={`${label} theme`}
             title={`${label} theme`}
             onClick={() => choose(value)}
+            onKeyDown={(event) => {
+              // APG radio group: arrows move and select, roving tabindex.
+              const index = OPTIONS.findIndex((option) => option.value === value);
+              const next =
+                event.key === "ArrowRight" || event.key === "ArrowDown"
+                  ? (index + 1) % OPTIONS.length
+                  : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                    ? (index - 1 + OPTIONS.length) % OPTIONS.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? OPTIONS.length - 1
+                        : -1;
+              if (next < 0) return;
+              event.preventDefault();
+              choose(OPTIONS[next].value);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]
+                ?.focus();
+            }}
             className={cn(
               "flex min-h-11 items-center gap-1.5 px-2 py-1.5 transition-colors",
               compact && "px-1.5",

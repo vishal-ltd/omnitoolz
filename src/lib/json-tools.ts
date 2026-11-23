@@ -2,15 +2,80 @@
 
 export type Indent = 2 | 4 | "tab";
 
+/**
+ * Re-emit validated JSON token by token. A JSON.parse → JSON.stringify round
+ * trip silently corrupts data: integers beyond 2^53 get rounded, huge literals
+ * turn into exponents, -0 becomes 0 and duplicate keys vanish. Copying the
+ * original literals keeps the output byte-faithful, and never assigning parsed
+ * keys onto objects keeps "__proto__" payloads inert data.
+ */
+function reemitJson(text: string, indentStr: string | null): string {
+  const pretty = indentStr !== null;
+  let out = "";
+  let depth = 0;
+  let i = 0;
+  const skipWs = () => {
+    while (i < text.length && /\s/.test(text[i])) i++;
+  };
+  const indent = () => {
+    if (pretty) out += "\n" + indentStr.repeat(depth);
+  };
+  while (i < text.length) {
+    skipWs();
+    if (i >= text.length) break;
+    const ch = text[i];
+    if (ch === '"') {
+      // Copy string literals verbatim — escapes, unicode and whitespace inside
+      // strings are data, not formatting.
+      const start = i;
+      i++;
+      while (i < text.length) {
+        if (text[i] === "\\") i += 2;
+        else if (text[i] === '"') { i++; break; }
+        else i++;
+      }
+      out += text.slice(start, i);
+    } else if (ch === "{" || ch === "[") {
+      out += ch;
+      i++;
+      skipWs();
+      if (text[i] === (ch === "{" ? "}" : "]")) {
+        out += text[i]; // empty container stays on one line
+        i++;
+      } else {
+        depth++;
+        indent();
+      }
+    } else if (ch === "}" || ch === "]") {
+      depth--;
+      indent();
+      out += ch;
+      i++;
+    } else if (ch === ",") {
+      out += ",";
+      i++;
+      indent();
+    } else if (ch === ":") {
+      out += pretty ? ": " : ":";
+      i++;
+    } else {
+      // Number / true / false / null literal — copy exactly as written.
+      const start = i;
+      while (i < text.length && !/[\s,{}[\]:"]/.test(text[i])) i++;
+      out += text.slice(start, i);
+    }
+  }
+  return out;
+}
+
 export function formatJson(text: string, indent: Indent): string {
-  const value = JSON.parse(text);
-  const indentStr = indent === "tab" ? "\t" : " ".repeat(indent);
-  return JSON.stringify(value, null, indentStr);
+  JSON.parse(text); // validate first — engine errors carry the position
+  return reemitJson(text, indent === "tab" ? "\t" : " ".repeat(indent));
 }
 
 export function minifyJson(text: string): string {
-  const value = JSON.parse(text);
-  return JSON.stringify(value);
+  JSON.parse(text);
+  return reemitJson(text, null);
 }
 
 export interface JsonErrorLocation {

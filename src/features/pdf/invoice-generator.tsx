@@ -69,7 +69,7 @@ export default function InvoiceGeneratorTool() {
       report("Laying out the document…", 0.8);
       const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
       const doc = await PDFDocument.create();
-      const page = doc.addPage([595.28, 841.89]);
+      let page = doc.addPage([595.28, 841.89]);
       const regular = await doc.embedFont(StandardFonts.Helvetica);
       const bold = await doc.embedFont(StandardFonts.HelveticaBold);
       const ink = rgb(0.12, 0.13, 0.18);
@@ -98,26 +98,21 @@ export default function InvoiceGeneratorTool() {
       const toX = 320;
       page.drawText("BILL TO", { x: toX, y, size: 8, font: bold, color: soft });
       y -= 14;
-      const partyLine = (text: string, x: number, width: number) => {
+      const partyLine = (text: string, x: number) => {
         const sanitized = t(text);
         if (!sanitized) return;
         page.drawText(sanitized, { x, y, size: 10, font: bold, color: ink });
         y -= 13;
-        for (const line of sanitized.split("\n").slice(1)) {
-          page.drawText(line, { x, y, size: 10, font: regular, color: ink });
-          y -= 13;
-        }
-        void width;
       };
       const fromYStart = y;
-      partyLine(fromName.trim() || "Your name", left, 250);
+      partyLine(fromName.trim() || "Your name", left);
       const fromDetailsLines = t(fromDetails).split("\n");
       for (const line of fromDetailsLines.slice(0, 4)) {
         page.drawText(line, { x: left, y, size: 9, font: regular, color: soft });
         y -= 12;
       }
       y = fromYStart;
-      partyLine(toName.trim() || "Client name", toX, 220);
+      partyLine(toName.trim() || "Client name", toX);
       const toDetailsLines = t(toDetails).split("\n");
       for (const line of toDetailsLines.slice(0, 4)) {
         page.drawText(line, { x: toX, y, size: 9, font: regular, color: soft });
@@ -137,22 +132,32 @@ export default function InvoiceGeneratorTool() {
           color: rgb(0.85, 0.85, 0.88),
         });
       };
-      page.drawText("DESCRIPTION", { x: left, y, size: 8, font: bold, color: soft });
       const rightText = (text: string, x: number, size: number, font: typeof regular, color = ink) => {
         const clean = t(text);
         page.drawText(clean, { x: x - font.widthOfTextAtSize(clean, size), y, size, font, color });
       };
-      rightText("QTY", colQty, 8, bold, soft);
-      rightText("RATE", colRate, 8, bold, soft);
-      rightText("AMOUNT", colAmount, 8, bold, soft);
-      y -= 6;
-      rowLine();
-      y -= 16;
+      const tableHeader = () => {
+        page.drawText("DESCRIPTION", { x: left, y, size: 8, font: bold, color: soft });
+        rightText("QTY", colQty, 8, bold, soft);
+        rightText("RATE", colRate, 8, bold, soft);
+        rightText("AMOUNT", colAmount, 8, bold, soft);
+        y -= 6;
+        rowLine();
+        y -= 16;
+      };
+      tableHeader();
 
       for (const item of filledItems) {
-        if (y < 200) break;
+        if (y < 200) {
+          // Continuation page with a repeated header: rows the totals count
+          // must never silently vanish off the bottom of the page.
+          page = doc.addPage([595.28, 841.89]);
+          y = 792;
+          tableHeader();
+        }
         const description = t(item.description.trim());
-        page.drawText(description.slice(0, 46), { x: left, y, size: 10, font: regular, color: ink });
+        const shown = description.length > 46 ? `${description.slice(0, 45)}…` : description;
+        page.drawText(shown, { x: left, y, size: 10, font: regular, color: ink });
         rightText(String(item.quantity), colQty, 10, regular);
         rightText(formatMoney(item.unitPrice, currency), colRate, 10, regular);
         rightText(formatMoney(lineTotal(item), currency), colAmount, 10, regular);
@@ -161,6 +166,10 @@ export default function InvoiceGeneratorTool() {
       y -= 2;
       rowLine();
       y -= 18;
+      if (y < 170) {
+        page = doc.addPage([595.28, 841.89]);
+        y = 792;
+      }
 
       // Totals
       const totalRow = (label: string, amount: string, emphasize: boolean) => {
@@ -180,7 +189,8 @@ export default function InvoiceGeneratorTool() {
       y -= 12;
       const notesText = t(notes.trim());
       if (notesText) {
-        page.drawText(notesText.slice(0, 90), { x: left, y, size: 9, font: regular, color: soft });
+        const shownNotes = notesText.length > 90 ? `${notesText.slice(0, 89)}…` : notesText;
+        page.drawText(shownNotes, { x: left, y, size: 9, font: regular, color: soft });
       }
       page.drawLine({
         start: { x: left, y: 60 },

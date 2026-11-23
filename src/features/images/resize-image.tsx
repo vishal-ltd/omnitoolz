@@ -12,6 +12,7 @@ import { Checkbox, Field, RangeInput, Select, TextInput } from "@/components/ui/
 import { baseName } from "@/lib/utils";
 import {
   canvasToBlob,
+  checkCanvasSize,
   decodeToCanvas,
   imageResult,
   sameFamilyFormat,
@@ -36,14 +37,23 @@ export default function ResizeImageTool() {
   useEffect(() => {
     const first = queue.files[0];
     if (!first) return;
+    // A newer file may decode first — never let a stale result overwrite it.
+    let cancelled = false;
     createImageBitmap(first)
       .then((bitmap) => {
+        if (cancelled) {
+          bitmap.close();
+          return;
+        }
         setAspect(bitmap.width / bitmap.height);
         setWidth(bitmap.width);
         setHeight(bitmap.height);
         bitmap.close();
       })
       .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, [queue.files]);
 
   const ready = queue.files.length >= 1;
@@ -54,7 +64,9 @@ export default function ResizeImageTool() {
       const results = [];
       for (const [index, file] of files.entries()) {
         report(`Resizing ${file.name} (${index + 1}/${files.length})…`, (index + 0.5) / files.length);
-        const source = await decodeToCanvas(file);
+        const format: ImageFormat = formatMode === "keep" ? sameFamilyFormat(file.name) : (formatMode as ImageFormat);
+        // JPG has no alpha — composite transparency on white, never on black.
+        const source = await decodeToCanvas(file, { background: format === "jpg" ? "#ffffff" : undefined });
         let targetWidth: number;
         let targetHeight: number;
         if (mode === "percent") {
@@ -64,6 +76,7 @@ export default function ResizeImageTool() {
           targetWidth = Math.max(1, Math.round(width));
           targetHeight = Math.max(1, Math.round(height));
         }
+        checkCanvasSize(targetWidth, targetHeight);
 
         const canvas = document.createElement("canvas");
         canvas.width = targetWidth;
@@ -74,7 +87,6 @@ export default function ResizeImageTool() {
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(source.canvas, 0, 0, targetWidth, targetHeight);
 
-        const format: ImageFormat = formatMode === "keep" ? sameFamilyFormat(file.name) : (formatMode as ImageFormat);
         const blob = await canvasToBlob(canvas, format, 0.92);
         results.push(imageResult(file, blob, format));
       }

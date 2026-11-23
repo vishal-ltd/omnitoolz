@@ -54,4 +54,12 @@ describe("WCAG contrast", () => {
     expect(ratio).toBeGreaterThan(5);
     expect(ratio).toBeLessThan(6);
   });
+
+  it("matches the reference #767676-on-white boundary (≈4.54:1)", () => {
+    const ratio = contrastRatio(parseHex("#767676")!, { r: 255, g: 255, b: 255 });
+    expect(ratio).toBeCloseTo(4.54, 1);
+    expect(wcagGrade(ratio)).toBe("AA");
+    // One step lighter fails normal-text AA.
+    expect(wcagGrade(contrastRatio(parseHex("#777777")!, { r: 255, g: 255, b: 255 }))).toBe("AA Large");
+  });
 });

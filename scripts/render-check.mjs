@@ -10,7 +10,7 @@
  * Skips with a message when Puppeteer is not installed, except under CI where a
  * missing browser is a failure rather than a free pass.
  */
-import { spawn } from "node:child_process";
+import { spawn, execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const port = Number(process.env.RENDER_CHECK_PORT ?? 3101);
@@ -56,13 +56,28 @@ try {
     try {
       return (await import("puppeteer")).default;
     } catch {
-      // Fall back to a machine-wide install, which is how this repo is checked locally.
-      const globalPath = `${process.env.APPDATA ?? ""}/npm/node_modules/puppeteer/lib/puppeteer/puppeteer.js`;
+      // Fall back to a machine-wide install, which is how this repo is checked
+      // locally. Probe the usual global roots on every platform, not just Win.
+      const roots = [
+        process.env.APPDATA ? `${process.env.APPDATA}/npm/node_modules` : null,
+        process.env.HOME ? `${process.env.HOME}/.npm-global/lib/node_modules` : null,
+        "/usr/lib/node_modules",
+        "/usr/local/lib/node_modules",
+      ].filter(Boolean);
       try {
-        return (await import(pathToFileURL(globalPath).href)).default;
+        roots.push(execSync("npm root -g", { encoding: "utf8" }).trim());
       } catch {
-        return null;
+        // npm not on PATH — the fixed roots above still get a chance.
       }
+      for (const root of roots) {
+        try {
+          const url = pathToFileURL(`${root}/puppeteer/lib/puppeteer/puppeteer.js`).href;
+          return (await import(url)).default;
+        } catch {
+          // try the next root
+        }
+      }
+      return null;
     }
   }
 
@@ -86,7 +101,8 @@ try {
       });
 
     const launchOptions = { args: ["--no-sandbox"] };
-    if (process.env.CHROME_PATH) launchOptions.executablePath = process.env.CHROME_PATH;
+    const executable = process.env.CHROME_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (executable) launchOptions.executablePath = executable;
     const browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });

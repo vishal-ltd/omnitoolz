@@ -31,30 +31,37 @@ export async function renderPageThumbnails(
   const doc = await pdfjs.getDocument({ data: bytes }).promise;
   const pageCount = doc.numPages;
   const limit = Math.min(pageCount, maxPages);
+  let rendered = 0;
 
-  for (let pageNumber = 1; pageNumber <= limit; pageNumber++) {
-    if (signal?.aborted) break;
-    const page = await doc.getPage(pageNumber);
-    const base = page.getViewport({ scale: 1 });
-    const scale = targetWidth / base.width;
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.floor(viewport.width));
-    canvas.height = Math.max(1, Math.floor(viewport.height));
-    const context = canvas.getContext("2d", { alpha: false });
-    if (!context) throw new Error("Your browser blocked canvas rendering — try another browser.");
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvasContext: context, viewport }).promise;
-    page.cleanup();
-    onPage({
-      pageNumber,
-      dataUrl: canvas.toDataURL("image/jpeg", 0.72),
-      aspect: viewport.height / viewport.width,
-    });
+  try {
+    for (let pageNumber = 1; pageNumber <= limit; pageNumber++) {
+      if (signal?.aborted) break;
+      const page = await doc.getPage(pageNumber);
+      const base = page.getViewport({ scale: 1 });
+      const scale = targetWidth / base.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.floor(viewport.width));
+      canvas.height = Math.max(1, Math.floor(viewport.height));
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) throw new Error("Your browser blocked canvas rendering — try another browser.");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: context, viewport }).promise;
+      page.cleanup();
+      // A render that finished after abort must not paint into the next file.
+      if (signal?.aborted) break;
+      onPage({
+        pageNumber,
+        dataUrl: canvas.toDataURL("image/jpeg", 0.72),
+        aspect: viewport.height / viewport.width,
+      });
+      rendered++;
+    }
+  } finally {
+    await doc.destroy();
   }
-  await doc.destroy();
-  return { pageCount, rendered: limit };
+  return { pageCount, rendered };
 }
 
 /** Render one page of an open document into `canvas` at the given CSS width. */

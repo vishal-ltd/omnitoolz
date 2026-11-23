@@ -59,7 +59,7 @@ export default function JwtDecoderTool() {
                 </ul>
               </div>
               <div className="border-[3px] border-edge bg-card p-3 shadow-[3px_3px_0_0_var(--color-shadow)]">
-                <p className="font-display text-display-xs text-ink-soft uppercase">Lifetime</p>
+                <p className="font-display text-display-xs text-ink-soft uppercase">Validity &amp; notes</p>
                 <ul className="mt-2 space-y-1 font-body text-lg text-ink">
                   {decoded.problems.map((problem) => (
                     <li key={problem}>{problem}</li>
@@ -80,8 +80,13 @@ export default function JwtDecoderTool() {
                 </ul>
               </div>
               <p className="text-sm text-ink-soft sm:col-span-2">
-                Signature: <code className="break-all">{decoded.signature.slice(0, 24)}…</code> —
-                signatures aren&apos;t verified here; decoding alone never proves authenticity.
+                Signature:{" "}
+                <code className="break-all">
+                  {decoded.signature
+                    ? `${decoded.signature.slice(0, 24)}${decoded.signature.length > 24 ? "…" : ""}`
+                    : "(empty)"}
+                </code>{" "}
+                — signatures aren&apos;t verified here; decoding alone never proves authenticity.
               </p>
             </OptionsPanel>
           </>

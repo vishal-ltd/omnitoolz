@@ -54,6 +54,7 @@ export default function OrganizePdfTool() {
       },
     })
       .then(({ pageCount }) => {
+        if (controller.signal.aborted) return;
         setThumbProgress({ done: pageCount, total: pageCount });
         setPhase("editing");
       })
@@ -92,12 +93,16 @@ export default function OrganizePdfTool() {
 
   function pointerDown(event: React.PointerEvent<HTMLLIElement>, index: number) {
     if (event.pointerType === "mouse") return;
+    // React nulls currentTarget after dispatch — capture it now, the timer
+    // fires 160ms later when the synthetic event is long dead.
+    const el = event.currentTarget;
+    const pointerId = event.pointerId;
     pressStart.current = { x: event.clientX, y: event.clientY };
     pressTimer.current = window.setTimeout(() => {
       pressStart.current = null;
       didDragRef.current = true;
       setDragIndex(index);
-      event.currentTarget.setPointerCapture(event.pointerId);
+      el.setPointerCapture(pointerId);
     }, 160);
   }
 
@@ -188,7 +193,9 @@ export default function OrganizePdfTool() {
     reset();
   }
 
-  const changed = pages.length !== thumbProgress.total || pages.some((page) => page.delta !== 0);
+  const changed =
+    pages.length !== thumbProgress.total ||
+    pages.some((page, index) => page.delta !== 0 || page.sourceIndex !== index);
 
   return (
     <ToolWidget>

@@ -7,7 +7,7 @@ import { useFileQueue } from "@/components/tools/file-queue";
 import { ToolWidget } from "@/components/tools/job-ui";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextInput } from "@/components/ui/form";
-import { digest, HASH_ALGORITHMS, parseDigestInput, type HashAlgorithm } from "@/lib/hash";
+import { createStreamingHash, HASH_ALGORITHMS, parseDigestInput, type HashAlgorithm } from "@/lib/hash";
 import { formatBytes } from "@/lib/utils";
 
 export default function FileHashVerifierTool() {
@@ -16,6 +16,7 @@ export default function FileHashVerifierTool() {
   const [expected, setExpected] = useState("");
   const [computed, setComputed] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const file = queue.files[0];
@@ -23,31 +24,48 @@ export default function FileHashVerifierTool() {
   useEffect(() => {
     setComputed(null);
     setError(null);
+    setProgress(0);
     if (!file) return;
     let cancelled = false;
     setWorking(true);
     (async () => {
+      const reader = file.stream().getReader();
       try {
-        // Stream large files in chunks so the tab never blocks.
-        const chunks: Uint8Array[] = [];
-        const reader = file.stream().getReader();
+        // Truly incremental: the hasher keeps a ~128-byte buffer, so a 500 MB
+        // file never lands in memory whole. Yield every megabyte so the tab
+        // stays responsive, and report real progress.
+        const hasher = createStreamingHash(algorithm);
+        let hashed = 0;
+        let sinceYield = 0;
         for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
-          chunks.push(value);
+          if (cancelled) {
+            void reader.cancel();
+            return;
+          }
+          hasher.update(value);
+          hashed += value.length;
+          sinceYield += value.length;
+          if (sinceYield >= 1024 * 1024) {
+            sinceYield = 0;
+            setProgress(file.size > 0 ? hashed / file.size : 1);
+            await new Promise((resolve) => window.setTimeout(resolve, 0));
+            if (cancelled) {
+              void reader.cancel();
+              return;
+            }
+          }
         }
-        const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-        const bytes = new Uint8Array(total);
-        let offset = 0;
-        for (const chunk of chunks) {
-          bytes.set(chunk, offset);
-          offset += chunk.length;
+        const result = hasher.hex();
+        if (!cancelled) {
+          setProgress(1);
+          setComputed(result);
         }
-        const result = await digest(algorithm, bytes);
-        if (!cancelled) setComputed(result);
       } catch {
-        if (!cancelled) setError("Hashing failed — try a smaller file.");
+        if (!cancelled) setError("Hashing failed — the file may have been moved or become unreadable. Try selecting it again.");
       } finally {
+        reader.releaseLock();
         if (!cancelled) setWorking(false);
       }
     })();
@@ -93,7 +111,11 @@ export default function FileHashVerifierTool() {
               </Field>
             </div>
 
-            {working && <p className="font-body text-lg text-ink-soft">Hashing {formatBytes(file.size)}…</p>}
+            {working && (
+              <p className="font-body text-lg text-ink-soft">
+                Hashing {formatBytes(file.size)}… {Math.round(progress * 100)}%
+              </p>
+            )}
             {error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</p>}
 
             {computed && (
@@ -121,7 +143,14 @@ export default function FileHashVerifierTool() {
                   </div>
                 )}
 
-                <Button variant="secondary" onClick={() => navigator.clipboard.writeText(computed)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    navigator.clipboard.writeText(computed).catch(() => {
+                      // Clipboard may be blocked — the digest above stays selectable.
+                    });
+                  }}
+                >
                   Copy computed digest
                 </Button>
               </div>

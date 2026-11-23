@@ -12,11 +12,16 @@ import { ThemeToggle } from "./theme-toggle";
 export function AppearanceControl() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        // Focus would otherwise drop to <body> when the panel unmounts.
+        triggerRef.current?.focus();
+      }
     };
     const onPointerDown = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
@@ -33,9 +38,10 @@ export function AppearanceControl() {
     <div ref={rootRef} className="relative">
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => setOpen((isOpen) => !isOpen)}
         aria-expanded={open}
-        aria-controls="appearance-panel"
+        aria-controls={open ? "appearance-panel" : undefined}
         aria-label="Appearance"
         title="Screen and palette"
         className="flex size-11 items-center justify-center border-[3px] border-edge bg-card text-ink shadow-[3px_3px_0_0_var(--color-shadow)] transition-[transform,box-shadow,background-color,border-color,color] hover:-translate-y-0.5 hover:text-brand hover:shadow-[4px_4px_0_0_var(--color-shadow)] active:translate-y-0.5 active:shadow-none aria-expanded:bg-brand-soft"

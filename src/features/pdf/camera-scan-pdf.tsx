@@ -88,7 +88,7 @@ export default function CameraScanPdfTool() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d", { alpha: false })!;
-    // Mirror like a selfie when facing the user; environment cameras draw as-is.
+    // Document capture draws as-is — mirroring would flip the text.
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
       (blob) => {
@@ -130,12 +130,13 @@ export default function CameraScanPdfTool() {
       );
       if (bounds) {
         const pad = Math.round(Math.min(canvas.width, canvas.height) * 0.015);
-        crop = {
-          x: Math.max(0, bounds.left - pad),
-          y: Math.max(0, bounds.top - pad),
-          width: Math.min(canvas.width, bounds.right - bounds.left + pad * 2),
-          height: Math.min(canvas.height, bounds.bottom - bounds.top + pad * 2),
-        };
+        // Clamp the edges, not the origin: a clamped x/y must shrink the rect
+        // too, or the source rectangle runs past the canvas (black fringe).
+        const x = Math.max(0, bounds.left - pad);
+        const y = Math.max(0, bounds.top - pad);
+        const right = Math.min(canvas.width, bounds.right + pad);
+        const bottom = Math.min(canvas.height, bounds.bottom + pad);
+        crop = { x, y, width: right - x, height: bottom - y };
       }
     }
 
@@ -205,6 +206,18 @@ export default function CameraScanPdfTool() {
     setShots([]);
     reset();
   }
+
+  // Client-side navigation keeps the document alive — release shot blobs on
+  // unmount too, not just on delete/start-over.
+  const shotsRef = useRef<Shot[]>([]);
+  useEffect(() => {
+    shotsRef.current = shots;
+  }, [shots]);
+  useEffect(() => {
+    return () => {
+      for (const shot of shotsRef.current) URL.revokeObjectURL(shot.url);
+    };
+  }, []);
 
   return (
     <ToolWidget>

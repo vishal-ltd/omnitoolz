@@ -36,15 +36,25 @@ export default function PdfToWordTool() {
         const content = await page.getTextContent();
         page.cleanup();
         // Reconstruct lines from positioned items, then group into paragraphs.
+        // Sort by baseline (desc) then x (asc) so out-of-order runs land in
+        // reading order; bucket scan is O(n), not O(n²) finds.
+        const positioned = content.items
+          .filter((item): item is Extract<typeof item, { str: string }> => "str" in item && Boolean(item.str.trim()))
+          .map((item) => ({
+            y: Math.round((item.transform[5] ?? 0) / 2) * 2,
+            x: item.transform[4] ?? 0,
+            str: item.str,
+          }))
+          .sort((a, b) => b.y - a.y || a.x - b.x);
         const lines: Array<{ y: number; text: string }> = [];
-        for (const item of content.items) {
-          if (!("str" in item) || !item.str.trim()) continue;
-          const y = Math.round((item.transform[5] ?? 0) / 2) * 2;
-          const existing = lines.find((line) => Math.abs(line.y - y) <= 2);
-          if (existing) existing.text += (existing.text.endsWith(" ") ? "" : " ") + item.str;
-          else lines.push({ y, text: item.str });
+        for (const item of positioned) {
+          const last = lines[lines.length - 1];
+          if (last && Math.abs(last.y - item.y) <= 2) {
+            last.text += (last.text.endsWith(" ") ? "" : " ") + item.str;
+          } else {
+            lines.push({ y: item.y, text: item.str });
+          }
         }
-        lines.sort((a, b) => b.y - a.y);
         pageTexts.push(lines.map((line) => line.text.trim()));
       }
       await doc.destroy();

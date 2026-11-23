@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChromeIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { downloadBlob, formatBytes, formatDuration, isImageBlob, type ResultFile } from "@/lib/utils";
@@ -22,26 +22,29 @@ export interface ResultsProps {
  */
 export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset, resetLabel = "Start over", note }: ResultsProps) {
   const [zipping, setZipping] = useState(false);
+  const [zipError, setZipError] = useState<string | null>(null);
   const totalSize = results.reduce((sum, file) => sum + file.blob.size, 0);
 
-  const previewUrls = useMemo(() => {
+  // Object URLs are created in an effect (not during render) so discarded
+  // renders and StrictMode double-invokes can't leak unrevokeable blobs.
+  const [previewUrls, setPreviewUrls] = useState<Map<string, string>>(() => new Map());
+  useEffect(() => {
     const map = new Map<string, string>();
     for (const file of results) {
       if (isImageBlob(file.blob)) map.set(file.name, URL.createObjectURL(file.blob));
     }
-    return map;
-  }, [results]);
-
-  useEffect(() => {
+    setPreviewUrls(map);
     return () => {
-      for (const url of previewUrls.values()) URL.revokeObjectURL(url);
+      for (const url of map.values()) URL.revokeObjectURL(url);
     };
-  }, [previewUrls]);
+  }, [results]);
 
   async function downloadAll() {
     setZipping(true);
+    setZipError(null);
     try {
-      const { zipSync } = await import("fflate");
+      // Async zip: zipSync holds ~3x the batch bytes on the main thread.
+      const { zip } = await import("fflate");
       const entries: Record<string, Uint8Array> = {};
       const used = new Set<string>();
       for (const file of results) {
@@ -55,10 +58,12 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
         used.add(name);
         entries[name] = new Uint8Array(await file.blob.arrayBuffer());
       }
-      const zipped = zipSync(entries);
-      const copy = new Uint8Array(zipped.byteLength);
-      copy.set(zipped);
-      downloadBlob(new Blob([copy.buffer], { type: "application/zip" }), `${zipBaseName}.zip`);
+      const zipped = await new Promise<Uint8Array>((resolve, reject) =>
+        zip(entries, { level: 6 }, (error, data) => (error ? reject(error) : resolve(data))),
+      );
+      downloadBlob(new Blob([zipped.slice().buffer], { type: "application/zip" }), `${zipBaseName}.zip`);
+    } catch {
+      setZipError("Couldn't build the ZIP — try saving the files individually instead.");
     } finally {
       setZipping(false);
     }
@@ -133,6 +138,11 @@ export function Results({ results, elapsedMs, zipBaseName = "omnitoolz", onReset
           {resetLabel}
         </Button>
       </div>
+      {zipError && (
+        <p role="alert" className="border-[3px] border-err bg-err-soft px-3 py-2 font-body text-base text-err">
+          {zipError}
+        </p>
+      )}
     </div>
   );
 }

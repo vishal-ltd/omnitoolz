@@ -48,6 +48,15 @@ describe("findQualityForTarget", () => {
   it("rejects non-positive targets", async () => {
     await expect(findQualityForTarget(mockEncode(), 0)).rejects.toThrow(/positive/);
   });
+
+  it("includes the boundary quality when the target matches exactly", async () => {
+    const encode = mockEncode();
+    const exact = await encode(42);
+    const result = await findQualityForTarget(encode, exact);
+    expect(result.hit).toBe(true);
+    expect(result.quality).toBe(42);
+    expect(result.sizeBytes).toBe(exact);
+  });
 });
 
 describe("findScaleForTarget", () => {
@@ -78,6 +87,13 @@ describe("findScaleForTarget", () => {
     expect(result).not.toBeNull();
     expect(result!.search.hit).toBe(false);
   });
+
+  it("rejects a non-positive step instead of looping forever", async () => {
+    const encode = async (quality: number) => await mockEncode()(quality);
+    await expect(findScaleForTarget(encode, 80_000, { scaleStep: 0 })).rejects.toThrow(/positive/);
+    await expect(findScaleForTarget(encode, 80_000, { scaleStep: -0.2 })).rejects.toThrow(/positive/);
+    await expect(findScaleForTarget(encode, 80_000, { minScale: 0 })).rejects.toThrow(/positive/);
+  });
 });
 
 describe("parseTargetSize", () => {
@@ -92,5 +108,10 @@ describe("parseTargetSize", () => {
     expect(parseTargetSize("abc")).toBeNull();
     expect(parseTargetSize("-5kb")).toBeNull();
     expect(parseTargetSize("")).toBeNull();
+  });
+
+  it("rejects tiny values that round to zero bytes", () => {
+    expect(parseTargetSize("0.0001kb")).toBeNull();
+    expect(parseTargetSize("0.0000001mb")).toBeNull();
   });
 });

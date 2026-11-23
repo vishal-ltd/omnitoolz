@@ -5,7 +5,7 @@ import { liveTools } from "@/lib/tools/registry";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "OmniToolz is 63 free, privacy-first tools that run entirely in your browser — PDFs, images, text, developer, security and media. No accounts, no uploads, no tracking.",
+    `OmniToolz is ${liveTools().length} free, privacy-first tools that run entirely in your browser — PDFs, images, text, developer, security and media. No accounts, no uploads, no tracking.`,
   alternates: { canonical: "/about" },
 };
 
@@ -17,8 +17,8 @@ export default function AboutPage() {
       <div className="mt-6 space-y-5 text-[15px] leading-relaxed text-ink-soft">
         <p>
           OmniToolz is an all-in-one toolbox for the file tasks people actually run into: merging a
-          PDF, protecting one with a password, signing a contract, shrinking a photo, removing a
-          background, converting an iPhone photo, generating a password or a two-factor code, timing
+          PDF, protecting one with a password, signing a contract, shrinking a photo, trimming
+          audio, converting an iPhone photo, generating a password or a two-factor code, timing
           a regex, building an invoice. One consistent interface instead of a trail of ad-covered
           single-purpose sites.
         </p>
@@ -36,8 +36,8 @@ export default function AboutPage() {
           <li><strong className="text-ink">Installable.</strong> Add OmniToolz to your home screen from your browser&apos;s menu — it always loads the latest version straight from the network, with no offline cache in the way.</li>
         </ul>
         <p>
-          Where a tool needs a heavyweight engine — the AI background remover, OCR, the HEIF codec,
-          the qpdf compressor — the engine itself is downloaded once from a public CDN and then
+          Where a tool needs a heavyweight engine — OCR, the HEIF codec, the qpdf compressor —
+          the engine is downloaded once (from a public CDN or this site&apos;s own files) and then
           runs entirely on your machine. Your files are never part of that download; the engine and
           your data never meet.
         </p>
@@ -64,7 +64,7 @@ export default function AboutPage() {
             full catalog on the homepage
           </Link>{" "}
           — and if a tool you need is missing, it&apos;s probably on the roadmap: deeper document
-          conversion fidelity, more OCR languages, touch-up brushes and audio tools are all next.
+          conversion fidelity and more OCR languages are next.
         </p>
       </div>
     </article>

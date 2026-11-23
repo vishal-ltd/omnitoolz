@@ -25,7 +25,7 @@ export default function CleanPdfTool() {
   async function clean() {
     const sources = queue.files;
     await start(async ({ report }) => {
-      const { PDFName } = await import("pdf-lib");
+      const { PDFName, PDFArray, PDFDict, PDFRef } = await import("pdf-lib");
       const results: ResultFile[] = [];
       for (const [index, source] of sources.entries()) {
         report(`Cleaning “${source.name}”…`, (index + 0.5) / sources.length);
@@ -37,10 +37,48 @@ export default function CleanPdfTool() {
           doc.setKeywords([]);
           doc.setCreator("");
           doc.setProducer("");
+          // Dates live in the Info dictionary, not the six string fields.
+          const info = doc.context.lookup(doc.context.trailerInfo.Info);
+          if (info instanceof PDFDict) {
+            info.delete(PDFName.of("CreationDate"));
+            info.delete(PDFName.of("ModDate"));
+          }
+          // XMP packet: the catalog's /Metadata stream carries the same data.
+          const metaRef = doc.catalog.get(PDFName.of("Metadata"));
+          if (metaRef) {
+            doc.catalog.delete(PDFName.of("Metadata"));
+            if (metaRef instanceof PDFRef) doc.context.delete(metaRef);
+          }
         }
         if (removeAnnotations) {
+          // Only comment/markup annotations go. Links and form-field widgets
+          // are content, not leftovers — wiping them broke forms and hyperlinks.
+          const dictOf = (entry: import("pdf-lib").PDFObject): import("pdf-lib").PDFDict | null => {
+            const resolved = entry instanceof PDFRef ? doc.context.lookup(entry) : entry;
+            return resolved instanceof PDFDict ? resolved : null;
+          };
+          const subtypeOf = (entry: import("pdf-lib").PDFObject): string => {
+            const subtype = dictOf(entry)?.get(PDFName.of("Subtype"));
+            return subtype instanceof PDFName ? subtype.toString() : "";
+          };
           for (const page of doc.getPages()) {
-            page.node.set(PDFName.of("Annots"), doc.context.obj([]));
+            const annots = doc.context.lookup(page.node.get(PDFName.of("Annots")));
+            if (!(annots instanceof PDFArray)) continue;
+            const entries = annots.asArray();
+            const kept = new Set(
+              entries.filter((entry) => {
+                const name = subtypeOf(entry);
+                return name === "/Link" || name === "/Widget";
+              }),
+            );
+            // A popup survives only while its parent annotation survives.
+            const surviving = entries.filter((entry) => {
+              if (kept.has(entry)) return true;
+              if (subtypeOf(entry) !== "/Popup") return false;
+              const parent = dictOf(entry)?.get(PDFName.of("Parent"));
+              return parent !== undefined && kept.has(parent);
+            });
+            page.node.set(PDFName.of("Annots"), doc.context.obj(surviving));
           }
         }
         if (removeOutline) {
@@ -80,7 +118,7 @@ export default function CleanPdfTool() {
               <Field label="Hidden metadata" hint="Title, author, subject, keywords, creator, producer, dates">
                 <Checkbox checked={stripMetadata} onChange={setStripMetadata} label="Strip document metadata" />
               </Field>
-              <Field label="Comments" hint="Highlights, sticky notes, drawn annotations">
+              <Field label="Comments" hint="Highlights, sticky notes, drawn annotations — links and form fields stay">
                 <Checkbox checked={removeAnnotations} onChange={setRemoveAnnotations} label="Delete comments & annotations" />
               </Field>
               <Field label="Bookmarks" hint="The sidebar outline">

@@ -33,14 +33,17 @@ export const DEFAULT_PASSWORD_OPTIONS: PasswordOptions = {
 
 /** Uniform random integer in [0, max) using rejection sampling (no modulo bias). */
 export function secureRandomInt(max: number): number {
-  if (max <= 0 || !Number.isInteger(max)) throw new RangeError("max must be a positive integer");
+  if (max <= 0 || !Number.isInteger(max) || max > 0xffffffff) {
+    throw new RangeError("max must be a positive integer up to 2^32 - 1");
+  }
   const cryptoObj = globalThis.crypto;
   if (!cryptoObj?.getRandomValues) {
     throw new Error("A cryptographic random source is required but unavailable.");
   }
-  const limit = Math.floor(0xffffffff / max) * max;
+  // Accept only a whole number of max-sized buckets below 2^32; anything above
+  // would skew the distribution, so redraw.
+  const limit = Math.floor(0x100000000 / max) * max;
   const buf = new Uint32Array(1);
-  // Rejection sampling: values >= limit would skew the distribution.
   for (;;) {
     cryptoObj.getRandomValues(buf);
     if (buf[0] < limit) return buf[0] % max;

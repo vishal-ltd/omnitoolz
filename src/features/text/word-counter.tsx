@@ -3,68 +3,11 @@
 import { useMemo, useState } from "react";
 import { ToolWidget } from "@/components/tools/job-ui";
 import { TextArea } from "@/components/ui/form";
-
-const STOPWORDS = new Set([
-  "the", "and", "for", "are", "but", "not", "you", "all", "can", "her", "was", "one",
-  "our", "out", "day", "get", "has", "him", "his", "how", "man", "new", "now", "old",
-  "see", "two", "way", "who", "did", "its", "let", "she", "too", "use", "that", "with",
-  "have", "this", "will", "your", "from", "they", "know", "want", "been", "good",
-  "much", "some", "time", "very", "when", "come", "here", "just", "like", "long",
-  "make", "many", "over", "such", "take", "than", "them", "well", "were", "what",
-]);
-
-interface Stats {
-  words: number;
-  characters: number;
-  charactersNoSpaces: number;
-  sentences: number;
-  paragraphs: number;
-  lines: number;
-  readingMinutes: number;
-  speakingMinutes: number;
-  topKeywords: Array<{ word: string; count: number }>;
-}
-
-function analyze(text: string): Stats {
-  const words = text.match(/[A-Za-z0-9'’-]+/g) ?? [];
-  const sentences = text.split(/[.!?]+(?:\s|$)/).filter((part) => part.trim().length > 0);
-  const paragraphs = text.split(/\n\s*\n/).filter((part) => part.trim().length > 0);
-
-  const counts = new Map<string, number>();
-  for (const word of words) {
-    const lower = word.toLowerCase();
-    if (lower.length < 4 || STOPWORDS.has(lower)) continue;
-    counts.set(lower, (counts.get(lower) ?? 0) + 1);
-  }
-  const topKeywords = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .slice(0, 5)
-    .map(([word, count]) => ({ word, count }));
-
-  return {
-    words: words.length,
-    characters: text.length,
-    charactersNoSpaces: text.replace(/\s/g, "").length,
-    sentences: sentences.length,
-    paragraphs: paragraphs.length,
-    lines: text.length === 0 ? 0 : text.split("\n").length,
-    readingMinutes: words.length / 200,
-    speakingMinutes: words.length / 130,
-    topKeywords,
-  };
-}
-
-function minutesLabel(minutes: number): string {
-  if (minutes === 0) return "0 sec";
-  if (minutes < 1) return `${Math.max(1, Math.round(minutes * 60))} sec`;
-  const whole = Math.floor(minutes);
-  const seconds = Math.round((minutes - whole) * 60);
-  return seconds > 0 ? `${whole} min ${seconds} sec` : `${whole} min`;
-}
+import { analyzeText, minutesLabel } from "@/lib/utils";
 
 export default function WordCounterTool() {
   const [text, setText] = useState("");
-  const stats = useMemo(() => analyze(text), [text]);
+  const stats = useMemo(() => analyzeText(text), [text]);
 
   const cards: Array<{ label: string; value: string }> = [
     { label: "Words", value: stats.words.toLocaleString() },

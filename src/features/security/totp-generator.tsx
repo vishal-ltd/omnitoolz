@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ToolWidget } from "@/components/tools/job-ui";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/form";
-import { base32Decode, base32Encode } from "@/lib/base32";
+import { base32Encode } from "@/lib/base32";
 import { secondsRemaining, totpFromBase32 } from "@/lib/totp";
 
 function randomSecret(): string {
@@ -20,37 +20,57 @@ export default function TotpGeneratorTool() {
   const [remaining, setRemaining] = useState(30);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async (currentSecret: string) => {
-    if (!currentSecret.trim()) {
-      setCode(null);
-      setNextCode(null);
-      setError(null);
-      return;
-    }
-    try {
-      base32Decode(currentSecret);
-      const now = Date.now();
-      setCode(await totpFromBase32(currentSecret, now));
-      setNextCode(await totpFromBase32(currentSecret, now + 30_000));
-      setError(null);
-    } catch {
-      setCode(null);
-      setNextCode(null);
-      setError("That secret isn't valid base32 (A-Z and 2-7) — copy it fresh from the service.");
-    }
-  }, []);
-
   useEffect(() => {
-    refresh(secret);
+    // Active flag: an in-flight HMAC for an old secret must never overwrite
+    // the code for the secret currently in the box.
+    let active = true;
+    let lastWindow = Math.floor(Date.now() / 30_000);
+    async function refresh() {
+      if (!secret.trim()) {
+        setCode(null);
+        setNextCode(null);
+        setError(null);
+        return;
+      }
+      try {
+        const now = Date.now();
+        const current = await totpFromBase32(secret, now);
+        const next = await totpFromBase32(secret, now + 30_000);
+        if (!active) return;
+        setCode(current);
+        setNextCode(next);
+        setError(null);
+      } catch {
+        if (!active) return;
+        setCode(null);
+        setNextCode(null);
+        setError("That secret isn't valid base32 (A-Z and 2-7) — copy it fresh from the service.");
+      }
+    }
+    refresh();
     const timer = window.setInterval(() => {
+      if (!active) return;
       setRemaining(secondsRemaining());
-      if (secondsRemaining() === 30) refresh(secret);
+      // Refresh exactly once per rollover, not on every tick of the new window.
+      const windowIndex = Math.floor(Date.now() / 30_000);
+      if (windowIndex !== lastWindow) {
+        lastWindow = windowIndex;
+        refresh();
+      }
     }, 500);
-    return () => window.clearInterval(timer);
-  }, [secret, refresh]);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [secret]);
 
   async function copyCode() {
-    if (code) await navigator.clipboard.writeText(code);
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      // Clipboard may be blocked — the code stays selectable as text.
+    }
   }
 
   return (

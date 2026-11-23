@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const SCRIPT_SRC =
-  "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com blob: 'wasm-unsafe-eval'";
+  "'self' 'unsafe-inline' https://cdn.jsdelivr.net blob: 'wasm-unsafe-eval'";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -19,10 +19,12 @@ function csp(scriptSrc: string): string {
     // Next's hydration bootstrap and Tailwind both need inline script/style.
     `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://cdn.jsdelivr.net",
+    "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com blob: data:",
-    "worker-src 'self' blob: https://cdn.jsdelivr.net",
+    "connect-src 'self' https://cdn.jsdelivr.net blob: data:",
+    // Tesseract spawns a blob: worker that importScripts() its jsDelivr code —
+    // script-src covers that; no worker or image ever loads from the CDN directly.
+    "worker-src 'self' blob:",
     "media-src 'self' blob: mediastream:",
     "object-src 'none'",
     "base-uri 'self'",
@@ -37,17 +39,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // The cutout model's tensor library (ndarray) builds constructors with
-        // new Function, so this page alone allows eval. Two CSP headers would
-        // intersect, so every other route is matched by the lookahead below.
-        source: "/image-tools/background-remover",
-        headers: [
-          ...securityHeaders,
-          { key: "Content-Security-Policy", value: csp(`${SCRIPT_SRC} 'unsafe-eval'`) },
-        ],
-      },
-      {
-        source: "/((?!image-tools/background-remover).*)",
+        source: "/:path*",
         headers: [
           ...securityHeaders,
           { key: "Content-Security-Policy", value: csp(SCRIPT_SRC) },

@@ -9,19 +9,32 @@ import { digest, HASH_ALGORITHMS } from "@/lib/hash";
 export default function HashGeneratorTool() {
   const [text, setText] = useState("");
   const [hashes, setHashes] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     if (!text) {
       setHashes({});
+      setError(null);
       return;
     }
     (async () => {
-      const entries: Record<string, string> = {};
-      for (const algorithm of HASH_ALGORITHMS) {
-        entries[algorithm] = await digest(algorithm, text);
+      try {
+        const entries: Record<string, string> = {};
+        for (const algorithm of HASH_ALGORITHMS) {
+          entries[algorithm] = await digest(algorithm, text);
+        }
+        if (!cancelled) {
+          setHashes(entries);
+          setError(null);
+        }
+      } catch {
+        // crypto.subtle is unavailable in insecure contexts (plain http).
+        if (!cancelled) {
+          setHashes({});
+          setError("Hashing needs your browser's Web Crypto, which is only available over HTTPS (or localhost).");
+        }
       }
-      if (!cancelled) setHashes(entries);
     })();
     return () => {
       cancelled = true;
@@ -31,7 +44,11 @@ export default function HashGeneratorTool() {
   const rows = useMemo(() => Object.entries(hashes), [hashes]);
 
   async function copy(value: string) {
-    await navigator.clipboard.writeText(value);
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      // Clipboard may be blocked — the digest stays selectable as text.
+    }
   }
 
   return (
@@ -46,6 +63,8 @@ export default function HashGeneratorTool() {
             rows={4}
           />
         </Field>
+
+        {error && <p className="border-[3px] border-err bg-err-soft p-3 font-body text-lg text-ink">{error}</p>}
 
         {rows.length > 0 && (
           <ul className="divide-y-[3px] divide-line overflow-hidden border-[3px] border-edge bg-card shadow-[4px_4px_0_0_var(--color-shadow)]">

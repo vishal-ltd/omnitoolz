@@ -12,7 +12,7 @@ export default function PrivacyPage() {
   return (
     <article className="max-w-3xl">
       <h1 className="text-display-lg font-bold tracking-tight text-ink">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-ink-soft">Last updated: October 25, 2026</p>
+      <p className="mt-2 text-sm text-ink-soft">Last updated: November 23, 2026</p>
 
       <div className="mt-8 space-y-6 text-[15px] leading-relaxed text-ink-soft">
         <section className="border-[3px] border-ok bg-ok-soft p-4">
@@ -32,7 +32,8 @@ export default function PrivacyPage() {
             in your browser&rdquo;, that is a technical statement, not a slogan: no network request
             carries your content anywhere. You can verify this yourself — open your browser&apos;s
             developer tools, watch the network tab, and run any tool. The only requests are the
-            site&apos;s own app files.
+            site&apos;s own app files and the public engine downloads described in section 4 —
+            none of them carry your content.
           </p>
         </section>
 
@@ -67,12 +68,12 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-display-sm font-semibold text-ink">4. Engines downloaded from CDNs</h2>
           <p>
-            A few heavyweight tools fetch their processing engine once from a public CDN (jsDelivr
-            / staticimgly / this site&apos;s own static files): the OCR engine (Tesseract), the AI
-            background-removal model, the HEIF codec, the qpdf compressor and the PDF rendering
-            worker. These downloads contain only code and model weights. Your files are never
-            attached to these requests. OmniToolz keeps no offline copy of itself — every visit
-            loads fresh from the network.
+            A few heavyweight tools download their processing engine once: the OCR engine
+            (Tesseract) comes from the jsDelivr CDN. The HEIF codec, the qpdf compressor and the
+            PDF rendering worker are served from this site&apos;s own static files. These downloads
+            contain only code and model weights. Your files are never attached to these requests,
+            and the CDN sees only that an engine was downloaded — never what you process with it.
+            OmniToolz keeps no offline copy of itself — every visit loads fresh from the network.
           </p>
         </section>
 

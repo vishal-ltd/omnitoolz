@@ -30,36 +30,91 @@ export default function AudioTrimmerTool() {
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const videoAudioRef = useRef<AudioBufferSourceNode | null>(null);
+  const playbackRef = useRef<{ source: AudioBufferSourceNode; context: AudioContext } | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
+  const startingRef = useRef(false);
 
   const file = queue.files[0];
 
-  const analyze = useCallback(async (source: File | Blob) => {
+  const analyze = useCallback(async (source: File | Blob, isCancelled: () => boolean) => {
     setError(null);
+    let context: AudioContext | null = null;
     try {
       const data = await source.arrayBuffer();
+      if (isCancelled()) return;
       const rate = wavSampleRate(new Uint8Array(data));
       const AudioCtor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       // Decode at the file's own rate so trimming a WAV doesn't resample it.
-      const context = rate && rate >= 8000 && rate <= 96000 ? new AudioCtor({ sampleRate: rate }) : new AudioCtor();
+      try {
+        context = rate && rate >= 8000 && rate <= 96000 ? new AudioCtor({ sampleRate: rate }) : new AudioCtor();
+      } catch {
+        // Some browsers refuse unusual rates — fall back instead of blaming the file.
+        context = new AudioCtor();
+      }
       const buffer = await context.decodeAudioData(data);
-      await context.close();
+      // A newer file may have been chosen mid-decode — never commit a stale buffer.
+      if (isCancelled()) return;
       setAudioBuffer(buffer);
       setPeaks(computePeaks(buffer.getChannelData(0), 400));
       setStartPct(0);
       setEndPct(100);
     } catch {
-      setError("That file couldn't be decoded as audio — try WAV, MP3, OGG, M4A or a .webm recording.");
+      if (!isCancelled()) {
+        setError("That file couldn't be decoded as audio — try WAV, MP3, OGG, M4A or a .webm recording.");
+      }
+    } finally {
+      // Leaked contexts count against the browser's ~6-context limit.
+      void context?.close();
     }
   }, []);
 
+  const stopPlayback = useCallback(() => {
+    const playback = playbackRef.current;
+    playbackRef.current = null;
+    if (playback) {
+      playback.source.onended = null;
+      try {
+        playback.source.stop();
+      } catch {
+        // Already stopped on its own — nothing to release.
+      }
+      void playback.context.close();
+    }
+    setPlaying(false);
+  }, []);
+
   useEffect(() => {
-    if (file) analyze(file);
-  }, [file, analyze]);
+    if (!file) {
+      // Removing the file must not leave its waveform (and export) behind.
+      setAudioBuffer(null);
+      setPeaks([]);
+      return;
+    }
+    let cancelled = false;
+    stopPlayback();
+    void analyze(file, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [file, analyze, stopPlayback]);
+
+  // Release the mic, playback and timers if the tool unmounts mid-use.
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+      // Detach onstop so a late stop can't touch the file queue after unmount.
+      const recorder = recorderRef.current;
+      if (recorder) {
+        recorder.onstop = null;
+        if (recorder.state !== "inactive") recorder.stop();
+      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, [stopPlayback]);
 
   // Waveform painting
   useEffect(() => {
@@ -67,7 +122,8 @@ export default function AudioTrimmerTool() {
     if (!canvas || peaks.length === 0) return;
     const width = canvas.width;
     const height = canvas.height;
-    const context = canvas.getContext("2d")!;
+    const context = canvas.getContext("2d");
+    if (!context) return;
     context.clearRect(0, 0, width, height);
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, width, height);
@@ -96,12 +152,6 @@ export default function AudioTrimmerTool() {
     context.fillRect(endPx - 2, 0, 2, height);
   }, [peaks, startPct, endPct]);
 
-  function stopPlayback() {
-    videoAudioRef.current?.stop();
-    videoAudioRef.current = null;
-    setPlaying(false);
-  }
-
   function playSelection() {
     if (!audioBuffer) return;
     stopPlayback();
@@ -110,11 +160,14 @@ export default function AudioTrimmerTool() {
     source.buffer = audioBuffer;
     source.connect(context.destination);
     source.start(0, (startPct / 100) * audioBuffer.duration, ((endPct - startPct) / 100) * audioBuffer.duration);
-    videoAudioRef.current = source;
+    playbackRef.current = { source, context };
     setPlaying(true);
     source.onended = () => {
+      // Ignore a late ended event from a playback we already replaced.
+      if (playbackRef.current?.source !== source) return;
+      playbackRef.current = null;
       setPlaying(false);
-      context.close();
+      void context.close();
     };
   }
 
@@ -126,9 +179,13 @@ export default function AudioTrimmerTool() {
   }
 
   async function startRecording() {
+    // The permission prompt is async — a second click must not open a second mic stream.
+    if (startingRef.current || recorderRef.current) return;
+    startingRef.current = true;
     setError(null);
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       chunksRef.current = [];
       const recorder = new MediaRecorder(stream);
@@ -143,20 +200,34 @@ export default function AudioTrimmerTool() {
         queue.addFiles([recorded]);
         streamRef.current?.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+        recorderRef.current = null;
         setRecording(false);
         if (timerRef.current) window.clearInterval(timerRef.current);
+        timerRef.current = null;
       };
       recorder.start(500);
       setRecording(true);
       setElapsed(0);
       timerRef.current = window.setInterval(() => setElapsed((e) => e + 1), 1000);
     } catch {
-      setError("Microphone access isn't available — upload an audio file instead.");
+      // Release the mic even when the recorder itself failed to start.
+      stream?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      recorderRef.current = null;
+      setError(
+        stream
+          ? "Recording isn't supported in this browser — upload an audio file instead."
+          : "Microphone access isn't available — upload an audio file instead.",
+      );
+    } finally {
+      startingRef.current = false;
     }
   }
 
   function stopRecording() {
-    recorderRef.current?.stop();
+    const recorder = recorderRef.current;
+    // A second click before onstop fires would throw InvalidStateError.
+    if (recorder && recorder.state !== "inactive") recorder.stop();
   }
 
   async function exportWav() {

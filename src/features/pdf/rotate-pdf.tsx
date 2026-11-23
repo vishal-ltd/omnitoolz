@@ -23,13 +23,11 @@ export default function RotatePdfTool() {
   useHandoffFile(queue.addFiles, queue.files.length > 0);
   const [angle, setAngle] = useState<Angle>("90");
   const [pagesInput, setPagesInput] = useState("");
-  const [rangeError, setRangeError] = useState<string | null>(null);
 
   const file = queue.files[0];
 
   async function rotate() {
     const source = file!;
-    setRangeError(null);
     await start(async ({ report }) => {
       const { degrees } = await import("pdf-lib");
       const doc = await loadPdf(source);
@@ -92,7 +90,7 @@ export default function RotatePdfTool() {
                   aria-label="Pages to rotate"
                 />
               </Field>
-              {rangeError && <p className="text-sm text-err sm:col-span-2">{rangeError}</p>}
+              {pagesInput.trim() && <p className="text-sm text-ink-soft sm:col-span-2">Leave empty to rotate every page.</p>}
             </OptionsPanel>
           )}
 

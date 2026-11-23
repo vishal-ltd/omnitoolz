@@ -29,6 +29,20 @@ export interface PreparedCanvas {
   height: number;
 }
 
+// Chrome's canvas ceiling (16384² pixels). Past it browsers hand back a blank
+// canvas or a null context instead of an error, so fail loudly up front.
+const MAX_CANVAS_EDGE = 32767;
+const MAX_CANVAS_PIXELS = 268_435_456;
+
+/** Throw a friendly error for dimensions no browser canvas can actually render. */
+export function checkCanvasSize(width: number, height: number): void {
+  if (width > MAX_CANVAS_EDGE || height > MAX_CANVAS_EDGE || width * height > MAX_CANVAS_PIXELS) {
+    throw new Error(
+      `This image is too large for the browser to process (${width}×${height}px). Try a smaller version.`,
+    );
+  }
+}
+
 /**
  * Decode a file into a canvas, optionally capping the long edge (downscale).
  * Throws a friendly error for files the browser can't decode.
@@ -39,7 +53,8 @@ export async function decodeToCanvas(
 ): Promise<PreparedCanvas> {
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(file);
+    // "from-image" applies EXIF orientation so phone photos aren't sideways.
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   } catch {
     throw new Error(`“${file.name}” couldn't be decoded as an image in this browser.`);
   }
@@ -50,6 +65,12 @@ export async function decodeToCanvas(
     const scale = options.maxLongEdge / Math.max(sw, sh);
     dw = Math.max(1, Math.round(sw * scale));
     dh = Math.max(1, Math.round(sh * scale));
+  }
+  try {
+    checkCanvasSize(dw, dh);
+  } catch (error) {
+    bitmap.close();
+    throw error;
   }
 
   const canvas = document.createElement("canvas");
