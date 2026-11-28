@@ -25,7 +25,7 @@ function toRuns(rows: string[]): Array<[number, number, number]> {
   return runs;
 }
 
-export type UiGlyph = "chevron" | "close";
+export type UiGlyph = "chevron" | "close" | "star";
 
 const UI_GLYPHS: Record<UiGlyph, string[]> = {
   chevron: [
@@ -64,6 +64,24 @@ const UI_GLYPHS: Record<UiGlyph, string[]> = {
     "................",
     "................",
   ],
+  star: [
+    "................",
+    ".......##.......",
+    ".......##.......",
+    "......####......",
+    "......####......",
+    ".....######.....",
+    "################",
+    ".##############.",
+    "..############..",
+    "...##########...",
+    "...##########...",
+    "..####....####..",
+    "..###......###..",
+    ".##..........##.",
+    "................",
+    "................",
+  ],
 };
 
 const RUNS = new Map(
@@ -93,7 +111,7 @@ export function PixelIcon({ name, className }: { name: UiGlyph; className?: stri
 
 export type ChromeName =
   | "search" | "menu" | "close" | "sun" | "moon" | "monitor" | "upload"
-  | "alert" | "check" | "download" | "eye" | "sparkles"
+  | "alert" | "check" | "download" | "eye" | "sparkles" | "star"
   | "arrow-up" | "arrow-down" | "shield" | "laptop" | "zap" | "restart";
 
 /** Controls and status marks, drawn from the same bitmap grid as the tool art. */

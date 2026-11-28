@@ -7,6 +7,7 @@ import { site } from "@/lib/site";
 import { activeCategories } from "@/lib/tools/registry";
 import { cn } from "@/lib/utils";
 import { AppearanceControl } from "./appearance-control";
+import { GitHubStarButton, GitHubStarMenuLink } from "./github-star";
 import { LogoMark } from "./logo";
 import { openSearch } from "./search-dialog";
 
@@ -62,6 +63,10 @@ export function Header() {
             </kbd>
           </button>
 
+          <span className="hidden lg:inline-flex">
+            <GitHubStarButton />
+          </span>
+
           <AppearanceControl />
 
           <button
@@ -82,6 +87,7 @@ export function Header() {
         className={cn("border-t-[3px] border-edge bg-card xl:hidden", menuOpen ? "block" : "hidden")}
       >
         <nav aria-label="Mobile" className="mx-auto grid max-w-6xl gap-1.5 px-4 py-4">
+          <GitHubStarMenuLink onNavigate={() => setMenuOpen(false)} />
           {categories.map((category) => (
             <Link
               key={category.id}

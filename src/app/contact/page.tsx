@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact and Feedback",
@@ -22,7 +23,7 @@ export default function ContactPage() {
         </p>
         <div className="flex flex-wrap gap-3">
           <a
-            href="https://github.com/vishal-ltd/omnitoolz/issues"
+            href={site.github.issuesUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center border-[3px] border-edge bg-brand px-4 py-3 font-display text-display-xs text-on-brand shadow-[3px_3px_0_0_var(--color-shadow)]"

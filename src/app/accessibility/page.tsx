@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Accessibility",
@@ -25,7 +26,7 @@ export default function AccessibilityPage() {
         </section>
         <p>
           If a page is difficult to use with your assistive technology, please report the route,
-          browser and interaction that failed through the <a className="font-medium text-brand underline" href="https://github.com/vishal-ltd/omnitoolz/issues" target="_blank" rel="noopener noreferrer">issue tracker</a>.
+          browser and interaction that failed through the <a className="font-medium text-brand underline" href={site.github.issuesUrl} target="_blank" rel="noopener noreferrer">issue tracker</a>.
         </p>
       </div>
     </article>

@@ -30,6 +30,13 @@ export const site = {
   description:
     "Free online tools for PDFs, images, text, developers, security and media. Convert, merge, split, sign, scan and more — processed right in your browser.",
   url: resolveSiteUrl(),
+  /** Public repository — the source of the "Star on GitHub" call to action. */
+  github: {
+    owner: "vishal-ltd",
+    repo: "omnitoolz",
+    url: "https://github.com/vishal-ltd/omnitoolz",
+    issuesUrl: "https://github.com/vishal-ltd/omnitoolz/issues",
+  },
 } as const;
 
 export function absoluteUrl(path: string): string {

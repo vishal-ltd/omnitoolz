@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
 import { PixelIcon, ToolIcon } from "@/components/icons";
+import { GitHubStarBanner } from "@/components/layout/github-star";
 import { HeroSearch } from "@/components/layout/hero-search";
 import { RecentTools } from "@/components/tools/recent-tools";
 import { IconBox } from "@/components/ui/icon-box";
@@ -24,6 +25,7 @@ export default function HomePage() {
           name: site.name,
           url: site.url,
           description: site.description,
+          sameAs: [site.github.url],
         }}
       />
       {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -73,6 +75,9 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Star on GitHub ───────────────────────────────────────── */}
+      <GitHubStarBanner className="mt-6" />
 
       <RecentTools />
 
