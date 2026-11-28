@@ -24,18 +24,20 @@ function resolveSiteUrl(): string {
   return withScheme.replace(/\/+$/, "");
 }
 
+/** Public repository — the source of every "Star on GitHub" call to action. */
+const githubRepo = { owner: "vishal-ltd", repo: "omnitoolz" } as const;
+const githubUrl = `https://github.com/${githubRepo.owner}/${githubRepo.repo}`;
+
 export const site = {
   name: "OmniToolz",
   tagline: "Every Tool. One Place.",
   description:
     "Free online tools for PDFs, images, text, developers, security and media. Convert, merge, split, sign, scan and more — processed right in your browser.",
   url: resolveSiteUrl(),
-  /** Public repository — the source of the "Star on GitHub" call to action. */
   github: {
-    owner: "vishal-ltd",
-    repo: "omnitoolz",
-    url: "https://github.com/vishal-ltd/omnitoolz",
-    issuesUrl: "https://github.com/vishal-ltd/omnitoolz/issues",
+    ...githubRepo,
+    url: githubUrl,
+    issuesUrl: `${githubUrl}/issues`,
   },
 } as const;
 

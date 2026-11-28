@@ -77,7 +77,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Star on GitHub ───────────────────────────────────────── */}
-      <GitHubStarBanner className="mt-6" />
+      <GitHubStarBanner className="mt-10 sm:mt-12" />
 
       <RecentTools />
 

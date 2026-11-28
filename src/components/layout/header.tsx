@@ -63,9 +63,7 @@ export function Header() {
             </kbd>
           </button>
 
-          <span className="hidden lg:inline-flex">
-            <GitHubStarButton />
-          </span>
+          <GitHubStarButton />
 
           <AppearanceControl />
 
@@ -87,7 +85,6 @@ export function Header() {
         className={cn("border-t-[3px] border-edge bg-card xl:hidden", menuOpen ? "block" : "hidden")}
       >
         <nav aria-label="Mobile" className="mx-auto grid max-w-6xl gap-1.5 px-4 py-4">
-          <GitHubStarMenuLink onNavigate={() => setMenuOpen(false)} />
           {categories.map((category) => (
             <Link
               key={category.id}
@@ -99,6 +96,7 @@ export function Header() {
               <span className="text-display-xs text-ink-soft">{category.toolCount}</span>
             </Link>
           ))}
+          <GitHubStarMenuLink onNavigate={() => setMenuOpen(false)} />
         </nav>
       </div>
     </header>
