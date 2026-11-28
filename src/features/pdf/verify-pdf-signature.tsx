@@ -48,6 +48,27 @@ async function verifyFn(
   );
 }
 
+/**
+ * CMS signingTime arrives as a DER UTCTime ("YYMMDDHHMMSSZ") or GeneralizedTime
+ * ("YYYYMMDDHHMMSSZ") — both are unreadable verbatim, so render real UTC.
+ */
+function formatSigningTime(raw: string): string | null {
+  const utc = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/.exec(raw);
+  const generalized = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/.exec(raw);
+  const parts = generalized ?? utc;
+  if (!parts) return null;
+  const year = generalized
+    ? Number(parts[1])
+    : Number(parts[1]) >= 50
+      ? 1900 + Number(parts[1])
+      : 2000 + Number(parts[1]);
+  const date = new Date(
+    Date.UTC(year, Number(parts[2]) - 1, Number(parts[3]), Number(parts[4]), Number(parts[5]), Number(parts[6])),
+  );
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.toISOString().slice(0, 19).replace("T", " ")} UTC`;
+}
+
 function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: string }) {
   const integrity = report.integrityOk;
   const crypto = report.signatureValid;
@@ -74,7 +95,15 @@ function VerdictCard({ report, fileName }: { report: SignatureReport; fileName: 
         {crypto === false && <p className="text-err">✗ Signature does NOT verify with the embedded certificate.</p>}
         {crypto === null && <p>Signature bytes present but not cryptographically verified here.</p>}
 
-        {report.signingTime && <p className="text-ink-soft">Claimed signing time: {report.signingTime}</p>}
+        {report.signingTime && (
+          <p className="text-ink-soft">
+            Claimed signing time:{" "}
+            {formatSigningTime(report.signingTime) ?? report.signingTime}
+            {formatSigningTime(report.signingTime) && (
+              <span className="sr-only"> (from the raw value {report.signingTime})</span>
+            )}
+          </p>
+        )}
         {report.detail && <p className="text-warn">{report.detail}</p>}
         {report.digestAlgorithmOid && (
           <p className="text-ink-soft">Digest: {digestName(report.digestAlgorithmOid) ?? report.digestAlgorithmOid}</p>

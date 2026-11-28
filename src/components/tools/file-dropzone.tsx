@@ -139,7 +139,7 @@ export function FileDropZone({
           ref={inputRef}
           type="file"
           className="hidden"
-          aria-label="Choose files to upload"
+          aria-label="Choose files from your device"
           accept={acceptAttr}
           multiple={multiple}
           onChange={(event) => {

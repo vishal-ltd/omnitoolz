@@ -83,7 +83,7 @@ export const tools: ToolDefinition[] = [
     requiresMultipleFiles: true,
     privacyNote: BROWSER_PRIVACY,
     howTo: [
-      "Drop two or more PDF files into the upload area (or click to browse).",
+      "Drop two or more PDF files into the drop zone (or click to browse).",
       "Use the arrows to put the files in the order you want them to appear in the merged document.",
       "Click “Merge PDFs” and download the combined file.",
     ],
@@ -1663,7 +1663,7 @@ export const tools: ToolDefinition[] = [
     howTo: [
       "Paste your text into the input area.",
       "Click the case style you want — the converted text appears instantly.",
-      "Copy the result or download it as a .txt file.",
+      "Copy the result — it is ready to paste anywhere.",
     ],
     faqs: [
       {
